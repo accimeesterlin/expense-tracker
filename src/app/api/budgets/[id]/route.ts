@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Budget from "@/models/Budget";
 
@@ -15,7 +15,7 @@ export async function GET(
     }
 
     await connectToDatabase();
-    
+
     const budget = await Budget.findOne({
       _id: params.id,
       userId: session.user.email,
@@ -65,10 +65,7 @@ export async function PUT(
   } catch (error: any) {
     console.error("Error updating budget:", error);
     if (error.name === "ValidationError") {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json(
       { error: "Failed to update budget" },

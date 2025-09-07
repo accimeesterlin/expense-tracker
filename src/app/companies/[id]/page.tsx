@@ -13,6 +13,7 @@ import {
   MapPin,
   Mail,
   Users,
+  User,
   CreditCard,
   Calendar,
   DollarSign,
@@ -73,7 +74,9 @@ export default function CompanyDetailsPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"expenses" | "team" | "overview">("overview");
+  const [activeTab, setActiveTab] = useState<"expenses" | "team" | "overview">(
+    "overview"
+  );
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [expenseFilter, setExpenseFilter] = useState<string>("all");
@@ -131,9 +134,11 @@ export default function CompanyDetailsPage() {
 
   const filterExpenses = () => {
     let filtered = expenses.filter((expense) => {
-      const matchesSearch = expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch =
+        expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         expense.category.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFilter = expenseFilter === "all" || 
+      const matchesFilter =
+        expenseFilter === "all" ||
         (expenseFilter === "active" && expense.isActive) ||
         (expenseFilter === "inactive" && !expense.isActive) ||
         expense.expenseType === expenseFilter;
@@ -194,9 +199,14 @@ export default function CompanyDetailsPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const totalExpenseAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const activeExpenses = expenses.filter(e => e.isActive).length;
-  const monthlyRecurring = expenses.filter(e => e.expenseType === "subscription" && e.isActive).reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenseAmount = expenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
+  const activeExpenses = expenses.filter((e) => e.isActive).length;
+  const monthlyRecurring = expenses
+    .filter((e) => e.expenseType === "subscription" && e.isActive)
+    .reduce((sum, e) => sum + e.amount, 0);
 
   if (status === "loading" || loading || !mounted) {
     return (
@@ -211,7 +221,7 @@ export default function CompanyDetailsPage() {
   }
 
   return (
-    <AppLayout title={`${company?.name || 'Company'} Details`}>
+    <AppLayout title={`${company?.name || "Company"} Details`}>
       {/* Company Header */}
       <div className="bg-white border-b border-[#E5E7EB] mb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -274,34 +284,53 @@ export default function CompanyDetailsPage() {
           <div className="space-y-8">
             {/* Company Info */}
             <div className="card p-6">
-              <h2 className="text-lg font-semibold text-[#0B3558] mb-4">Company Information</h2>
+              <h2 className="text-lg font-semibold text-[#0B3558] mb-4">
+                Company Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-[#476788]">Industry</label>
+                    <label className="text-sm font-medium text-[#476788]">
+                      Industry
+                    </label>
                     <p className="text-[#0B3558]">{company.industry}</p>
                   </div>
                   {company.description && (
                     <div>
-                      <label className="text-sm font-medium text-[#476788]">Description</label>
+                      <label className="text-sm font-medium text-[#476788]">
+                        Description
+                      </label>
                       <p className="text-[#0B3558]">{company.description}</p>
                     </div>
                   )}
                   <div>
-                    <label className="text-sm font-medium text-[#476788]">Member Since</label>
-                    <p className="text-[#0B3558]">{formatDate(company.createdAt)}</p>
+                    <label className="text-sm font-medium text-[#476788]">
+                      Member Since
+                    </label>
+                    <p className="text-[#0B3558]">
+                      {formatDate(company.createdAt)}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-[#476788]">Address</label>
+                    <label className="text-sm font-medium text-[#476788]">
+                      Address
+                    </label>
                     <div className="text-[#0B3558]">
-                      {company.address.street && <p>{company.address.street}</p>}
-                      <p>{company.address.city}, {company.address.state} {company.address.zipCode}</p>
+                      {company.address.street && (
+                        <p>{company.address.street}</p>
+                      )}
+                      <p>
+                        {company.address.city}, {company.address.state}{" "}
+                        {company.address.zipCode}
+                      </p>
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#476788]">Contact</label>
+                    <label className="text-sm font-medium text-[#476788]">
+                      Contact
+                    </label>
                     <div className="text-[#0B3558] space-y-1">
                       <div className="flex items-center space-x-2">
                         <Mail className="w-4 h-4 text-[#476788]" />
@@ -309,14 +338,23 @@ export default function CompanyDetailsPage() {
                       </div>
                       {company.contactInfo.phone && (
                         <div className="flex items-center space-x-2">
-                          <span className="w-4 h-4 text-center text-[#476788]">📞</span>
+                          <span className="w-4 h-4 text-center text-[#476788]">
+                            📞
+                          </span>
                           <span>{company.contactInfo.phone}</span>
                         </div>
                       )}
                       {company.contactInfo.website && (
                         <div className="flex items-center space-x-2">
-                          <span className="w-4 h-4 text-center text-[#476788]">🌐</span>
-                          <a href={company.contactInfo.website} target="_blank" rel="noopener noreferrer" className="text-[#006BFF] hover:underline">
+                          <span className="w-4 h-4 text-center text-[#476788]">
+                            🌐
+                          </span>
+                          <a
+                            href={company.contactInfo.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#006BFF] hover:underline"
+                          >
                             {company.contactInfo.website}
                           </a>
                         </div>
@@ -335,8 +373,12 @@ export default function CompanyDetailsPage() {
                     <CreditCard className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#476788]">Total Expenses</p>
-                    <p className="text-xl font-bold text-[#0B3558]">{expenses.length}</p>
+                    <p className="text-sm font-medium text-[#476788]">
+                      Total Expenses
+                    </p>
+                    <p className="text-xl font-bold text-[#0B3558]">
+                      {expenses.length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -346,8 +388,12 @@ export default function CompanyDetailsPage() {
                     <DollarSign className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#476788]">Total Amount</p>
-                    <p className="text-xl font-bold text-[#0B3558]">{formatCurrency(totalExpenseAmount)}</p>
+                    <p className="text-sm font-medium text-[#476788]">
+                      Total Amount
+                    </p>
+                    <p className="text-xl font-bold text-[#0B3558]">
+                      {formatCurrency(totalExpenseAmount)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -357,8 +403,12 @@ export default function CompanyDetailsPage() {
                     <Calendar className="w-6 h-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#476788]">Active Expenses</p>
-                    <p className="text-xl font-bold text-[#0B3558]">{activeExpenses}</p>
+                    <p className="text-sm font-medium text-[#476788]">
+                      Active Expenses
+                    </p>
+                    <p className="text-xl font-bold text-[#0B3558]">
+                      {activeExpenses}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -368,8 +418,12 @@ export default function CompanyDetailsPage() {
                     <Users className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#476788]">Team Members</p>
-                    <p className="text-xl font-bold text-[#0B3558]">{teamMembers.length}</p>
+                    <p className="text-sm font-medium text-[#476788]">
+                      Team Members
+                    </p>
+                    <p className="text-xl font-bold text-[#0B3558]">
+                      {teamMembers.length}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -414,7 +468,9 @@ export default function CompanyDetailsPage() {
               <div className="card p-12 text-center">
                 <CreditCard className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
                 <h3 className="text-lg font-medium text-[#0B3558] mb-2">
-                  {expenses.length === 0 ? "No expenses yet" : "No expenses match your filters"}
+                  {expenses.length === 0
+                    ? "No expenses yet"
+                    : "No expenses match your filters"}
                 </h3>
                 <p className="text-[#476788] mb-6">
                   {expenses.length === 0
@@ -472,7 +528,9 @@ export default function CompanyDetailsPage() {
                         <User className="w-6 h-6 text-[#006BFF]" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-[#0B3558]">{member.name}</h3>
+                        <h3 className="font-semibold text-[#0B3558]">
+                          {member.name}
+                        </h3>
                         <p className="text-sm text-[#476788]">{member.role}</p>
                       </div>
                     </div>
