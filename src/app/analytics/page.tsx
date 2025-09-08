@@ -199,8 +199,8 @@ export default function AnalyticsPage() {
           </select>
         </div>
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="card p-4 sm:p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788]">
@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788]">
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788]">
@@ -272,7 +272,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788]">
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Expenses by Category */}
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Expenses by Category
             </h3>
@@ -326,7 +326,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Expenses by Type */}
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Expenses by Type
             </h3>
@@ -348,7 +348,7 @@ export default function AnalyticsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Monthly Trend */}
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Monthly Trend (Last 12 Months)
             </h3>
@@ -379,7 +379,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Daily Expenses */}
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Daily Expenses
             </h3>
@@ -406,7 +406,7 @@ export default function AnalyticsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Top Companies */}
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Top Companies by Spending
             </h3>
@@ -443,7 +443,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Large Expenses */}
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Largest Expenses
             </h3>

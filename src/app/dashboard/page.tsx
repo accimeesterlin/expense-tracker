@@ -344,8 +344,8 @@ export default function DashboardPage() {
                 >
                   <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-                <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0">
-                  <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 lg:w-6 lg:h-6 text-white" />
+                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0 hidden sm:flex">
+                  <DollarSign className="w-4 h-4 lg:w-6 lg:h-6 text-white" />
                 </div>
                 <h1 className="text-sm sm:text-lg lg:text-2xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
                   ExpenseTracker
@@ -425,16 +425,16 @@ export default function DashboardPage() {
               <DashboardStats companies={companies} expenses={expenses} />
 
               {/* Quick Actions - Essential Only */}
-              <div className="mt-3 sm:mt-4 lg:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4 w-full">
+              <div className="mt-3 sm:mt-4 lg:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4 w-full">
                 <button
                   onClick={() => setShowSimpleIncomeModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200 w-full"
+                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200 flex-1 sm:max-w-xs"
                 >
-                  <div className="flex items-center space-x-2 sm:space-x-3 w-full">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="min-w-0 flex-1">
                       <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-green-800 truncate">
                         Add Income
                       </h3>
@@ -447,13 +447,13 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowExpenseModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200 w-full"
+                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200 flex-1 sm:max-w-xs"
                 >
-                  <div className="flex items-center space-x-2 sm:space-x-3 w-full">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="min-w-0 flex-1">
                       <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-blue-800 truncate">
                         Add Expense
                       </h3>

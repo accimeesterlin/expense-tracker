@@ -234,7 +234,7 @@ export default function DebtsPage() {
         {/* Main Content */}
         <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             <div className="card p-4 sm:p-6">
               <div className="flex items-center">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">

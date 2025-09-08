@@ -123,6 +123,9 @@ export default function GoalsPage() {
   };
 
   const formatCurrency = (amount: number) => {
+    if (amount == null || isNaN(amount)) {
+      return "$0.00";
+    }
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -224,7 +227,7 @@ export default function GoalsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 w-full">
             {goals.map((goal) => (
               <div
                 key={goal._id}
@@ -319,7 +322,7 @@ export default function GoalsPage() {
                             : "text-[#006BFF]"
                         }`}
                       >
-                        {Math.round(goal.percentageCompleted)}%
+                        {Math.round(goal.percentageCompleted || 0)}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1 sm:h-1.5 lg:h-2">
@@ -330,7 +333,7 @@ export default function GoalsPage() {
                             : "bg-[#006BFF]"
                         }`}
                         style={{
-                          width: `${Math.min(100, goal.percentageCompleted)}%`,
+                          width: `${Math.min(100, goal.percentageCompleted || 0)}%`,
                         }}
                       ></div>
                     </div>
@@ -340,17 +343,17 @@ export default function GoalsPage() {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0 text-xs text-[#476788]">
                       <span className="flex items-center space-x-1">
                         <Calendar className="w-3 h-3 flex-shrink-0" />
-                        <span>{goal.daysRemaining} days left</span>
+                        <span>{goal.daysRemaining || 0} days left</span>
                       </span>
                       <span className="flex items-center space-x-1">
                         <TrendingUp className="w-3 h-3 flex-shrink-0" />
                         <span
                           className="truncate"
                           title={`${formatCurrency(
-                            goal.requiredMonthlySavings
+                            goal.requiredMonthlySavings || 0
                           )}/month`}
                         >
-                          {formatCurrency(goal.requiredMonthlySavings)}/month
+                          {formatCurrency(goal.requiredMonthlySavings || 0)}/month
                         </span>
                       </span>
                     </div>

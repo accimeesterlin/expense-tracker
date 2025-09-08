@@ -10,7 +10,8 @@
       "Bash(node:*)",
       "Bash(yarn build)",
       "mcp__ide__getDiagnostics",
-      "Bash(npm show:*)"
+      "Bash(npm show:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],

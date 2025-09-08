@@ -23,14 +23,14 @@ interface Company {
   name: string;
   industry: string;
   description?: string;
-  address: {
+  address?: {
     street?: string;
-    city: string;
-    state: string;
+    city?: string;
+    state?: string;
     zipCode?: string;
   };
-  contactInfo: {
-    email: string;
+  contactInfo?: {
+    email?: string;
     phone?: string;
     website?: string;
   };
@@ -169,7 +169,7 @@ export default function CompaniesPage() {
 
       <div className="space-y-4 sm:space-y-6 lg:space-y-8 w-full overflow-x-hidden">
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 w-full">
           <div className="card p-3 sm:p-4 lg:p-6 w-full overflow-hidden">
             <div className="flex items-center w-full">
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">

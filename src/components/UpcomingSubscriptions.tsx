@@ -107,34 +107,34 @@ export default function UpcomingSubscriptions({
 
   if (upcomingExpenses.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <Calendar className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+        <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
             Upcoming Subscriptions
           </h2>
         </div>
-        <div className="text-center py-8">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No upcoming subscriptions</p>
+        <div className="text-center py-6 sm:py-8">
+          <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+          <p className="text-sm sm:text-base text-gray-500">No upcoming subscriptions</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center space-x-3 mb-6">
-        <Calendar className="w-6 h-6 text-blue-600" />
-        <h2 className="text-xl font-semibold text-gray-900">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+      <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+        <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
           Upcoming Subscriptions
         </h2>
-        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 sm:px-2.5 py-0.5 rounded-full">
           {upcomingExpenses.length}
         </span>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {upcomingExpenses.map((expense) => {
           const daysUntil = getDaysUntil(expense.nextBillingDate!);
           const statusColor = getStatusColor(daysUntil);
@@ -143,18 +143,18 @@ export default function UpcomingSubscriptions({
           return (
             <div
               key={expense._id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 gap-3 sm:gap-0"
             >
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+              <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">{expense.name}</h3>
-                  <p className="text-sm text-gray-600">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{expense.name}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
                     {expense.company.name} • {expense.category}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
                     {new Date(expense.nextBillingDate!).toLocaleDateString(
                       "en-US",
                       {
@@ -165,15 +165,25 @@ export default function UpcomingSubscriptions({
                       }
                     )}
                   </p>
+                  <p className="text-xs text-gray-500 sm:hidden">
+                    {new Date(expense.nextBillingDate!).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4">
-                <span className="text-lg font-semibold text-gray-900">
+              <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
+                <span className="text-base sm:text-lg font-semibold text-gray-900">
                   ${expense.amount.toFixed(2)}
                 </span>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor}`}
+                  className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${statusColor} whitespace-nowrap`}
                 >
                   {statusText}
                 </span>
@@ -184,10 +194,10 @@ export default function UpcomingSubscriptions({
                     onClick={() =>
                       setOpenDropdown(openDropdown === expense._id ? null : expense._id)
                     }
-                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
                     title="Actions"
                   >
-                    <MoreVertical className="w-4 h-4 text-gray-600" />
+                    <MoreVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
                   </button>
                   
                   {openDropdown === expense._id && (

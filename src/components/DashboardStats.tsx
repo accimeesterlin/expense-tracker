@@ -69,19 +69,19 @@ export default function DashboardStats({
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {stats.map((stat) => (
         <div
           key={stat.name}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6"
         >
-          <div className="flex items-center">
-            <div className={`${stat.color} rounded-lg p-3 mr-4`}>
-              <stat.icon className="w-6 h-6 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center">
+            <div className={`${stat.color} rounded-lg p-2 sm:p-3 mb-2 sm:mb-0 sm:mr-3 lg:mr-4 flex-shrink-0`}>
+              <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-              <p className={`text-2xl font-bold ${stat.textColor}`}>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.name}</p>
+              <p className={`text-lg sm:text-xl lg:text-2xl font-bold ${stat.textColor} truncate`}>
                 {stat.value}
               </p>
             </div>

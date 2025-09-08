@@ -172,7 +172,7 @@ export default function BudgetPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 w-full">
             {budgets.map((budget) => (
               <div
                 key={budget._id}
@@ -283,7 +283,7 @@ export default function BudgetPage() {
                           budget.period.slice(1)}
                       </span>
                       <span className="whitespace-nowrap ml-2">
-                        {budget.daysRemaining} days left
+                        {budget.daysRemaining || 0} days left
                       </span>
                     </div>
                   </div>

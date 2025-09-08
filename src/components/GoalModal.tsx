@@ -144,25 +144,25 @@ export default function GoalModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
         }
       }}
     >
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-              <Target className="w-6 h-6 text-green-600" />
+        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-[#E5E7EB]">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Target className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-[#0B3558]">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558] truncate">
                 {isEditing ? "Edit Goal" : "Create New Goal"}
               </h2>
-              <p className="text-sm text-[#476788]">
+              <p className="text-xs sm:text-sm text-[#476788] truncate">
                 {isEditing
                   ? "Update goal details"
                   : "Set up a new financial goal"}
@@ -171,37 +171,37 @@ export default function GoalModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
+            className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-3 sm:p-6 space-y-4 sm:space-y-6">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
                 Goal Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-field w-full"
+                className="input-field w-full text-sm sm:text-base"
                 placeholder="e.g., Emergency Fund"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
                 Goal Type
               </label>
               <select
@@ -216,7 +216,7 @@ export default function GoalModal({
                       | "other"
                   )
                 }
-                className="input-field w-full"
+                className="input-field w-full text-sm sm:text-base"
               >
                 <option value="savings">Savings</option>
                 <option value="debt_payoff">Debt Payoff</option>
@@ -228,28 +228,28 @@ export default function GoalModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input-field w-full"
-              rows={3}
+              className="input-field w-full text-sm sm:text-base"
+              rows={2}
               placeholder="Optional description of this goal..."
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
                 Target Amount <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 value={targetAmount}
                 onChange={(e) => setTargetAmount(e.target.value)}
-                className="input-field w-full"
+                className="input-field w-full text-sm sm:text-base"
                 placeholder="10000"
                 step="0.01"
                 min="0"
@@ -258,14 +258,14 @@ export default function GoalModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
                 Current Amount
               </label>
               <input
                 type="number"
                 value={currentAmount}
                 onChange={(e) => setCurrentAmount(e.target.value)}
-                className="input-field w-full"
+                className="input-field w-full text-sm sm:text-base"
                 placeholder="0"
                 step="0.01"
                 min="0"
@@ -273,7 +273,7 @@ export default function GoalModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
                 Priority
               </label>
               <select
@@ -281,7 +281,7 @@ export default function GoalModal({
                 onChange={(e) =>
                   setPriority(e.target.value as "low" | "medium" | "high")
                 }
-                className="input-field w-full"
+                className="input-field w-full text-sm sm:text-base"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -291,29 +291,29 @@ export default function GoalModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-[#0B3558] mb-1.5 sm:mb-2">
               Target Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              className="input-field w-full"
+              className="input-field w-full text-sm sm:text-base"
               required
             />
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-2 sm:pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary w-full sm:w-auto text-sm sm:text-base"
               disabled={loading}
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button type="submit" className="btn-primary w-full sm:w-auto text-sm sm:text-base" disabled={loading}>
               {loading
                 ? "Saving..."
                 : isEditing

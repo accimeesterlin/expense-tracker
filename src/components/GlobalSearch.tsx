@@ -239,6 +239,9 @@ export default function GlobalSearch() {
   };
 
   const formatCurrency = (amount: number) => {
+    if (amount == null || isNaN(amount)) {
+      return "$0.00";
+    }
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",

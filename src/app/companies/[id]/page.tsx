@@ -25,14 +25,14 @@ interface Company {
   name: string;
   industry: string;
   description?: string;
-  address: {
+  address?: {
     street?: string;
-    city: string;
-    state: string;
+    city?: string;
+    state?: string;
     zipCode?: string;
   };
-  contactInfo: {
-    email: string;
+  contactInfo?: {
+    email?: string;
     phone?: string;
     website?: string;
   };
@@ -331,13 +331,20 @@ export default function CompanyDetailsPage() {
                       Address
                     </label>
                     <div className="text-sm sm:text-base text-[#0B3558]">
-                      {company.address.street && (
+                      {company.address?.street && (
                         <p>{company.address.street}</p>
                       )}
-                      <p>
-                        {company.address.city}, {company.address.state}{" "}
-                        {company.address.zipCode}
-                      </p>
+                      {(company.address?.city || company.address?.state) && (
+                        <p>
+                          {company.address.city && company.address.city}
+                          {company.address.city && company.address.state && ", "}
+                          {company.address.state && company.address.state}
+                          {company.address.zipCode && ` ${company.address.zipCode}`}
+                        </p>
+                      )}
+                      {(!company.address?.street && !company.address?.city && !company.address?.state) && (
+                        <span className="text-[#A6BBD1] text-sm">No address information available</span>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -345,11 +352,13 @@ export default function CompanyDetailsPage() {
                       Contact
                     </label>
                     <div className="text-sm sm:text-base text-[#0B3558] space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#476788] flex-shrink-0" />
-                        <span className="truncate">{company.contactInfo.email}</span>
-                      </div>
-                      {company.contactInfo.phone && (
+                      {company.contactInfo?.email && (
+                        <div className="flex items-center space-x-2">
+                          <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#476788] flex-shrink-0" />
+                          <span className="truncate">{company.contactInfo.email}</span>
+                        </div>
+                      )}
+                      {company.contactInfo?.phone && (
                         <div className="flex items-center space-x-2">
                           <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-center text-[#476788] flex-shrink-0">
                             📞
@@ -357,7 +366,7 @@ export default function CompanyDetailsPage() {
                           <span className="truncate">{company.contactInfo.phone}</span>
                         </div>
                       )}
-                      {company.contactInfo.website && (
+                      {company.contactInfo?.website && (
                         <div className="flex items-center space-x-2">
                           <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-center text-[#476788] flex-shrink-0">
                             🌐
@@ -371,6 +380,9 @@ export default function CompanyDetailsPage() {
                             {company.contactInfo.website}
                           </a>
                         </div>
+                      )}
+                      {(!company.contactInfo?.email && !company.contactInfo?.phone && !company.contactInfo?.website) && (
+                        <span className="text-[#A6BBD1] text-sm">No contact information available</span>
                       )}
                     </div>
                   </div>

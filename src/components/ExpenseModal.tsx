@@ -9,14 +9,14 @@ interface Company {
   name: string;
   industry: string;
   description?: string;
-  address: {
+  address?: {
     street?: string;
-    city: string;
-    state: string;
+    city?: string;
+    state?: string;
     zipCode?: string;
   };
-  contactInfo: {
-    email: string;
+  contactInfo?: {
+    email?: string;
     phone?: string;
     website?: string;
   };
