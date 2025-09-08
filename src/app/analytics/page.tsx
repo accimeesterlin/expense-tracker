@@ -24,7 +24,7 @@ import {
   CreditCard,
   Calendar,
   Building2,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
@@ -40,25 +40,55 @@ interface AnalyticsData {
   charts: {
     expensesByCategory: Array<{ _id: string; total: number; count: number }>;
     expensesByType: Array<{ _id: string; total: number; count: number }>;
-    dailyExpenses: Array<{ _id: { year: number; month: number; day: number }; total: number; count: number }>;
-    monthlyTrend: Array<{ _id: { year: number; month: number }; total: number; count: number }>;
+    dailyExpenses: Array<{
+      _id: { year: number; month: number; day: number };
+      total: number;
+      count: number;
+    }>;
+    monthlyTrend: Array<{
+      _id: { year: number; month: number };
+      total: number;
+      count: number;
+    }>;
   };
   insights: {
-    topCompanies: Array<{ _id: string; name: string; total: number; count: number }>;
-    largeExpenses: Array<{ _id: string; name: string; amount: number; category: string; company: { name: string } }>;
+    topCompanies: Array<{
+      _id: string;
+      name: string;
+      total: number;
+      count: number;
+    }>;
+    largeExpenses: Array<{
+      _id: string;
+      name: string;
+      amount: number;
+      category: string;
+      company: { name: string };
+    }>;
   };
 }
 
 const COLORS = [
-  "#006BFF", "#00C7BE", "#FF6B6B", "#4ECDC4", 
-  "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F",
-  "#BB8FCE", "#85C1E9", "#F8C471", "#82E0AA"
+  "#006BFF",
+  "#00C7BE",
+  "#FF6B6B",
+  "#4ECDC4",
+  "#45B7D1",
+  "#FFA07A",
+  "#98D8C8",
+  "#F7DC6F",
+  "#BB8FCE",
+  "#85C1E9",
+  "#F8C471",
+  "#82E0AA",
 ];
 
 export default function AnalyticsPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [error, setError] = useState("");
@@ -97,12 +127,28 @@ export default function AnalyticsPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateObj: { year: number; month: number; day?: number }) => {
+  const formatDate = (dateObj: {
+    year: number;
+    month: number;
+    day?: number;
+  }) => {
     if (dateObj.day) {
       return `${dateObj.month}/${dateObj.day}`;
     }
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
     return monthNames[dateObj.month - 1];
   };
 
@@ -140,12 +186,12 @@ export default function AnalyticsPage() {
 
   return (
     <AppLayout title="Analytics">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-end mb-8">
+      <div className="w-full overflow-x-hidden">
+        <div className="flex items-center justify-end mb-4 sm:mb-8">
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="input-field"
+            className="input-field text-sm sm:text-base"
           >
             <option value="week">This Week</option>
             <option value="month">This Month</option>
@@ -153,79 +199,103 @@ export default function AnalyticsPage() {
           </select>
         </div>
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="card p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Total Spent</p>
-                <p className="text-3xl font-bold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                  Total Spent
+                </p>
+                <p
+                  className="text-xl sm:text-3xl font-bold text-[#0B3558] truncate"
+                  title={formatCurrency(summary.total)}
+                >
                   {formatCurrency(summary.total)}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-[#006BFF]/10 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-[#006BFF]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#006BFF]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#006BFF]" />
               </div>
             </div>
             {summary.percentageChange !== 0 && (
               <div className="flex items-center mt-2">
                 {summary.percentageChange > 0 ? (
-                  <TrendingUp className="w-4 h-4 text-red-500 mr-1" />
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1 flex-shrink-0" />
                 ) : (
-                  <TrendingDown className="w-4 h-4 text-green-500 mr-1" />
+                  <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1 flex-shrink-0" />
                 )}
-                <span className={`text-sm ${summary.percentageChange > 0 ? "text-red-600" : "text-green-600"}`}>
+                <span
+                  className={`text-xs sm:text-sm ${
+                    summary.percentageChange > 0
+                      ? "text-red-600"
+                      : "text-green-600"
+                  } truncate`}
+                >
                   {Math.abs(summary.percentageChange)}% vs last {summary.period}
                 </span>
               </div>
             )}
           </div>
 
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Total Expenses</p>
-                <p className="text-3xl font-bold text-[#0B3558]">{summary.count}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                  Total Expenses
+                </p>
+                <p className="text-xl sm:text-3xl font-bold text-[#0B3558]">
+                  {summary.count}
+                </p>
               </div>
-              <div className="w-12 h-12 bg-[#00C7BE]/10 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-[#00C7BE]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#00C7BE]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-[#00C7BE]" />
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Average Amount</p>
-                <p className="text-3xl font-bold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                  Average Amount
+                </p>
+                <p
+                  className="text-xl sm:text-3xl font-bold text-[#0B3558] truncate"
+                  title={formatCurrency(summary.avgAmount)}
+                >
                   {formatCurrency(summary.avgAmount)}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-[#FF6B6B]/10 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-[#FF6B6B]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#FF6B6B]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#FF6B6B]" />
               </div>
             </div>
           </div>
 
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Period</p>
-                <p className="text-2xl font-bold text-[#0B3558] capitalize">{summary.period}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                  Period
+                </p>
+                <p className="text-lg sm:text-2xl font-bold text-[#0B3558] capitalize">
+                  {summary.period}
+                </p>
               </div>
-              <div className="w-12 h-12 bg-[#4ECDC4]/10 rounded-lg flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-[#4ECDC4]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#4ECDC4]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-[#4ECDC4]" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Expenses by Category */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+          <div className="card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Expenses by Category
             </h3>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -233,33 +303,42 @@ export default function AnalyticsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ _id, total }) => `${_id}: ${formatCurrency(total)}`}
-                    outerRadius={100}
+                    label={({ _id, total }) =>
+                      `${_id}: ${formatCurrency(total)}`
+                    }
+                    outerRadius={80}
                     fill="#8884d8"
                     dataKey="total"
                   >
                     {charts.expensesByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Expenses by Type */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+          <div className="card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Expenses by Type
             </h3>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={charts.expensesByType}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="_id" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
                   <Bar dataKey="total" fill="#006BFF" />
                 </BarChart>
               </ResponsiveContainer>
@@ -267,26 +346,30 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Monthly Trend */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+          <div className="card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Monthly Trend (Last 12 Months)
             </h3>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={charts.monthlyTrend.map(item => ({
-                  ...item,
-                  date: formatDate(item._id)
-                }))}>
+                <LineChart
+                  data={charts.monthlyTrend.map((item) => ({
+                    ...item,
+                    date: formatDate(item._id),
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="total" 
-                    stroke="#006BFF" 
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#006BFF"
                     strokeWidth={2}
                     dot={{ fill: "#006BFF" }}
                   />
@@ -296,20 +379,24 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Daily Expenses */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+          <div className="card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Daily Expenses
             </h3>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={charts.dailyExpenses.map(item => ({
-                  ...item,
-                  date: formatDate(item._id)
-                }))}>
+                <BarChart
+                  data={charts.dailyExpenses.map((item) => ({
+                    ...item,
+                    date: formatDate(item._id),
+                  }))}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
                   <Bar dataKey="total" fill="#00C7BE" />
                 </BarChart>
               </ResponsiveContainer>
@@ -317,26 +404,36 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Top Companies */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+          <div className="card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Top Companies by Spending
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {insights.topCompanies.map((company) => (
-                <div key={company._id} className="flex items-center justify-between p-3 bg-[#F8F9FB] rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-[#006BFF]/10 rounded-lg flex items-center justify-center">
-                      <Building2 className="w-4 h-4 text-[#006BFF]" />
+                <div
+                  key={company._id}
+                  className="flex items-center justify-between p-2 sm:p-3 bg-[#F8F9FB] rounded-lg"
+                >
+                  <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#006BFF]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-[#006BFF]" />
                     </div>
-                    <div>
-                      <p className="font-medium text-[#0B3558]">{company.name}</p>
-                      <p className="text-sm text-[#476788]">{company.count} expenses</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[#0B3558] text-sm sm:text-base truncate">
+                        {company.name}
+                      </p>
+                      <p className="text-xs sm:text-sm text-[#476788]">
+                        {company.count} expenses
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#0B3558]">
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <p
+                      className="font-bold text-[#0B3558] text-sm sm:text-base truncate"
+                      title={formatCurrency(company.total)}
+                    >
                       {formatCurrency(company.total)}
                     </p>
                   </div>
@@ -346,21 +443,29 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Large Expenses */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+          <div className="card p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Largest Expenses
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {insights.largeExpenses.map((expense) => (
-                <div key={expense._id} className="flex items-center justify-between p-3 bg-[#F8F9FB] rounded-lg">
-                  <div>
-                    <p className="font-medium text-[#0B3558]">{expense.name}</p>
-                    <p className="text-sm text-[#476788]">
+                <div
+                  key={expense._id}
+                  className="flex items-center justify-between p-2 sm:p-3 bg-[#F8F9FB] rounded-lg"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-[#0B3558] text-sm sm:text-base truncate">
+                      {expense.name}
+                    </p>
+                    <p className="text-xs sm:text-sm text-[#476788] truncate">
                       {expense.company.name} • {expense.category}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#0B3558]">
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <p
+                      className="font-bold text-[#0B3558] text-sm sm:text-base truncate"
+                      title={formatCurrency(expense.amount)}
+                    >
                       {formatCurrency(expense.amount)}
                     </p>
                   </div>

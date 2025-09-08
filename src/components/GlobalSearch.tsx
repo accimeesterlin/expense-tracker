@@ -270,16 +270,16 @@ export default function GlobalSearch() {
   };
 
   return (
-    <div className="relative" ref={searchRef}>
+    <div className="relative w-full max-w-48 sm:max-w-56 lg:max-w-64" ref={searchRef}>
       <div className="input-field-with-icon">
-        <Search className="icon w-4 h-4" />
+        <Search className="icon w-3 h-3 sm:w-4 sm:h-4" />
         <input
           type="text"
-          placeholder="Search companies, expenses, income..."
+          placeholder="Search..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsOpen(true)}
-          className="w-64 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pr-8 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {query && (
           <button
@@ -287,15 +287,15 @@ export default function GlobalSearch() {
               setQuery("");
               setIsOpen(false);
             }}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         )}
       </div>
 
       {isOpen && query.length > 2 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 sm:max-h-96 overflow-y-auto min-w-64">
           {loading ? (
             <div className="p-4 text-center text-gray-500">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>

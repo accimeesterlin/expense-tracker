@@ -152,15 +152,20 @@ export default function ExpenseModal({
 
       if (categoriesRes.ok) {
         const categoriesData = await categoriesRes.json();
-        setCategories(categoriesData);
+        // Ensure categoriesData is always an array
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       }
 
       if (tagsRes.ok) {
         const tagsData = await tagsRes.json();
-        setTags(tagsData);
+        // Ensure tagsData is always an array
+        setTags(Array.isArray(tagsData) ? tagsData : []);
       }
     } catch (error) {
       console.error("Error fetching categories and tags:", error);
+      // Set to empty arrays on error
+      setCategories([]);
+      setTags([]);
     }
   };
 
@@ -709,7 +714,7 @@ export default function ExpenseModal({
                       className="input-field w-full"
                     >
                       {/* Default categories if user hasn't created any custom ones */}
-                      {categories.length === 0 && (
+                      {(!Array.isArray(categories) || categories.length === 0) && (
                         <>
                           <option value="Software & Subscriptions">
                             Software & Subscriptions
@@ -734,13 +739,13 @@ export default function ExpenseModal({
                         </>
                       )}
                       {/* User-created categories */}
-                      {categories.map((category) => (
+                      {Array.isArray(categories) && categories.map((category) => (
                         <option key={category._id} value={category.name}>
                           {category.name}
                         </option>
                       ))}
                     </select>
-                    {categories.length === 0 && (
+                    {(!Array.isArray(categories) || categories.length === 0) && (
                       <p className="text-xs text-[#476788] mt-1">
                         <a
                           href="/categories"

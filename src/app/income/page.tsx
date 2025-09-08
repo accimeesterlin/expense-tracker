@@ -238,18 +238,18 @@ export default function IncomePage() {
   return (
     <AppLayout title="Income">
       {/* Page Header */}
-      <div className="bg-white border-b border-[#E5E7EB] -m-4 sm:-m-6 mb-4 sm:mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="bg-white border-b border-[#E5E7EB] -m-3 sm:-m-4 lg:-m-6 mb-3 sm:mb-4 lg:mb-6 w-full overflow-x-hidden">
+        <div className="w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6 overflow-x-hidden">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#0B3558] truncate">
                   Income Management
                 </h1>
-                <p className="text-xs sm:text-sm text-[#476788]">
+                <p className="text-xs sm:text-sm text-[#476788] truncate">
                   Track and manage your income sources
                 </p>
               </div>
@@ -265,49 +265,55 @@ export default function IncomePage() {
         </div>
       </div>
 
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 w-full overflow-x-hidden">
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="card p-4 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                   Total Income
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-[#0B3558] truncate" title={formatCurrency(totalIncomeAmount)}>
+                <p
+                  className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate"
+                  title={formatCurrency(totalIncomeAmount)}
+                >
                   {formatCurrency(totalIncomeAmount)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                   Monthly Income
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-[#0B3558] truncate" title={formatCurrency(monthlyIncomeAmount)}>
+                <p
+                  className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate"
+                  title={formatCurrency(monthlyIncomeAmount)}
+                >
                   {formatCurrency(monthlyIncomeAmount)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="card p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+          <div className="card p-3 sm:p-4 lg:p-6 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                   Income Sources
                 </p>
-                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558]">
                   {incomes.length}
                 </p>
               </div>
@@ -316,10 +322,10 @@ export default function IncomePage() {
         </div>
 
         {/* Filters */}
-        <div className="card p-4 sm:p-6">
-          <div className="grid grid-cols-1 gap-4">
+        <div className="card p-3 sm:p-4 lg:p-6">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <div className="input-field-with-icon">
-              <Search className="icon w-5 h-5" />
+              <Search className="icon w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 placeholder="Search income sources..."
@@ -328,7 +334,7 @@ export default function IncomePage() {
                 className="input-field text-sm sm:text-base"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4">
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
@@ -359,38 +365,41 @@ export default function IncomePage() {
 
         {/* Income List */}
         {filteredIncomes.length === 0 ? (
-          <div className="card p-8 sm:p-12 text-center">
-            <TrendingUp className="w-12 h-12 sm:w-16 sm:h-16 text-[#A6BBD1] mx-auto mb-4 sm:mb-8" />
-            <h3 className="text-base sm:text-lg font-medium text-[#0B3558] mb-2">
+          <div className="card p-6 sm:p-8 lg:p-12 text-center">
+            <TrendingUp className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 text-[#A6BBD1] mx-auto mb-3 sm:mb-4 lg:mb-8" />
+            <h3 className="text-sm sm:text-base lg:text-lg font-medium text-[#0B3558] mb-2">
               {incomes.length === 0
                 ? "No income sources yet"
                 : "No income sources match your filters"}
             </h3>
-            <p className="text-sm sm:text-base text-[#476788] mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm lg:text-base text-[#476788] mb-3 sm:mb-4 lg:mb-6">
               {incomes.length === 0
                 ? "Start tracking your income sources to get a better view of your financial situation"
                 : "Try adjusting your search or filters"}
             </p>
             <button
               onClick={() => setShowIncomeModal(true)}
-              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
+              className="btn-primary inline-flex items-center space-x-2 text-xs sm:text-sm lg:text-base"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Add Your First Income</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2 sm:space-y-3 lg:space-y-4 w-full overflow-x-hidden">
             {filteredIncomes.map((income) => (
-              <div key={income._id} className="card p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div
+                key={income._id}
+                className="card p-3 sm:p-4 lg:p-6 w-full overflow-hidden"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 lg:gap-4 w-full">
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
-                      <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] truncate">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] truncate">
                         {income.source}
                       </h3>
                       <span
-                        className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium ${getTypeColor(
+                        className={`px-1.5 py-0.5 sm:px-2 sm:py-0.5 lg:px-2.5 lg:py-1 rounded-full text-xs font-medium ${getTypeColor(
                           income.category
                         )}`}
                       >
@@ -398,17 +407,17 @@ export default function IncomePage() {
                           "UNKNOWN"}
                       </span>
                       {income.frequency && (
-                        <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="px-1.5 py-0.5 sm:px-2 sm:py-0.5 lg:px-2.5 lg:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {getFrequencyLabel(income.frequency)}
                         </span>
                       )}
                       {!income.isActive && (
-                        <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <span className="px-1.5 py-0.5 sm:px-2 sm:py-0.5 lg:px-2.5 lg:py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                           INACTIVE
                         </span>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm text-[#476788]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 lg:gap-4 text-xs sm:text-sm text-[#476788]">
                       <div>
                         <span className="font-medium">Amount: </span>
                         <span className="text-[#0B3558] font-semibold">
@@ -425,23 +434,23 @@ export default function IncomePage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-end space-x-2">
+                  <div className="flex items-center justify-end space-x-1 sm:space-x-2">
                     <button
                       onClick={() => {
                         setSelectedIncome(income);
                         setShowIncomeModal(true);
                       }}
-                      className="p-1.5 sm:p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors"
+                      className="p-1 sm:p-1.5 lg:p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors"
                       title="Edit income"
                     >
-                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteIncome(income._id)}
-                      className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1 sm:p-1.5 lg:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete income"
                     >
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     </button>
                   </div>
                 </div>

@@ -64,9 +64,10 @@ export default function CompaniesPage() {
   };
 
   const filterCompanies = useCallback(() => {
-    const filtered = companies.filter((company) =>
-      company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      company.industry.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = companies.filter(
+      (company) =>
+        company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company.industry.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCompanies(filtered);
   }, [companies, searchTerm]);
@@ -99,7 +100,11 @@ export default function CompaniesPage() {
   };
 
   const handleDeleteCompany = async (companyId: string) => {
-    if (!confirm("Are you sure you want to delete this company? This will also delete all associated expenses.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this company? This will also delete all associated expenses."
+      )
+    ) {
       return;
     }
 
@@ -135,70 +140,76 @@ export default function CompaniesPage() {
   return (
     <AppLayout title="Companies">
       {/* Page Header */}
-      <div className="bg-white border-b border-[#E5E7EB] -m-4 sm:-m-6 mb-4 sm:mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+      <div className="bg-white border-b border-[#E5E7EB] -m-3 sm:-m-4 lg:-m-6 mb-3 sm:mb-4 lg:mb-6 w-full overflow-x-hidden">
+        <div className="w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6 overflow-x-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-blue-600" />
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-[#0B3558] truncate">
                   Companies
                 </h1>
-                <p className="text-xs sm:text-sm text-[#476788]">
+                <p className="text-xs sm:text-sm text-[#476788] truncate">
                   Manage your business partners
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowCompanyModal(true)}
-              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+              className="btn-primary inline-flex items-center space-x-2 text-xs sm:text-sm lg:text-base w-full sm:w-auto justify-center flex-shrink-0"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Add Company</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8 w-full overflow-x-hidden">
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="card p-4 sm:p-6">
-            <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full">
+          <div className="card p-3 sm:p-4 lg:p-6 w-full overflow-hidden">
+            <div className="flex items-center w-full">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">Total Companies</p>
-                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
+                  Total Companies
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate">
                   {companies.length}
                 </p>
               </div>
             </div>
           </div>
-          <div className="card p-4 sm:p-6">
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">Active Expenses</p>
-                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
+                  Active Expenses
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558]">
                   {companies.reduce((sum, c) => sum + (c.expenseCount || 0), 0)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="card p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+          <div className="card p-3 sm:p-4 lg:p-6 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">Team Members</p>
-                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
+                  Team Members
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558]">
                   {companies.reduce((sum, c) => sum + (c.teamCount || 0), 0)}
                 </p>
               </div>
@@ -207,9 +218,9 @@ export default function CompaniesPage() {
         </div>
 
         {/* Search */}
-        <div className="card p-4 sm:p-6">
+        <div className="card p-3 sm:p-4 lg:p-6">
           <div className="input-field-with-icon">
-            <Search className="icon w-5 h-5" />
+            <Search className="icon w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="text"
               placeholder="Search companies..."
@@ -222,35 +233,40 @@ export default function CompaniesPage() {
 
         {/* Companies List */}
         {filteredCompanies.length === 0 ? (
-          <div className="card p-8 sm:p-12 text-center">
-            <Building2 className="w-12 h-12 sm:w-16 sm:h-16 text-[#A6BBD1] mx-auto mb-4 sm:mb-8" />
-            <h3 className="text-base sm:text-lg font-medium text-[#0B3558] mb-2">
-              {companies.length === 0 ? "No companies yet" : "No companies match your search"}
+          <div className="card p-6 sm:p-8 lg:p-12 text-center">
+            <Building2 className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 text-[#A6BBD1] mx-auto mb-3 sm:mb-4 lg:mb-8" />
+            <h3 className="text-sm sm:text-base lg:text-lg font-medium text-[#0B3558] mb-2">
+              {companies.length === 0
+                ? "No companies yet"
+                : "No companies match your search"}
             </h3>
-            <p className="text-sm sm:text-base text-[#476788] mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm lg:text-base text-[#476788] mb-3 sm:mb-4 lg:mb-6">
               {companies.length === 0
                 ? "Start by adding your first business partner or vendor"
                 : "Try adjusting your search terms"}
             </p>
             <button
               onClick={() => setShowCompanyModal(true)}
-              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
+              className="btn-primary inline-flex items-center space-x-2 text-xs sm:text-sm lg:text-base"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Add Your First Company</span>
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 w-full">
             {filteredCompanies.map((company) => (
-              <div key={company._id} className="card p-4 sm:p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div
+                key={company._id}
+                className="card p-3 sm:p-4 lg:p-6 hover:shadow-lg transition-shadow w-full overflow-hidden"
+              >
+                <div className="flex items-start justify-between mb-2 sm:mb-3 lg:mb-4">
                   <div className="flex-1 min-w-0">
                     <Link
                       href={`/companies/${company._id}`}
                       className="block hover:text-[#006BFF] transition-colors"
                     >
-                      <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-1 truncate">
+                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] mb-1 truncate">
                         {company.name}
                       </h3>
                       <p className="text-xs sm:text-sm text-[#006BFF] font-medium truncate">
@@ -279,30 +295,34 @@ export default function CompaniesPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-[#476788]">
+                <div className="space-y-1 sm:space-y-1.5 lg:space-y-2 text-xs sm:text-sm text-[#476788]">
                   {company.address?.city && company.address?.state && (
                     <div className="flex items-center space-x-2">
-                      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="truncate">{company.address.city}, {company.address.state}</span>
+                      <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 flex-shrink-0" />
+                      <span className="truncate">
+                        {company.address.city}, {company.address.state}
+                      </span>
                     </div>
                   )}
                   {company.contactInfo?.email && (
                     <div className="flex items-center space-x-2">
-                      <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="truncate">{company.contactInfo.email}</span>
+                      <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 flex-shrink-0" />
+                      <span className="truncate">
+                        {company.contactInfo.email}
+                      </span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[#E5E7EB]">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 text-xs sm:text-sm">
-                    <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="mt-2 sm:mt-3 lg:mt-4 pt-2 sm:pt-3 lg:pt-4 border-t border-[#E5E7EB]">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 lg:gap-0 text-xs sm:text-sm">
+                    <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4">
                       <div className="flex items-center space-x-1 text-[#476788]">
-                        <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <CreditCard className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                         <span>{company.expenseCount || 0} expenses</span>
                       </div>
                       <div className="flex items-center space-x-1 text-[#476788]">
-                        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                         <span>{company.teamCount || 0} team</span>
                       </div>
                     </div>

@@ -199,7 +199,7 @@ export default function DebtsPage() {
       <div className="flex-1 lg:ml-0">
         {/* Header */}
         <header className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 py-4 sm:py-0 sm:h-16">
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <button
@@ -232,7 +232,7 @@ export default function DebtsPage() {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div className="card p-4 sm:p-6">

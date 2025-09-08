@@ -211,7 +211,7 @@ function SearchPageContent() {
     <div className="min-h-screen bg-[#F8F9FB]">
       {/* Header */}
       <div className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <Link
@@ -231,7 +231,7 @@ function SearchPageContent() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Bar */}
         <div className="mb-6">
           <div className="input-field-with-icon">

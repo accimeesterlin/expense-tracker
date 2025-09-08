@@ -235,7 +235,7 @@ export default function CompanyDetailsPage() {
     <AppLayout title={`${company?.name || "Company"} Details`}>
       {/* Company Header */}
       <div className="bg-white border-b border-[#E5E7EB] mb-4 sm:mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 py-4 sm:py-6">
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -270,7 +270,7 @@ export default function CompanyDetailsPage() {
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
             {["overview", "expenses", "team"].map((tab) => (
               <button
@@ -292,7 +292,7 @@ export default function CompanyDetailsPage() {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {activeTab === "overview" && (
           <div className="space-y-6 sm:space-y-8">
             {/* Company Info */}

@@ -21,61 +21,61 @@ export default function AppLayout({
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] flex">
+    <div className="min-h-screen bg-[#F8F9FB] flex w-full overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar isOpen={showSidebar} onClose={() => setShowSidebar(false)} />
 
       {/* Main content area */}
-      <div className="flex-1 lg:ml-0">
+      <div className="flex-1 lg:ml-0 min-w-0 w-full overflow-x-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-[#E5E7EB]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-3">
+        <header className="bg-white border-b border-[#E5E7EB] w-full overflow-x-hidden">
+          <div className="w-full max-w-none px-3 sm:px-4 lg:px-6 overflow-x-hidden">
+            <div className="flex justify-between items-center h-16 min-w-0 gap-2 sm:gap-3">
+              <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-shrink">
                 <button
                   onClick={() => setShowSidebar(true)}
-                  className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden"
+                  className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden flex-shrink-0"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-                <div className="w-10 h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden">
-                  <DollarSign className="w-6 h-6 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0">
+                  <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h1 className="text-2xl font-semibold text-[#0B3558] lg:hidden">
+                <h1 className="text-base sm:text-xl lg:text-2xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
                   ExpenseTracker
                 </h1>
-                <h1 className="text-2xl font-semibold text-[#0B3558] hidden lg:block">
+                <h1 className="text-xl lg:text-2xl font-semibold text-[#0B3558] hidden lg:block truncate min-w-0">
                   {title}
                 </h1>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 flex-shrink-0">
                 {/* Global Search */}
                 <GlobalSearch />
 
                 {/* User Menu */}
-                <div className="flex items-center space-x-3">
-                  <div className="hidden sm:flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-[#006BFF]" />
+                <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
+                  <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#006BFF]" />
                     </div>
-                    <span className="text-sm font-medium text-[#0B3558]">
+                    <span className="text-xs sm:text-sm font-medium text-[#0B3558] hidden lg:block truncate max-w-24">
                       {session?.user?.name}
                     </span>
                   </div>
 
                   <button
                     onClick={() => setShowSettingsModal(true)}
-                    className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
                     title="Settings"
                   >
-                    <Settings className="w-5 h-5" />
+                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   <button
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
                     title="Sign out"
                   >
-                    <LogOut className="w-5 h-5" />
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               </div>
@@ -84,8 +84,8 @@ export default function AppLayout({
         </header>
 
         {/* Page content */}
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="max-w-full overflow-x-hidden">{children}</div>
+        <div className="p-3 sm:p-4 lg:p-6 xl:p-8 w-full overflow-x-hidden">
+          <div className="w-full max-w-none overflow-x-hidden">{children}</div>
         </div>
 
         {/* Settings Modal */}
