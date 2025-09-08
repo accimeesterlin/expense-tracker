@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Goal from "@/models/Goal";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -45,11 +45,12 @@ export async function POST(request: NextRequest) {
 
     await goal.save();
     return NextResponse.json(goal, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating goal:", error);
-    if (error.name === "ValidationError") {
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { message: string };
       return NextResponse.json(
-        { error: error.message },
+        { error: mongooseError.message },
         { status: 400 }
       );
     }

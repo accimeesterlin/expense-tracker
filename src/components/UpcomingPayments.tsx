@@ -4,7 +4,6 @@ import {
   CreditCard,
   AlertTriangle,
   TrendingUp,
-  Clock,
 } from "lucide-react";
 
 interface UpcomingPayment {
@@ -45,75 +44,115 @@ export default function UpcomingPayments() {
 
       if (expensesRes.ok) {
         const expenses = await expensesRes.json();
-        expenses.forEach((expense: any) => {
-          if (expense.nextBillingDate) {
-            const dueDate = new Date(expense.nextBillingDate);
-            const today = new Date();
-            const daysUntilDue = Math.ceil(
-              (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-            );
+        expenses.forEach(
+          (expense: {
+            _id: string;
+            name: string;
+            amount: number;
+            nextBillingDate: string;
+            company: { name: string };
+            category?: string;
+            paymentMethod?: {
+              name: string;
+              type: string;
+              lastFourDigits?: string;
+            };
+          }) => {
+            if (expense.nextBillingDate) {
+              const dueDate = new Date(expense.nextBillingDate);
+              const today = new Date();
+              const daysUntilDue = Math.ceil(
+                (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+              );
 
-            payments.push({
-              id: expense._id,
-              name: expense.name,
-              amount: expense.amount,
-              dueDate: expense.nextBillingDate,
-              type: "expense",
-              category: expense.category,
-              paymentMethod: expense.paymentMethod,
-              isOverdue: daysUntilDue < 0,
-              daysUntilDue,
-            });
+              payments.push({
+                id: expense._id,
+                name: expense.name,
+                amount: expense.amount,
+                dueDate: expense.nextBillingDate,
+                type: "expense",
+                category: expense.category || "Other",
+                paymentMethod: expense.paymentMethod,
+                isOverdue: daysUntilDue < 0,
+                daysUntilDue,
+              });
+            }
           }
-        });
+        );
       }
 
       if (debtsRes.ok) {
         const debts = await debtsRes.json();
-        debts.forEach((debt: any) => {
-          const dueDate = new Date(debt.nextPaymentDate);
-          const today = new Date();
-          const daysUntilDue = Math.ceil(
-            (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-          );
-
-          payments.push({
-            id: debt._id,
-            name: debt.name,
-            amount: debt.minimumPayment,
-            dueDate: debt.nextPaymentDate,
-            type: "debt",
-            category: debt.type,
-            paymentMethod: debt.paymentMethod,
-            isOverdue: daysUntilDue < 0,
-            daysUntilDue,
-          });
-        });
-      }
-
-      if (incomeRes.ok) {
-        const income = await incomeRes.json();
-        income.forEach((inc: any) => {
-          if (inc.nextPaymentDate) {
-            const dueDate = new Date(inc.nextPaymentDate);
+        debts.forEach(
+          (debt: {
+            _id: string;
+            name: string;
+            minimumPayment: number;
+            nextPaymentDate: string;
+            type?: string;
+            paymentMethod?: {
+              name: string;
+              type: string;
+              lastFourDigits?: string;
+            };
+          }) => {
+            const dueDate = new Date(debt.nextPaymentDate);
             const today = new Date();
             const daysUntilDue = Math.ceil(
               (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
             );
 
             payments.push({
-              id: inc._id,
-              name: inc.source,
-              amount: inc.amount,
-              dueDate: inc.nextPaymentDate,
-              type: "income",
-              category: inc.category,
-              paymentMethod: inc.paymentMethod,
+              id: debt._id,
+              name: debt.name,
+              amount: debt.minimumPayment,
+              dueDate: debt.nextPaymentDate,
+              type: "debt",
+              category: debt.type,
+              paymentMethod: debt.paymentMethod,
               isOverdue: daysUntilDue < 0,
               daysUntilDue,
             });
           }
-        });
+        );
+      }
+
+      if (incomeRes.ok) {
+        const income = await incomeRes.json();
+        income.forEach(
+          (inc: {
+            _id: string;
+            source: string;
+            amount: number;
+            nextPaymentDate: string;
+            category?: string;
+            paymentMethod?: {
+              name: string;
+              type: string;
+              lastFourDigits?: string;
+            };
+          }) => {
+            if (inc.nextPaymentDate) {
+              const dueDate = new Date(inc.nextPaymentDate);
+              const today = new Date();
+              const daysUntilDue = Math.ceil(
+                (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+              );
+
+              payments.push({
+                id: inc._id,
+                name: inc.source,
+                amount: inc.amount,
+                dueDate: inc.nextPaymentDate,
+                type: "income",
+                category: inc.category,
+                paymentMethod: inc.paymentMethod,
+                isOverdue: daysUntilDue < 0,
+                daysUntilDue,
+              });
+            }
+          }
+        );
       }
 
       // Sort by due date

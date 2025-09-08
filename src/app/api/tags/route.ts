@@ -42,12 +42,13 @@ export async function POST(request: NextRequest) {
     await tag.save();
 
     return NextResponse.json(tag, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating tag:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error.code === 11000) {
+    if (error && typeof error === "object" && "code" in error && error.code === 11000) {
       return NextResponse.json(
         { error: "Tag with this name already exists" },
         { status: 409 }

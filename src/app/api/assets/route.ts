@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category");
     const isLiquid = searchParams.get("isLiquid");
 
-    let query: any = { userId: session.user.id, isActive: true };
+    const query: { userId: string; isActive: boolean; type?: string; category?: string; isLiquid?: boolean } = { userId: session.user.id, isActive: true };
 
     if (type) query.type = type;
     if (category) query.category = category;
@@ -53,12 +53,13 @@ export async function POST(request: NextRequest) {
     await asset.save();
 
     return NextResponse.json(asset, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating asset:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error instanceof Error && error.name === "ValidationError") {
+      const validationError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(validationError.errors).map(
+        (err: { message: string }) => err.message
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },

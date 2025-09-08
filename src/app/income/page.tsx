@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   TrendingUp,
   Plus,
   Search,
-  Filter,
   Calendar,
   DollarSign,
   Edit,
@@ -20,11 +19,47 @@ import SimpleIncomeModal from "@/components/SimpleIncomeModal";
 interface Income {
   _id: string;
   source: string;
+  description?: string;
   amount: number;
-  type: string;
-  frequency?: string;
+  currency: string;
+  frequency: string;
+  category: string;
+  paymentMethod?: {
+    _id: string;
+    name: string;
+    type:
+      | "credit_card"
+      | "debit_card"
+      | "bank_account"
+      | "digital_wallet"
+      | "other";
+    lastFourDigits?: string;
+    isDefault: boolean;
+  };
+  company?: {
+    _id: string;
+    name: string;
+    industry: string;
+    description?: string;
+    address: {
+      street?: string;
+      city: string;
+      state: string;
+      zipCode?: string;
+    };
+    contactInfo: {
+      email: string;
+      phone?: string;
+      website?: string;
+    };
+    createdAt: string;
+  };
+  receivedDate: string;
   nextPaymentDate?: string;
+  isRecurring: boolean;
   isActive: boolean;
+  tags: string[];
+  notes?: string;
   createdAt: string;
 }
 
@@ -38,7 +73,9 @@ export default function IncomePage() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
   const [showIncomeModal, setShowIncomeModal] = useState(false);
-  const [selectedIncome, setSelectedIncome] = useState<Income | null>(null);
+  const [selectedIncome, setSelectedIncome] = useState<Income | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (status === "loading") return;
@@ -48,10 +85,6 @@ export default function IncomePage() {
     }
     fetchIncomes();
   }, [session, status, router]);
-
-  useEffect(() => {
-    filterAndSortIncomes();
-  }, [incomes, searchTerm, selectedType, sortBy]);
 
   const fetchIncomes = async () => {
     try {
@@ -67,12 +100,13 @@ export default function IncomePage() {
     }
   };
 
-  const filterAndSortIncomes = () => {
-    let filtered = incomes.filter((income) => {
+  const filterAndSortIncomes = useCallback(() => {
+    const filtered = incomes.filter((income) => {
       const matchesSearch = income.source
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const matchesType = selectedType === "all" || income.type === selectedType;
+      const matchesType =
+        selectedType === "all" || income.category === selectedType;
       return matchesSearch && matchesType;
     });
 
@@ -84,15 +118,21 @@ export default function IncomePage() {
         case "name":
           return a.source.localeCompare(b.source);
         case "type":
-          return a.type.localeCompare(b.type);
+          return a.category.localeCompare(b.category);
         case "date":
         default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
       }
     });
 
     setFilteredIncomes(filtered);
-  };
+  }, [incomes, searchTerm, selectedType, sortBy]);
+
+  useEffect(() => {
+    filterAndSortIncomes();
+  }, [filterAndSortIncomes]);
 
   const handleIncomeCreated = (newIncome: Income) => {
     if (selectedIncome) {
@@ -105,7 +145,7 @@ export default function IncomePage() {
       setIncomes((prev) => [newIncome, ...prev]);
     }
     setShowIncomeModal(false);
-    setSelectedIncome(null);
+    setSelectedIncome(undefined);
   };
 
   const handleDeleteIncome = async (incomeId: string) => {
@@ -143,34 +183,43 @@ export default function IncomePage() {
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      "salary": "bg-blue-100 text-blue-800",
-      "freelance": "bg-purple-100 text-purple-800",
-      "business": "bg-green-100 text-green-800",
-      "investment": "bg-yellow-100 text-yellow-800",
-      "rental": "bg-indigo-100 text-indigo-800",
-      "other": "bg-gray-100 text-gray-800",
+      salary: "bg-blue-100 text-blue-800",
+      freelance: "bg-purple-100 text-purple-800",
+      business: "bg-green-100 text-green-800",
+      investment: "bg-yellow-100 text-yellow-800",
+      rental: "bg-indigo-100 text-indigo-800",
+      other: "bg-gray-100 text-gray-800",
     };
     return colors[type] || colors["other"];
   };
 
   const getFrequencyLabel = (frequency: string) => {
     const labels: Record<string, string> = {
-      "weekly": "Weekly",
-      "bi_weekly": "Bi-weekly",
-      "monthly": "Monthly",
-      "quarterly": "Quarterly",
-      "yearly": "Yearly",
-      "one_time": "One-time",
+      weekly: "Weekly",
+      bi_weekly: "Bi-weekly",
+      monthly: "Monthly",
+      quarterly: "Quarterly",
+      yearly: "Yearly",
+      one_time: "One-time",
     };
     return labels[frequency] || frequency;
   };
 
   const getUniqueTypes = () => {
-    const types = [...new Set(incomes.map((income) => income.type).filter(type => type && typeof type === 'string'))];
+    const types = [
+      ...new Set(
+        incomes
+          .map((income) => income.category)
+          .filter((type) => type && typeof type === "string")
+      ),
+    ];
     return types.sort();
   };
 
-  const totalIncomeAmount = incomes.reduce((sum, income) => sum + income.amount, 0);
+  const totalIncomeAmount = incomes.reduce(
+    (sum, income) => sum + income.amount,
+    0
+  );
   const monthlyIncomeAmount = incomes
     .filter((income) => income.frequency === "monthly")
     .reduce((sum, income) => sum + income.amount, 0);
@@ -226,7 +275,9 @@ export default function IncomePage() {
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Total Income</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Total Income
+                </p>
                 <p className="text-2xl font-bold text-[#0B3558]">
                   {formatCurrency(totalIncomeAmount)}
                 </p>
@@ -239,7 +290,9 @@ export default function IncomePage() {
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Monthly Income</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Monthly Income
+                </p>
                 <p className="text-2xl font-bold text-[#0B3558]">
                   {formatCurrency(monthlyIncomeAmount)}
                 </p>
@@ -252,8 +305,12 @@ export default function IncomePage() {
                 <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Income Sources</p>
-                <p className="text-2xl font-bold text-[#0B3558]">{incomes.length}</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Income Sources
+                </p>
+                <p className="text-2xl font-bold text-[#0B3558]">
+                  {incomes.length}
+                </p>
               </div>
             </div>
           </div>
@@ -283,7 +340,9 @@ export default function IncomePage() {
                 <option value="all">All Types</option>
                 {getUniqueTypes().map((type) => (
                   <option key={type} value={type}>
-                    {type && typeof type === 'string' ? type.replace("_", " ").toUpperCase() : type}
+                    {type && typeof type === "string"
+                      ? type.replace("_", " ").toUpperCase()
+                      : type}
                   </option>
                 ))}
               </select>
@@ -306,7 +365,9 @@ export default function IncomePage() {
           <div className="card p-12 text-center">
             <TrendingUp className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
             <h3 className="text-lg font-medium text-[#0B3558] mb-2">
-              {incomes.length === 0 ? "No income sources yet" : "No income sources match your filters"}
+              {incomes.length === 0
+                ? "No income sources yet"
+                : "No income sources match your filters"}
             </h3>
             <p className="text-[#476788] mb-6">
               {incomes.length === 0
@@ -333,10 +394,11 @@ export default function IncomePage() {
                       </h3>
                       <span
                         className={`px-2.5 py-1 rounded-full text-xs font-medium ${getTypeColor(
-                          income.type
+                          income.category
                         )}`}
                       >
-                        {income.type?.replace("_", " ").toUpperCase() || "UNKNOWN"}
+                        {income.category?.replace("_", " ").toUpperCase() ||
+                          "UNKNOWN"}
                       </span>
                       {income.frequency && (
                         <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -398,7 +460,7 @@ export default function IncomePage() {
           isOpen={showIncomeModal}
           onClose={() => {
             setShowIncomeModal(false);
-            setSelectedIncome(null);
+            setSelectedIncome(undefined);
           }}
           onSuccess={handleIncomeCreated}
           income={selectedIncome}

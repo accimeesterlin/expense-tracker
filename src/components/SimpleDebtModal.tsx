@@ -3,11 +3,43 @@
 import { useState, useEffect } from "react";
 import { X, AlertTriangle, Calendar } from "lucide-react";
 
+interface Debt {
+  _id: string;
+  name: string;
+  description?: string;
+  originalAmount: number;
+  currentBalance: number;
+  currency: string;
+  type: string;
+  interestRate?: number;
+  minimumPayment: number;
+  paymentFrequency: string;
+  nextPaymentDate: string;
+  paymentMethod?: {
+    _id: string;
+    name: string;
+    type:
+      | "credit_card"
+      | "debit_card"
+      | "bank_account"
+      | "digital_wallet"
+      | "other";
+    lastFourDigits?: string;
+    isDefault: boolean;
+  };
+  creditor?: string;
+  accountNumber?: string;
+  isActive: boolean;
+  tags: string[];
+  notes?: string;
+  createdAt: string;
+}
+
 interface SimpleDebtModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (debt: any) => void;
-  debt?: any;
+  onSuccess: (debt: Debt) => void;
+  debt?: Debt;
 }
 
 export default function SimpleDebtModal({
@@ -30,9 +62,12 @@ export default function SimpleDebtModal({
       if (debt) {
         // Editing mode
         setName(debt.name || "");
-        setCurrentBalance(debt.amount?.toString() || debt.currentBalance?.toString() || "");
+        setCurrentBalance(debt.currentBalance?.toString() || "");
         setMinimumPayment(debt.minimumPayment?.toString() || "");
-        setNextPaymentDate(debt.dueDate?.split("T")[0] || debt.nextPaymentDate?.split("T")[0] || new Date().toISOString().split("T")[0]);
+        setNextPaymentDate(
+          debt.nextPaymentDate?.split("T")[0] ||
+            new Date().toISOString().split("T")[0]
+        );
       } else {
         // Create mode
         setName("");
@@ -68,7 +103,7 @@ export default function SimpleDebtModal({
     try {
       const url = isEditing ? `/api/debts/${debt._id}` : "/api/debts";
       const method = isEditing ? "PUT" : "POST";
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -119,7 +154,9 @@ export default function SimpleDebtModal({
             <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[#0B3558]">{isEditing ? 'Edit Debt' : 'Add Debt'}</h2>
+            <h2 className="text-xl font-semibold text-[#0B3558]">
+              {isEditing ? "Edit Debt" : "Add Debt"}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -217,8 +254,10 @@ export default function SimpleDebtModal({
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+              ) : isEditing ? (
+                "Update Debt"
               ) : (
-                isEditing ? "Update Debt" : "Add Debt"
+                "Add Debt"
               )}
             </button>
           </div>

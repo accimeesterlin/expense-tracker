@@ -53,12 +53,13 @@ export async function POST(request: NextRequest) {
     await paymentMethod.save();
 
     return NextResponse.json(paymentMethod, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating payment method:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },

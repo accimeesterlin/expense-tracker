@@ -25,7 +25,13 @@ export default function SettingsModal({
   userName,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<
-    "profile" | "notifications" | "privacy" | "appearance" | "data"
+    | "profile"
+    | "notifications"
+    | "preferences"
+    | "security"
+    | "privacy"
+    | "appearance"
+    | "data"
   >("profile");
   const [settings, setSettings] = useState({
     profile: {
@@ -144,7 +150,15 @@ export default function SettingsModal({
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() =>
+                      setActiveTab(
+                        tab.id as
+                          | "profile"
+                          | "preferences"
+                          | "security"
+                          | "notifications"
+                      )
+                    }
                     className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       activeTab === tab.id
                         ? "bg-[#006BFF] text-white"

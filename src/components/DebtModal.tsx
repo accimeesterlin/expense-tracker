@@ -12,8 +12,20 @@ import {
 interface PaymentMethod {
   _id: string;
   name: string;
-  type: string;
+  type:
+    | "credit_card"
+    | "debit_card"
+    | "bank_account"
+    | "digital_wallet"
+    | "other";
+  provider?: string;
   lastFourDigits?: string;
+  expiryDate?: string;
+  isDefault: boolean;
+  metadata?: {
+    cardholderName?: string;
+    bankName?: string;
+  };
 }
 
 interface Debt {

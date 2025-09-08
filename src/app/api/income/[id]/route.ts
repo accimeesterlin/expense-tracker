@@ -56,21 +56,38 @@ export async function PUT(
       const receivedDate = new Date(body.receivedDate);
       let nextPaymentDate = new Date(receivedDate);
 
+      // Calculate next payment date based on frequency
       switch (body.frequency) {
         case "weekly":
-          nextPaymentDate.setDate(nextPaymentDate.getDate() + 7);
+          nextPaymentDate = new Date(
+            nextPaymentDate.getTime() + 7 * 24 * 60 * 60 * 1000
+          );
           break;
         case "bi-weekly":
-          nextPaymentDate.setDate(nextPaymentDate.getDate() + 14);
+          nextPaymentDate = new Date(
+            nextPaymentDate.getTime() + 14 * 24 * 60 * 60 * 1000
+          );
           break;
         case "monthly":
-          nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+          nextPaymentDate = new Date(
+            nextPaymentDate.getFullYear(),
+            nextPaymentDate.getMonth() + 1,
+            nextPaymentDate.getDate()
+          );
           break;
         case "quarterly":
-          nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 3);
+          nextPaymentDate = new Date(
+            nextPaymentDate.getFullYear(),
+            nextPaymentDate.getMonth() + 3,
+            nextPaymentDate.getDate()
+          );
           break;
         case "yearly":
-          nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
+          nextPaymentDate = new Date(
+            nextPaymentDate.getFullYear() + 1,
+            nextPaymentDate.getMonth(),
+            nextPaymentDate.getDate()
+          );
           break;
       }
 
@@ -93,12 +110,18 @@ export async function PUT(
     }
 
     return NextResponse.json(income);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating income:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors || {}).map(
+        (err) => err.message || "Validation error"
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }).populate("company", "name industry");
 
     // Group expenses by category
-    const expensesByCategory: { [key: string]: any[] } = {};
+    const expensesByCategory: { [key: string]: Array<typeof expenses[0]> } = {};
     let totalAmount = 0;
 
     expenses.forEach((expense) => {

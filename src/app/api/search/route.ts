@@ -26,27 +26,82 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    let results: any = {
+    const results: {
+      expenses: Array<{
+        _id: string;
+        name: string;
+        amount: number;
+        category: string;
+        company: { name: string };
+        createdAt: string;
+      }>;
+      companies: Array<{
+        _id: string;
+        name: string;
+        industry: string;
+        createdAt: string;
+      }>;
+      total: number;
+      metadata: {
+        query: string;
+        filters: {
+          startDate?: string;
+          endDate?: string;
+          category?: string;
+          company?: string;
+          expenseType?: string;
+          minAmount?: string;
+          maxAmount?: string;
+        };
+        pagination: {
+          limit: number;
+          offset: number;
+          hasMore: boolean;
+        };
+      };
+    } = {
       expenses: [],
       companies: [],
-      total: 0
+      total: 0,
+      metadata: {
+        query: query || "",
+        filters: {
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          category: category || undefined,
+          company: undefined,
+        },
+        pagination: {
+          limit,
+          offset,
+          hasMore: false,
+        },
+      },
     };
 
-    if (!query && !category && !expenseType && !minAmount && !maxAmount && !startDate && !endDate) {
+    if (
+      !query &&
+      !category &&
+      !expenseType &&
+      !minAmount &&
+      !maxAmount &&
+      !startDate &&
+      !endDate
+    ) {
       return NextResponse.json(results);
     }
 
     // Build search filters
-    const searchFilters: any = { userId: session.user.id };
+    const searchFilters: Record<string, any> = { userId: session.user.id };
 
     // Text search
     if (query) {
-      const searchRegex = new RegExp(query, 'i');
+      const searchRegex = new RegExp(query, "i");
       searchFilters.$or = [
         { name: searchRegex },
         { description: searchRegex },
         { category: searchRegex },
-        { tags: { $in: [searchRegex] } }
+        { tags: { $in: [searchRegex] } },
       ];
     }
 
@@ -98,16 +153,16 @@ export async function GET(request: NextRequest) {
 
     if (type === "companies" || type === "all") {
       // Search companies
-      const companyFilters: any = { userId: session.user.id };
-      
+      const companyFilters: Record<string, any> = { userId: session.user.id };
+
       if (query) {
-        const searchRegex = new RegExp(query, 'i');
+        const searchRegex = new RegExp(query, "i");
         companyFilters.$or = [
           { name: searchRegex },
           { industry: searchRegex },
           { "address.city": searchRegex },
           { "address.state": searchRegex },
-          { "contactInfo.email": searchRegex }
+          { "contactInfo.email": searchRegex },
         ];
       }
 
@@ -120,28 +175,25 @@ export async function GET(request: NextRequest) {
 
     // Add search metadata
     results.metadata = {
-      query,
+      query: query || "",
       filters: {
-        category,
-        expenseType,
-        minAmount,
-        maxAmount,
-        startDate,
-        endDate
+        category: category || undefined,
+        expenseType: expenseType || undefined,
+        minAmount: minAmount || undefined,
+        maxAmount: maxAmount || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
       },
       pagination: {
         limit,
         offset,
-        hasMore: results.total > offset + limit
-      }
+        hasMore: results.total > offset + limit,
+      },
     };
 
     return NextResponse.json(results);
   } catch (error) {
     console.error("Error searching:", error);
-    return NextResponse.json(
-      { error: "Failed to search" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to search" }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-import { Building2, MapPin, Mail, Edit, Trash2 } from "lucide-react";
+import { MapPin, Mail, Edit, Trash2 } from "lucide-react";
 import CompanyLogo from "./CompanyLogo";
 import Link from "next/link";
 
@@ -30,7 +30,10 @@ export default function CompanyCard({
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
-        <Link href={`/companies/${company._id}`} className="flex-1 block hover:bg-gray-50 -m-4 p-4 rounded-lg">
+        <Link
+          href={`/companies/${company._id}`}
+          className="flex-1 block hover:bg-gray-50 -m-4 p-4 rounded-lg"
+        >
           <div className="flex items-center space-x-3 mb-2">
             <CompanyLogo
               companyName={company.name}

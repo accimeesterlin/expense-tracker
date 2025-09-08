@@ -6,7 +6,7 @@ import Budget from "@/models/Budget";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,9 +15,10 @@ export async function GET(
     }
 
     await connectToDatabase();
+    const { id } = await params;
 
     const budget = await Budget.findOne({
-      _id: params.id,
+      _id: id,
       userId: session.user.email,
     });
 
@@ -37,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -47,10 +48,11 @@ export async function PUT(
 
     const data = await request.json();
     await connectToDatabase();
+    const { id } = await params;
 
     const budget = await Budget.findOneAndUpdate(
       {
-        _id: params.id,
+        _id: id,
         userId: session.user.email,
       },
       data,
@@ -62,10 +64,18 @@ export async function PUT(
     }
 
     return NextResponse.json(budget);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating budget:", error);
-    if (error.name === "ValidationError") {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      return NextResponse.json(
+        { error: (error as Error).message || "Validation failed" },
+        { status: 400 }
+      );
     }
     return NextResponse.json(
       { error: "Failed to update budget" },
@@ -76,7 +86,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -85,9 +95,10 @@ export async function DELETE(
     }
 
     await connectToDatabase();
+    const { id } = await params;
 
     const budget = await Budget.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: session.user.email,
     });
 

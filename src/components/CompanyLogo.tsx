@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Building2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+// import { Building2 } from "lucide-react";
 
 interface CompanyLogoProps {
   companyName: string;
@@ -25,13 +26,13 @@ export default function CompanyLogo({
     lg: "w-12 h-12",
   };
 
-  useEffect(() => {
-    if (website) {
-      fetchLogo();
-    }
-  }, [website]);
+  const sizeMap = {
+    sm: 24,
+    md: 32,
+    lg: 48,
+  };
 
-  const fetchLogo = async () => {
+  const fetchLogo = useCallback(async () => {
     if (!website) return;
 
     setLoading(true);
@@ -54,7 +55,13 @@ export default function CompanyLogo({
     } finally {
       setLoading(false);
     }
-  };
+  }, [website]);
+
+  useEffect(() => {
+    if (website) {
+      fetchLogo();
+    }
+  }, [website, fetchLogo]);
 
   const getInitials = (name: string) => {
     return name
@@ -77,9 +84,11 @@ export default function CompanyLogo({
 
   if (logoUrl) {
     return (
-      <img
+      <Image
         src={logoUrl}
         alt={`${companyName} logo`}
+        width={sizeMap[size]}
+        height={sizeMap[size]}
         className={`${sizeClasses[size]} rounded-lg object-cover ${className}`}
         onError={() => setLogoUrl(null)}
       />

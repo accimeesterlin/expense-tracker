@@ -6,7 +6,7 @@ import Goal from "@/models/Goal";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,9 +15,10 @@ export async function GET(
     }
 
     await connectToDatabase();
+    const { id } = await params;
 
     const goal = await Goal.findOne({
-      _id: params.id,
+      _id: id,
       userId: session.user.email,
     });
 
@@ -37,7 +38,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -47,10 +48,11 @@ export async function PUT(
 
     const data = await request.json();
     await connectToDatabase();
+    const { id } = await params;
 
     const goal = await Goal.findOneAndUpdate(
       {
-        _id: params.id,
+        _id: id,
         userId: session.user.email,
       },
       data,
@@ -62,10 +64,11 @@ export async function PUT(
     }
 
     return NextResponse.json(goal);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating goal:", error);
-    if (error.name === "ValidationError") {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { message: string };
+      return NextResponse.json({ error: mongooseError.message }, { status: 400 });
     }
     return NextResponse.json(
       { error: "Failed to update goal" },
@@ -76,7 +79,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -85,9 +88,10 @@ export async function DELETE(
     }
 
     await connectToDatabase();
+    const { id } = await params;
 
     const goal = await Goal.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: session.user.email,
     });
 

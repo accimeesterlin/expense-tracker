@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, DollarSign, Calendar, AlertCircle, Target, TrendingUp, Edit, Trash2 } from "lucide-react";
+import {
+  Plus,
+  DollarSign,
+  Calendar,
+  AlertCircle,
+  Target,
+  TrendingUp,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import BudgetModal from "@/components/BudgetModal";
 
@@ -31,7 +40,9 @@ export default function BudgetPage() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [editingBudget, setEditingBudget] = useState<Budget | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (status === "loading") return;
@@ -62,14 +73,14 @@ export default function BudgetPage() {
 
   const handleBudgetSuccess = (budget: Budget) => {
     if (editingBudget) {
-      setBudgets(prev => prev.map(b => 
-        b._id === editingBudget._id ? budget : b
-      ));
+      setBudgets((prev) =>
+        prev.map((b) => (b._id === editingBudget._id ? budget : b))
+      );
     } else {
-      setBudgets(prev => [budget, ...prev]);
+      setBudgets((prev) => [budget, ...prev]);
     }
     setShowModal(false);
-    setEditingBudget(null);
+    setEditingBudget(undefined);
   };
 
   const handleEdit = (budget: Budget) => {
@@ -88,7 +99,7 @@ export default function BudgetPage() {
       });
 
       if (response.ok) {
-        setBudgets(prev => prev.filter(b => b._id !== budget._id));
+        setBudgets((prev) => prev.filter((b) => b._id !== budget._id));
       } else {
         const errorData = await response.json();
         alert(errorData.error || "Failed to delete budget");
@@ -135,7 +146,9 @@ export default function BudgetPage() {
             <DollarSign className="w-8 h-8 text-[#006BFF]" />
             <div>
               <h1 className="text-2xl font-semibold text-[#0B3558]">Budgets</h1>
-              <p className="text-sm text-[#476788]">Track and manage your spending budgets</p>
+              <p className="text-sm text-[#476788]">
+                Track and manage your spending budgets
+              </p>
             </div>
           </div>
           <button
@@ -147,13 +160,16 @@ export default function BudgetPage() {
           </button>
         </div>
 
-
         {/* Budgets List */}
         {budgets.length === 0 ? (
           <div className="card p-12 text-center">
             <DollarSign className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
-            <h3 className="text-lg font-medium text-[#0B3558] mb-2">No budgets yet</h3>
-            <p className="text-[#476788] mb-6">Create your first budget to start tracking your spending</p>
+            <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+              No budgets yet
+            </h3>
+            <p className="text-[#476788] mb-6">
+              Create your first budget to start tracking your spending
+            </p>
             <button
               onClick={() => setShowModal(true)}
               className="btn-primary inline-flex items-center space-x-2"
@@ -168,9 +184,13 @@ export default function BudgetPage() {
               <div key={budget._id} className="card p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-semibold text-[#0B3558]">{budget.name}</h3>
+                    <h3 className="font-semibold text-[#0B3558]">
+                      {budget.name}
+                    </h3>
                     {budget.category && (
-                      <p className="text-sm text-[#476788]">{budget.category}</p>
+                      <p className="text-sm text-[#476788]">
+                        {budget.category}
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
@@ -204,7 +224,13 @@ export default function BudgetPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-[#476788]">Remaining</span>
-                    <span className={`font-medium ${budget.remainingAmount <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span
+                      className={`font-medium ${
+                        budget.remainingAmount <= 0
+                          ? "text-red-600"
+                          : "text-green-600"
+                      }`}
+                    >
                       {formatCurrency(budget.remainingAmount)}
                     </span>
                   </div>
@@ -213,24 +239,37 @@ export default function BudgetPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-[#476788]">Progress</span>
-                      <span className={`text-xs font-medium ${
-                        budget.percentageUsed >= 100 ? 'text-red-600' : 
-                        budget.percentageUsed >= budget.alertThreshold ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
+                      <span
+                        className={`text-xs font-medium ${
+                          budget.percentageUsed >= 100
+                            ? "text-red-600"
+                            : budget.percentageUsed >= budget.alertThreshold
+                            ? "text-yellow-600"
+                            : "text-green-600"
+                        }`}
+                      >
                         {Math.round(budget.percentageUsed)}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(budget.percentageUsed, budget.alertThreshold)}`}
-                        style={{ width: `${Math.min(100, budget.percentageUsed)}%` }}
+                        className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(
+                          budget.percentageUsed,
+                          budget.alertThreshold
+                        )}`}
+                        style={{
+                          width: `${Math.min(100, budget.percentageUsed)}%`,
+                        }}
                       ></div>
                     </div>
                   </div>
 
                   <div className="pt-2 border-t border-[#E5E7EB]">
                     <div className="flex justify-between items-center text-xs text-[#476788]">
-                      <span>{budget.period.charAt(0).toUpperCase() + budget.period.slice(1)}</span>
+                      <span>
+                        {budget.period.charAt(0).toUpperCase() +
+                          budget.period.slice(1)}
+                      </span>
                       <span>{budget.daysRemaining} days left</span>
                     </div>
                   </div>
@@ -245,7 +284,7 @@ export default function BudgetPage() {
         isOpen={showModal}
         onClose={() => {
           setShowModal(false);
-          setEditingBudget(null);
+          setEditingBudget(undefined);
         }}
         onSuccess={handleBudgetSuccess}
         budget={editingBudget}

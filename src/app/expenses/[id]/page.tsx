@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -24,14 +24,20 @@ import AppLayout from "@/components/AppLayout";
 interface Company {
   _id: string;
   name: string;
-  industry?: string;
-  address?: {
+  industry: string;
+  description?: string;
+  address: {
+    street?: string;
     city: string;
     state: string;
+    zipCode?: string;
   };
-  contactInfo?: {
+  contactInfo: {
     email: string;
+    phone?: string;
+    website?: string;
   };
+  createdAt: string;
 }
 
 interface Expense {
@@ -72,17 +78,7 @@ export default function ExpenseDetailPage() {
     value: "",
   });
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session) {
-      router.push("/auth/signin");
-      return;
-    }
-    fetchExpense();
-    fetchCompanies();
-  }, [session, status, params.id]);
-
-  const fetchExpense = async () => {
+  const fetchExpense = useCallback(async () => {
     try {
       const response = await fetch(`/api/expenses/${params.id}`);
       if (response.ok) {
@@ -97,9 +93,9 @@ export default function ExpenseDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       const response = await fetch("/api/companies");
       if (response.ok) {
@@ -109,7 +105,17 @@ export default function ExpenseDetailPage() {
     } catch (error) {
       console.error("Error fetching companies:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+    fetchExpense();
+    fetchCompanies();
+  }, [session, status, router, params.id, fetchExpense, fetchCompanies]);
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this expense?")) return;
@@ -338,12 +344,19 @@ export default function ExpenseDetailPage() {
                         type="number"
                         step="0.01"
                         value={quickEdit.value}
-                        onChange={(e) => setQuickEdit(prev => ({ ...prev, value: e.target.value }))}
+                        onChange={(e) =>
+                          setQuickEdit((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                          }))
+                        }
                         className="input-field text-2xl font-bold w-32"
                         autoFocus
                       />
                       <button
-                        onClick={() => handleQuickEdit("amount", quickEdit.value)}
+                        onClick={() =>
+                          handleQuickEdit("amount", quickEdit.value)
+                        }
                         className="btn-primary text-sm px-3 py-1"
                       >
                         ✓
@@ -358,9 +371,11 @@ export default function ExpenseDetailPage() {
                   ) : (
                     <div className="flex items-center space-x-2">
                       <DollarSign className="w-5 h-5 text-[#006BFF]" />
-                      <span 
+                      <span
                         className="text-3xl font-bold text-[#0B3558] cursor-pointer hover:text-[#006BFF] transition-colors"
-                        onClick={() => startQuickEdit("amount", expense.amount.toString())}
+                        onClick={() =>
+                          startQuickEdit("amount", expense.amount.toString())
+                        }
                         title="Click to edit amount"
                       >
                         ${expense.amount.toFixed(2)}
@@ -455,7 +470,8 @@ export default function ExpenseDetailPage() {
             </div>
 
             {/* Billing Information */}
-            {(expense.expenseType === "subscription" || expense.expenseType === "recurring") && (
+            {(expense.expenseType === "subscription" ||
+              expense.expenseType === "recurring") && (
               <div className="card p-6">
                 <h2 className="text-xl font-semibold text-[#0B3558] mb-4">
                   Billing Information
@@ -482,11 +498,14 @@ export default function ExpenseDetailPage() {
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4 text-[#006BFF]" />
                         <span className="text-[#0B3558]">
-                          {new Date(expense.startDate).toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {new Date(expense.startDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )}
                         </span>
                       </div>
                     </div>
@@ -499,11 +518,14 @@ export default function ExpenseDetailPage() {
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4 text-[#006BFF]" />
                         <span className="text-[#0B3558] font-medium">
-                          {new Date(expense.nextBillingDate).toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {new Date(expense.nextBillingDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )}
                         </span>
                       </div>
                     </div>
@@ -526,20 +548,20 @@ export default function ExpenseDetailPage() {
                     Remove Receipt
                   </button>
                 </div>
-                
-                {expense.receiptUrl.startsWith('data:image') ? (
+
+                {expense.receiptUrl.startsWith("data:image") ? (
                   <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-                    <img 
-                      src={expense.receiptUrl} 
+                    <img
+                      src={expense.receiptUrl}
                       alt="Receipt"
                       className="max-w-full h-auto max-h-96 object-contain"
                     />
                   </div>
-                ) : expense.receiptUrl.startsWith('data:application/pdf') ? (
+                ) : expense.receiptUrl.startsWith("data:application/pdf") ? (
                   <div className="border border-[#E5E7EB] rounded-lg p-4 text-center">
                     <FileText className="w-12 h-12 text-[#006BFF] mx-auto mb-2" />
                     <p className="text-[#476788]">PDF Receipt</p>
-                    <a 
+                    <a
                       href={expense.receiptUrl}
                       download="receipt.pdf"
                       className="text-[#006BFF] hover:underline text-sm"
@@ -561,7 +583,7 @@ export default function ExpenseDetailPage() {
               <h2 className="text-xl font-semibold text-[#0B3558] mb-4">
                 Comments ({expense.comments?.length || 0})
               </h2>
-              
+
               {/* Add Comment */}
               <div className="mb-6">
                 <div className="flex space-x-3">
@@ -590,16 +612,22 @@ export default function ExpenseDetailPage() {
               {expense.comments && expense.comments.length > 0 ? (
                 <div className="space-y-4">
                   {expense.comments.map((comment, index) => (
-                    <div key={index} className="border-l-4 border-[#006BFF] pl-4 py-2">
+                    <div
+                      key={index}
+                      className="border-l-4 border-[#006BFF] pl-4 py-2"
+                    >
                       <p className="text-[#0B3558] mb-2">{comment.text}</p>
                       <p className="text-xs text-[#476788]">
-                        {new Date(comment.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
+                        {new Date(comment.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }
+                        )}
                       </p>
                     </div>
                   ))}
@@ -634,7 +662,8 @@ export default function ExpenseDetailPage() {
                   )}
                   {expense.company.address && (
                     <p className="text-sm text-[#476788] mt-1">
-                      {expense.company.address.city}, {expense.company.address.state}
+                      {expense.company.address.city},{" "}
+                      {expense.company.address.state}
                     </p>
                   )}
                   {expense.company.contactInfo?.email && (

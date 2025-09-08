@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
@@ -151,7 +151,7 @@ export async function GET() {
         monthlyCashFlow: monthlyCashFlow,
         totalPaymentMethods: paymentMethods.length,
         activeDebts: debts.length,
-        totalAssets: assets.length,
+        totalAssetCount: assets.length,
       },
       upcoming: {
         expenses: upcomingExpenses.length,

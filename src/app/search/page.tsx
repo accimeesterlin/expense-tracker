@@ -1,19 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   ArrowLeft,
   Filter,
-  X,
-  CreditCard,
   Building2,
   Calendar,
-  DollarSign,
   Tag,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -48,7 +45,12 @@ interface SearchResult {
   total: number;
   metadata: {
     query: string;
-    filters: any;
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      category?: string;
+      company?: string;
+    };
     pagination: {
       limit: number;
       offset: number;
@@ -57,7 +59,7 @@ interface SearchResult {
   };
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,9 +73,9 @@ export default function SearchPage() {
     minAmount: "",
     maxAmount: "",
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const categories = [
     "Software & Subscriptions",
@@ -94,23 +96,11 @@ export default function SearchPage() {
     { value: "recurring", label: "Recurring" },
   ];
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-      return;
-    }
-
-    // Initialize search from URL params
-    const initialQuery = searchParams.get("q") || "";
-    if (initialQuery) {
-      setSearchQuery(initialQuery);
-      performSearch(initialQuery, filters);
-    }
-  }, [status, router, searchParams]);
-
-  const performSearch = async (query: string, currentFilters: typeof filters) => {
-    if (!query.trim() && !Object.values(currentFilters).some(v => v)) {
+  const performSearch = useCallback(async (
+    query: string,
+    currentFilters: typeof filters
+  ) => {
+    if (!query.trim() && !Object.values(currentFilters).some((v) => v)) {
       setResults(null);
       return;
     }
@@ -133,11 +123,26 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+      return;
+    }
+
+    // Initialize search from URL params
+    const initialQuery = searchParams.get("q") || "";
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+      performSearch(initialQuery, filters);
+    }
+  }, [status, router, searchParams, performSearch, filters]);
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    
+
     // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -146,7 +151,7 @@ export default function SearchPage() {
     // Debounce search
     searchTimeoutRef.current = setTimeout(() => {
       performSearch(value, filters);
-      
+
       // Update URL
       const params = new URLSearchParams();
       if (value.trim()) params.set("q", value);
@@ -167,13 +172,13 @@ export default function SearchPage() {
       minAmount: "",
       maxAmount: "",
       startDate: "",
-      endDate: ""
+      endDate: "",
     };
     setFilters(clearedFilters);
     performSearch(searchQuery, clearedFilters);
   };
 
-  const hasActiveFilters = Object.values(filters).some(v => v);
+  const hasActiveFilters = Object.values(filters).some((v) => v);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -217,7 +222,9 @@ export default function SearchPage() {
               </Link>
               <div className="flex items-center space-x-3">
                 <Search className="w-6 h-6 text-[#006BFF]" />
-                <h1 className="text-2xl font-semibold text-[#0B3558]">Search</h1>
+                <h1 className="text-2xl font-semibold text-[#0B3558]">
+                  Search
+                </h1>
               </div>
             </div>
           </div>
@@ -262,7 +269,7 @@ export default function SearchPage() {
                   </button>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#476788] mb-1">
@@ -270,7 +277,9 @@ export default function SearchPage() {
                   </label>
                   <select
                     value={filters.category}
-                    onChange={(e) => handleFilterChange("category", e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("category", e.target.value)
+                    }
                     className="input-field w-full"
                   >
                     <option value="">All Categories</option>
@@ -288,7 +297,9 @@ export default function SearchPage() {
                   </label>
                   <select
                     value={filters.expenseType}
-                    onChange={(e) => handleFilterChange("expenseType", e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("expenseType", e.target.value)
+                    }
                     className="input-field w-full"
                   >
                     <option value="">All Types</option>
@@ -308,14 +319,18 @@ export default function SearchPage() {
                     <input
                       type="number"
                       value={filters.minAmount}
-                      onChange={(e) => handleFilterChange("minAmount", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("minAmount", e.target.value)
+                      }
                       placeholder="Min"
                       className="input-field w-full"
                     />
                     <input
                       type="number"
                       value={filters.maxAmount}
-                      onChange={(e) => handleFilterChange("maxAmount", e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("maxAmount", e.target.value)
+                      }
                       placeholder="Max"
                       className="input-field w-full"
                     />
@@ -329,7 +344,9 @@ export default function SearchPage() {
                   <input
                     type="date"
                     value={filters.startDate}
-                    onChange={(e) => handleFilterChange("startDate", e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("startDate", e.target.value)
+                    }
                     className="input-field w-full"
                   />
                 </div>
@@ -341,7 +358,9 @@ export default function SearchPage() {
                   <input
                     type="date"
                     value={filters.endDate}
-                    onChange={(e) => handleFilterChange("endDate", e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("endDate", e.target.value)
+                    }
                     className="input-field w-full"
                   />
                 </div>
@@ -364,14 +383,15 @@ export default function SearchPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-lg font-semibold text-[#0B3558]">
-                  {results.total > 0 
-                    ? `${results.total} expense${results.total === 1 ? '' : 's'} found`
-                    : 'No expenses found'
-                  }
+                  {results.total > 0
+                    ? `${results.total} expense${
+                        results.total === 1 ? "" : "s"
+                      } found`
+                    : "No expenses found"}
                 </p>
                 {results.metadata.query && (
                   <p className="text-sm text-[#476788]">
-                    for "{results.metadata.query}"
+                    for &quot;{results.metadata.query}&quot;
                   </p>
                 )}
               </div>
@@ -380,7 +400,9 @@ export default function SearchPage() {
             {/* Expense Results */}
             {results.expenses.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">Expenses</h3>
+                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+                  Expenses
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {results.expenses.map((expense) => (
                     <Link
@@ -396,7 +418,7 @@ export default function SearchPage() {
                           {formatCurrency(expense.amount)}
                         </span>
                       </div>
-                      
+
                       <div className="space-y-1 text-sm text-[#476788]">
                         <div className="flex items-center space-x-2">
                           <Building2 className="w-4 h-4" />
@@ -438,7 +460,9 @@ export default function SearchPage() {
             {/* Company Results */}
             {results.companies.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">Companies</h3>
+                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+                  Companies
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {results.companies.map((company) => (
                     <div key={company._id} className="card p-4">
@@ -447,9 +471,13 @@ export default function SearchPage() {
                           <Building2 className="w-6 h-6 text-[#006BFF]" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-[#0B3558]">{company.name}</h4>
+                          <h4 className="font-medium text-[#0B3558]">
+                            {company.name}
+                          </h4>
                           {company.industry && (
-                            <p className="text-sm text-[#476788]">{company.industry}</p>
+                            <p className="text-sm text-[#476788]">
+                              {company.industry}
+                            </p>
                           )}
                           {company.address && (
                             <p className="text-sm text-[#476788]">
@@ -480,10 +508,7 @@ export default function SearchPage() {
                   Try adjusting your search terms or filters
                 </p>
                 {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="btn-secondary"
-                  >
+                  <button onClick={clearFilters} className="btn-secondary">
                     Clear filters
                   </button>
                 )}
@@ -500,11 +525,24 @@ export default function SearchPage() {
               Search your expenses and companies
             </h3>
             <p className="text-[#A6BBD1]">
-              Use the search bar above to find expenses, companies, or use filters to narrow down results
+              Use the search bar above to find expenses, companies, or use
+              filters to narrow down results
             </p>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-[#006BFF]" />
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }

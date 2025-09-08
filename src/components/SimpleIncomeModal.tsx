@@ -3,11 +3,58 @@
 import { useState, useEffect } from "react";
 import { X, DollarSign, Calendar } from "lucide-react";
 
+interface Income {
+  _id: string;
+  source: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  frequency: string;
+  category: string;
+  paymentMethod?: {
+    _id: string;
+    name: string;
+    type:
+      | "credit_card"
+      | "debit_card"
+      | "bank_account"
+      | "digital_wallet"
+      | "other";
+    lastFourDigits?: string;
+    isDefault: boolean;
+  };
+  company?: {
+    _id: string;
+    name: string;
+    industry: string;
+    description?: string;
+    address: {
+      street?: string;
+      city: string;
+      state: string;
+      zipCode?: string;
+    };
+    contactInfo: {
+      email: string;
+      phone?: string;
+      website?: string;
+    };
+    createdAt: string;
+  };
+  receivedDate: string;
+  nextPaymentDate?: string;
+  isRecurring: boolean;
+  isActive: boolean;
+  tags: string[];
+  notes?: string;
+  createdAt: string;
+}
+
 interface SimpleIncomeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (income: any) => void;
-  income?: any;
+  onSuccess: (income: Income) => void;
+  income?: Income;
 }
 
 export default function SimpleIncomeModal({
@@ -32,7 +79,10 @@ export default function SimpleIncomeModal({
         setSource(income.source || "");
         setAmount(income.amount?.toString() || "");
         setFrequency(income.frequency || "monthly");
-        setReceivedDate(income.nextPaymentDate?.split("T")[0] || new Date().toISOString().split("T")[0]);
+        setReceivedDate(
+          income.nextPaymentDate?.split("T")[0] ||
+            new Date().toISOString().split("T")[0]
+        );
       } else {
         // Create mode
         setSource("");
@@ -63,7 +113,7 @@ export default function SimpleIncomeModal({
     try {
       const url = isEditing ? `/api/income/${income._id}` : "/api/income";
       const method = isEditing ? "PUT" : "POST";
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -113,7 +163,9 @@ export default function SimpleIncomeModal({
             <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[#0B3558]">{isEditing ? 'Edit Income' : 'Add Income'}</h2>
+            <h2 className="text-xl font-semibold text-[#0B3558]">
+              {isEditing ? "Edit Income" : "Add Income"}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -216,8 +268,10 @@ export default function SimpleIncomeModal({
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+              ) : isEditing ? (
+                "Update Income"
               ) : (
-                isEditing ? "Update Income" : "Add Income"
+                "Add Income"
               )}
             </button>
           </div>

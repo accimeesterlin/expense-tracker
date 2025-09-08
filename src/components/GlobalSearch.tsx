@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Search,
   X,
@@ -41,15 +41,7 @@ export default function GlobalSearch() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (query.length > 2) {
-      searchData();
-    } else {
-      setResults([]);
-    }
-  }, [query]);
-
-  const searchData = async () => {
+  const searchData = useCallback(async () => {
     setLoading(true);
     try {
       const [companiesRes, expensesRes, incomeRes, debtsRes, assetsRes] =
@@ -65,91 +57,134 @@ export default function GlobalSearch() {
 
       if (companiesRes.ok) {
         const companies = await companiesRes.json();
-        companies.forEach((company: any) => {
-          if (company.name.toLowerCase().includes(query.toLowerCase())) {
-            allResults.push({
-              id: company._id,
-              type: "company",
-              name: company.name,
-              category: company.industry,
-            });
+        companies.forEach(
+          (company: { _id: string; name: string; industry: string }) => {
+            if (company.name.toLowerCase().includes(query.toLowerCase())) {
+              allResults.push({
+                id: company._id,
+                type: "company",
+                name: company.name,
+                category: company.industry,
+              });
+            }
           }
-        });
+        );
       }
 
       if (expensesRes.ok) {
         const expenses = await expensesRes.json();
-        expenses.forEach((expense: any) => {
-          if (
-            expense.name.toLowerCase().includes(query.toLowerCase()) ||
-            expense.category.toLowerCase().includes(query.toLowerCase())
-          ) {
-            allResults.push({
-              id: expense._id,
-              type: "expense",
-              name: expense.name,
-              amount: expense.amount,
-              category: expense.category,
-              date: expense.nextBillingDate,
-            });
+        expenses.forEach(
+          (expense: {
+            _id: string;
+            name: string;
+            category: string;
+            amount: number;
+            company: { name: string };
+          }) => {
+            if (
+              expense.name.toLowerCase().includes(query.toLowerCase()) ||
+              expense.category.toLowerCase().includes(query.toLowerCase())
+            ) {
+              allResults.push({
+                id: expense._id,
+                type: "expense",
+                name: expense.name,
+                amount: expense.amount,
+                category: expense.category,
+                date:
+                  (expense as { nextBillingDate?: string; createdAt?: string })
+                    .nextBillingDate ||
+                  (expense as { nextBillingDate?: string; createdAt?: string })
+                    .createdAt,
+              });
+            }
           }
-        });
+        );
       }
 
       if (incomeRes.ok) {
         const income = await incomeRes.json();
-        income.forEach((inc: any) => {
-          if (
-            inc.source.toLowerCase().includes(query.toLowerCase()) ||
-            inc.category.toLowerCase().includes(query.toLowerCase())
-          ) {
-            allResults.push({
-              id: inc._id,
-              type: "income",
-              name: inc.source,
-              amount: inc.amount,
-              category: inc.category,
-              date: inc.receivedDate,
-            });
+        income.forEach(
+          (inc: {
+            _id: string;
+            source: string;
+            category: string;
+            amount: number;
+          }) => {
+            if (
+              inc.source.toLowerCase().includes(query.toLowerCase()) ||
+              inc.category.toLowerCase().includes(query.toLowerCase())
+            ) {
+              allResults.push({
+                id: inc._id,
+                type: "income",
+                name: inc.source,
+                amount: inc.amount,
+                category: inc.category,
+                date:
+                  (inc as { receivedDate?: string; createdAt?: string })
+                    .receivedDate ||
+                  (inc as { receivedDate?: string; createdAt?: string })
+                    .createdAt,
+              });
+            }
           }
-        });
+        );
       }
 
       if (debtsRes.ok) {
         const debts = await debtsRes.json();
-        debts.forEach((debt: any) => {
-          if (
-            debt.name.toLowerCase().includes(query.toLowerCase()) ||
-            debt.type.toLowerCase().includes(query.toLowerCase())
-          ) {
-            allResults.push({
-              id: debt._id,
-              type: "debt",
-              name: debt.name,
-              amount: debt.currentBalance,
-              category: debt.type,
-              date: debt.nextPaymentDate,
-            });
+        debts.forEach(
+          (debt: {
+            _id: string;
+            name: string;
+            type: string;
+            currentBalance: number;
+          }) => {
+            if (
+              debt.name.toLowerCase().includes(query.toLowerCase()) ||
+              debt.type.toLowerCase().includes(query.toLowerCase())
+            ) {
+              allResults.push({
+                id: debt._id,
+                type: "debt",
+                name: debt.name,
+                amount: debt.currentBalance,
+                category: debt.type,
+                date:
+                  (debt as { nextPaymentDate?: string; createdAt?: string })
+                    .nextPaymentDate ||
+                  (debt as { nextPaymentDate?: string; createdAt?: string })
+                    .createdAt,
+              });
+            }
           }
-        });
+        );
       }
 
       if (assetsRes.ok) {
         const assets = await assetsRes.json();
-        assets.forEach((asset: any) => {
-          if (
-            asset.name.toLowerCase().includes(query.toLowerCase()) ||
-            asset.category.toLowerCase().includes(query.toLowerCase())
-          ) {
-            allResults.push({
-              id: asset._id,
-              type: "asset",
-              name: asset.name,
-              amount: asset.currentValue,
-              category: asset.category,
-            });
+        assets.forEach(
+          (asset: {
+            _id: string;
+            name: string;
+            category: string;
+            currentValue: number;
+          }) => {
+            if (
+              asset.name.toLowerCase().includes(query.toLowerCase()) ||
+              asset.category.toLowerCase().includes(query.toLowerCase())
+            ) {
+              allResults.push({
+                id: asset._id,
+                type: "asset",
+                name: asset.name,
+                amount: asset.currentValue,
+                category: asset.category,
+              });
+            }
           }
-        });
+        );
       }
 
       setResults(allResults.slice(0, 10)); // Limit to 10 results
@@ -158,7 +193,15 @@ export default function GlobalSearch() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
+
+  useEffect(() => {
+    if (query.length > 2) {
+      searchData();
+    } else {
+      setResults([]);
+    }
+  }, [query, searchData]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -285,7 +328,7 @@ export default function GlobalSearch() {
           ) : (
             <div className="p-4 text-center text-gray-500">
               <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p>No results found for "{query}"</p>
+              <p>No results found for &quot;{query}&quot;</p>
             </div>
           )}
         </div>

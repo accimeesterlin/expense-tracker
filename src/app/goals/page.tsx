@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, Target, Calendar, TrendingUp, CheckCircle, Circle, Flag, Edit, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Target,
+  Calendar,
+  TrendingUp,
+  CheckCircle,
+  Circle,
+  Flag,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import GoalModal from "@/components/GoalModal";
 
@@ -14,7 +24,13 @@ interface Goal {
   targetAmount: number;
   currentAmount: number;
   currency: string;
-  goalType: "savings" | "debt_payoff" | "investment" | "emergency_fund" | "other";
+  goalType:
+    | "savings"
+    | "debt_payoff"
+    | "investment"
+    | "emergency_fund"
+    | "purchase"
+    | "other";
   targetDate: string;
   priority: "low" | "medium" | "high";
   isCompleted: boolean;
@@ -37,18 +53,9 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-      return;
-    }
-    fetchGoals();
-  }, [status, router]);
-
-  const fetchGoals = async () => {
+  const fetchGoals = useCallback(async () => {
     try {
       const response = await fetch("/api/goals");
       if (response.ok) {
@@ -64,22 +71,31 @@ export default function GoalsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+      return;
+    }
+    fetchGoals();
+  }, [status, router, fetchGoals]);
 
   const handleGoalSuccess = (goal: Goal) => {
     if (editingGoal) {
       // Update existing goal
-      setGoals(prev => prev.map(g => 
-        g._id === editingGoal._id ? goal : g
-      ));
+      setGoals((prev) =>
+        prev.map((g) => (g._id === editingGoal._id ? goal : g))
+      );
     } else {
       // Add new goal to beginning of list
-      setGoals(prev => [goal, ...prev]);
+      setGoals((prev) => [goal, ...prev]);
     }
-    
+
     // Close modal and reset editing goal
     setShowModal(false);
-    setEditingGoal(null);
+    setEditingGoal(undefined);
   };
 
   const handleEdit = (goal: Goal) => {
@@ -98,7 +114,7 @@ export default function GoalsPage() {
       });
 
       if (response.ok) {
-        setGoals(prev => prev.filter(g => g._id !== goal._id));
+        setGoals((prev) => prev.filter((g) => g._id !== goal._id));
       } else {
         const errorData = await response.json();
         alert(errorData.error || "Failed to delete goal");
@@ -117,20 +133,29 @@ export default function GoalsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "text-red-600 bg-red-100";
-      case "medium": return "text-yellow-600 bg-yellow-100";
-      case "low": return "text-green-600 bg-green-100";
-      default: return "text-gray-600 bg-gray-100";
+      case "high":
+        return "text-red-600 bg-red-100";
+      case "medium":
+        return "text-yellow-600 bg-yellow-100";
+      case "low":
+        return "text-green-600 bg-green-100";
+      default:
+        return "text-gray-600 bg-gray-100";
     }
   };
 
   const getGoalTypeIcon = (type: string) => {
     switch (type) {
-      case "savings": return "💰";
-      case "debt_payoff": return "💳";
-      case "investment": return "📈";
-      case "emergency_fund": return "🚨";
-      default: return "🎯";
+      case "savings":
+        return "💰";
+      case "debt_payoff":
+        return "💳";
+      case "investment":
+        return "📈";
+      case "emergency_fund":
+        return "🚨";
+      default:
+        return "🎯";
     }
   };
 
@@ -154,8 +179,12 @@ export default function GoalsPage() {
           <div className="flex items-center space-x-3">
             <Target className="w-8 h-8 text-[#006BFF]" />
             <div>
-              <h1 className="text-2xl font-semibold text-[#0B3558]">Financial Goals</h1>
-              <p className="text-sm text-[#476788]">Set and track your financial objectives</p>
+              <h1 className="text-2xl font-semibold text-[#0B3558]">
+                Financial Goals
+              </h1>
+              <p className="text-sm text-[#476788]">
+                Set and track your financial objectives
+              </p>
             </div>
           </div>
           <button
@@ -172,7 +201,7 @@ export default function GoalsPage() {
           isOpen={showModal}
           onClose={() => {
             setShowModal(false);
-            setEditingGoal(null);
+            setEditingGoal(undefined);
           }}
           onSuccess={handleGoalSuccess}
           goal={editingGoal}
@@ -182,8 +211,12 @@ export default function GoalsPage() {
         {goals.length === 0 ? (
           <div className="card p-12 text-center">
             <Target className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
-            <h3 className="text-lg font-medium text-[#0B3558] mb-2">No goals yet</h3>
-            <p className="text-[#476788] mb-6">Set your first financial goal to start tracking your progress</p>
+            <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+              No goals yet
+            </h3>
+            <p className="text-[#476788] mb-6">
+              Set your first financial goal to start tracking your progress
+            </p>
             <button
               onClick={() => setShowModal(true)}
               className="btn-primary inline-flex items-center space-x-2"
@@ -198,11 +231,19 @@ export default function GoalsPage() {
               <div key={goal._id} className="card p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{getGoalTypeIcon(goal.goalType)}</span>
+                    <span className="text-2xl">
+                      {getGoalTypeIcon(goal.goalType)}
+                    </span>
                     <div>
-                      <h3 className="font-semibold text-[#0B3558]">{goal.name}</h3>
+                      <h3 className="font-semibold text-[#0B3558]">
+                        {goal.name}
+                      </h3>
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(goal.priority)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                            goal.priority
+                          )}`}
+                        >
                           {goal.priority}
                         </span>
                         {goal.isCompleted && (
@@ -242,7 +283,13 @@ export default function GoalsPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-[#476788]">Remaining</span>
-                    <span className={`font-medium ${goal.remainingAmount <= 0 ? 'text-green-600' : 'text-[#0B3558]'}`}>
+                    <span
+                      className={`font-medium ${
+                        goal.remainingAmount <= 0
+                          ? "text-green-600"
+                          : "text-[#0B3558]"
+                      }`}
+                    >
                       {formatCurrency(goal.remainingAmount)}
                     </span>
                   </div>
@@ -251,18 +298,26 @@ export default function GoalsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-[#476788]">Progress</span>
-                      <span className={`text-xs font-medium ${
-                        goal.percentageCompleted >= 100 ? 'text-green-600' : 'text-[#006BFF]'
-                      }`}>
+                      <span
+                        className={`text-xs font-medium ${
+                          goal.percentageCompleted >= 100
+                            ? "text-green-600"
+                            : "text-[#006BFF]"
+                        }`}
+                      >
                         {Math.round(goal.percentageCompleted)}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${
-                          goal.percentageCompleted >= 100 ? 'bg-green-500' : 'bg-[#006BFF]'
+                          goal.percentageCompleted >= 100
+                            ? "bg-green-500"
+                            : "bg-[#006BFF]"
                         }`}
-                        style={{ width: `${Math.min(100, goal.percentageCompleted)}%` }}
+                        style={{
+                          width: `${Math.min(100, goal.percentageCompleted)}%`,
+                        }}
                       ></div>
                     </div>
                   </div>
@@ -275,7 +330,9 @@ export default function GoalsPage() {
                       </span>
                       <span className="flex items-center space-x-1">
                         <TrendingUp className="w-3 h-3" />
-                        <span>{formatCurrency(goal.requiredMonthlySavings)}/month</span>
+                        <span>
+                          {formatCurrency(goal.requiredMonthlySavings)}/month
+                        </span>
                       </span>
                     </div>
                   </div>

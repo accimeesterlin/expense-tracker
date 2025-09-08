@@ -1,18 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   CreditCard,
   Plus,
   Search,
-  Filter,
   Calendar,
   DollarSign,
-  Edit,
-  Trash2,
-  ArrowLeft,
   Building2,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
@@ -23,25 +19,44 @@ interface Company {
   _id: string;
   name: string;
   industry: string;
+  description?: string;
   address: {
+    street?: string;
     city: string;
     state: string;
+    zipCode?: string;
   };
   contactInfo: {
     email: string;
+    phone?: string;
+    website?: string;
   };
+  createdAt: string;
 }
 
 interface Expense {
   _id: string;
   name: string;
+  description?: string;
   amount: number;
   category: string;
+  tags?: string[];
   expenseType: string;
+  frequency?: string;
+  startDate?: string;
   nextBillingDate?: string;
   company: Company;
   isActive: boolean;
+  receiptUrl?: string;
+  receiptS3Key?: string;
+  receiptFileName?: string;
+  receiptContentType?: string;
+  comments: Array<{
+    text: string;
+    createdAt: string;
+  }>;
   createdAt: string;
+  updatedAt: string;
 }
 
 export default function ExpensesPage() {
@@ -57,7 +72,9 @@ export default function ExpensesPage() {
   const [selectedCompany, setSelectedCompany] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (status === "loading") return;
@@ -67,10 +84,6 @@ export default function ExpensesPage() {
     }
     fetchData();
   }, [session, status, router]);
-
-  useEffect(() => {
-    filterAndSortExpenses();
-  }, [expenses, searchTerm, selectedCategory, selectedType, selectedCompany, sortBy]);
 
   const fetchData = async () => {
     try {
@@ -95,18 +108,20 @@ export default function ExpensesPage() {
     }
   };
 
-  const filterAndSortExpenses = () => {
-    let filtered = expenses.filter((expense) => {
-      const matchesSearch = expense.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
+  const filterAndSortExpenses = useCallback(() => {
+    const filtered = expenses.filter((expense) => {
+      const matchesSearch =
+        expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
         expense.company.name.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesCategory = selectedCategory === "all" || expense.category === selectedCategory;
-      const matchesType = selectedType === "all" || expense.expenseType === selectedType;
-      const matchesCompany = selectedCompany === "all" || expense.company._id === selectedCompany;
-      
+
+      const matchesCategory =
+        selectedCategory === "all" || expense.category === selectedCategory;
+      const matchesType =
+        selectedType === "all" || expense.expenseType === selectedType;
+      const matchesCompany =
+        selectedCompany === "all" || expense.company._id === selectedCompany;
+
       return matchesSearch && matchesCategory && matchesType && matchesCompany;
     });
 
@@ -123,12 +138,18 @@ export default function ExpensesPage() {
           return a.category.localeCompare(b.category);
         case "date":
         default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
       }
     });
 
     setFilteredExpenses(filtered);
-  };
+  }, [expenses, searchTerm, selectedCategory, selectedType, selectedCompany, sortBy]);
+
+  useEffect(() => {
+    filterAndSortExpenses();
+  }, [filterAndSortExpenses]);
 
   const handleExpenseCreated = (newExpense: Expense) => {
     if (selectedExpense) {
@@ -141,7 +162,7 @@ export default function ExpensesPage() {
       setExpenses((prev) => [newExpense, ...prev]);
     }
     setShowExpenseModal(false);
-    setSelectedExpense(null);
+    setSelectedExpense(undefined);
   };
 
   const handleExpenseDeleted = async (expenseId: string) => {
@@ -173,12 +194,10 @@ export default function ExpensesPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
   const getUniqueCategories = () => {
-    const categories = [...new Set(expenses.map((expense) => expense.category))];
+    const categories = [
+      ...new Set(expenses.map((expense) => expense.category)),
+    ];
     return categories.sort();
   };
 
@@ -187,10 +206,18 @@ export default function ExpensesPage() {
     return types.sort();
   };
 
-  const totalExpenseAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const activeExpenses = expenses.filter(e => e.isActive).length;
-  const monthlySubscriptions = expenses.filter(e => e.expenseType === "subscription" && e.isActive);
-  const monthlyRecurring = monthlySubscriptions.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenseAmount = expenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
+  const activeExpenses = expenses.filter((e) => e.isActive).length;
+  const monthlySubscriptions = expenses.filter(
+    (e) => e.expenseType === "subscription" && e.isActive
+  );
+  const monthlyRecurring = monthlySubscriptions.reduce(
+    (sum, e) => sum + e.amount,
+    0
+  );
 
   if (status === "loading" || loading) {
     return (
@@ -243,7 +270,9 @@ export default function ExpensesPage() {
                 <CreditCard className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Total Expenses</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Total Expenses
+                </p>
                 <p className="text-2xl font-bold text-[#0B3558]">
                   {expenses.length}
                 </p>
@@ -256,7 +285,9 @@ export default function ExpensesPage() {
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Total Amount</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Total Amount
+                </p>
                 <p className="text-2xl font-bold text-[#0B3558]">
                   {formatCurrency(totalExpenseAmount)}
                 </p>
@@ -269,8 +300,12 @@ export default function ExpensesPage() {
                 <Calendar className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Active Expenses</p>
-                <p className="text-2xl font-bold text-[#0B3558]">{activeExpenses}</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Active Expenses
+                </p>
+                <p className="text-2xl font-bold text-[#0B3558]">
+                  {activeExpenses}
+                </p>
               </div>
             </div>
           </div>
@@ -280,7 +315,9 @@ export default function ExpensesPage() {
                 <Building2 className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-[#476788]">Monthly Recurring</p>
+                <p className="text-sm font-medium text-[#476788]">
+                  Monthly Recurring
+                </p>
                 <p className="text-2xl font-bold text-[#0B3558]">
                   {formatCurrency(monthlyRecurring)}
                 </p>
@@ -359,7 +396,9 @@ export default function ExpensesPage() {
           <div className="card p-12 text-center">
             <CreditCard className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
             <h3 className="text-lg font-medium text-[#0B3558] mb-2">
-              {expenses.length === 0 ? "No expenses tracked yet" : "No expenses match your filters"}
+              {expenses.length === 0
+                ? "No expenses tracked yet"
+                : "No expenses match your filters"}
             </h3>
             <p className="text-[#476788] mb-6">
               {expenses.length === 0
@@ -397,7 +436,7 @@ export default function ExpensesPage() {
           isOpen={showExpenseModal}
           onClose={() => {
             setShowExpenseModal(false);
-            setSelectedExpense(null);
+            setSelectedExpense(undefined);
           }}
           companies={companies}
           expense={selectedExpense}

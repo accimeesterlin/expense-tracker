@@ -12,7 +12,10 @@ interface AppLayoutProps {
   title?: string;
 }
 
-export default function AppLayout({ children, title = "Dashboard" }: AppLayoutProps) {
+export default function AppLayout({
+  children,
+  title = "Dashboard",
+}: AppLayoutProps) {
   const { data: session } = useSession();
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -21,7 +24,7 @@ export default function AppLayout({ children, title = "Dashboard" }: AppLayoutPr
     <div className="min-h-screen bg-[#F8F9FB] flex">
       {/* Sidebar */}
       <Sidebar isOpen={showSidebar} onClose={() => setShowSidebar(false)} />
-      
+
       {/* Main content area */}
       <div className="flex-1 lg:ml-0">
         {/* Header */}
@@ -81,17 +84,15 @@ export default function AppLayout({ children, title = "Dashboard" }: AppLayoutPr
         </header>
 
         {/* Page content */}
-        <div className="p-4 sm:p-6 lg:p-8">
-          {children}
-        </div>
+        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
 
         {/* Settings Modal */}
         {showSettingsModal && (
           <SettingsModal
             isOpen={showSettingsModal}
             onClose={() => setShowSettingsModal(false)}
-            userEmail={session?.user?.email}
-            userName={session?.user?.name}
+            userEmail={session?.user?.email || undefined}
+            userName={session?.user?.name || undefined}
           />
         )}
       </div>

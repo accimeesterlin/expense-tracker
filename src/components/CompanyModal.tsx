@@ -7,13 +7,19 @@ interface Company {
   _id: string;
   name: string;
   industry: string;
+  description?: string;
   address: {
+    street?: string;
     city: string;
     state: string;
+    zipCode?: string;
   };
   contactInfo: {
     email: string;
+    phone?: string;
+    website?: string;
   };
+  createdAt: string;
 }
 
 interface CompanyModalProps {

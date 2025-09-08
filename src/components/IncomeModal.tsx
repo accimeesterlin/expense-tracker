@@ -7,13 +7,38 @@ interface Company {
   _id: string;
   name: string;
   industry: string;
+  description?: string;
+  address: {
+    street?: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+  };
+  contactInfo: {
+    email: string;
+    phone?: string;
+    website?: string;
+  };
+  createdAt: string;
 }
 
 interface PaymentMethod {
   _id: string;
   name: string;
-  type: string;
+  type:
+    | "credit_card"
+    | "debit_card"
+    | "bank_account"
+    | "digital_wallet"
+    | "other";
+  provider?: string;
   lastFourDigits?: string;
+  expiryDate?: string;
+  isDefault: boolean;
+  metadata?: {
+    cardholderName?: string;
+    bankName?: string;
+  };
 }
 
 interface Income {

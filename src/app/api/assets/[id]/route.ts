@@ -63,12 +63,13 @@ export async function PUT(
     }
 
     return NextResponse.json(asset);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating asset:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },

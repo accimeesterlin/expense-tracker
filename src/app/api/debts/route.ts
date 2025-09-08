@@ -16,7 +16,12 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const upcoming = searchParams.get("upcoming"); // Show only upcoming payments
 
-    let query: any = { userId: session.user.id, isActive: true };
+    const query: { 
+      userId: string; 
+      isActive: boolean; 
+      type?: string; 
+      nextPaymentDate?: { $gte: Date; $lte: Date } 
+    } = { userId: session.user.id, isActive: true };
 
     if (type) query.type = type;
     if (upcoming === "true") {
@@ -63,12 +68,13 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json(populatedDebt, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating debt:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },

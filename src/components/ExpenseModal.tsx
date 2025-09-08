@@ -2,18 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { X, CreditCard, FileText } from "lucide-react";
+import NextImage from "next/image";
 
 interface Company {
   _id: string;
   name: string;
   industry: string;
+  description?: string;
   address: {
+    street?: string;
     city: string;
     state: string;
+    zipCode?: string;
   };
   contactInfo: {
     email: string;
+    phone?: string;
+    website?: string;
   };
+  createdAt: string;
 }
 
 interface Expense {
@@ -33,6 +40,12 @@ interface Expense {
   receiptS3Key?: string;
   receiptFileName?: string;
   receiptContentType?: string;
+  comments: Array<{
+    text: string;
+    createdAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ExpenseModalProps {
@@ -206,16 +219,28 @@ export default function ExpenseModal({
 
       // Auto-fill the form with extracted information
       if (extractedInfo.amount) {
-        setFormData((prev) => ({ ...prev, amount: extractedInfo.amount }));
+        setFormData((prev) => ({
+          ...prev,
+          amount: extractedInfo.amount || "",
+        }));
       }
       if (extractedInfo.merchantName && !formData.name) {
-        setFormData((prev) => ({ ...prev, name: extractedInfo.merchantName }));
+        setFormData((prev) => ({
+          ...prev,
+          name: extractedInfo.merchantName || "",
+        }));
       }
       if (extractedInfo.date) {
-        setFormData((prev) => ({ ...prev, startDate: extractedInfo.date }));
+        setFormData((prev) => ({
+          ...prev,
+          startDate: extractedInfo.date || "",
+        }));
       }
       if (extractedInfo.category) {
-        setFormData((prev) => ({ ...prev, category: extractedInfo.category }));
+        setFormData((prev) => ({
+          ...prev,
+          category: extractedInfo.category || "",
+        }));
       }
     } catch (error) {
       console.error("Receipt scanning failed:", error);
@@ -238,7 +263,12 @@ export default function ExpenseModal({
     // Mock extraction based on file name or random data
     // In a real implementation, this would use actual OCR
     const fileName = file.name.toLowerCase();
-    let mockData: any = {};
+    let mockData: {
+      amount?: string;
+      merchantName?: string;
+      category?: string;
+      date?: string;
+    } = {};
 
     // Simple pattern matching based on common receipt patterns
     if (fileName.includes("restaurant") || fileName.includes("food")) {
@@ -409,34 +439,40 @@ export default function ExpenseModal({
         onClose();
       } else {
         const errorData = await response.json();
-        console.error('API Error:', errorData);
-        
+        console.error("API Error:", errorData);
+
         // Provide user-friendly error messages
-        let friendlyError = errorData.error || `Failed to ${isEditing ? 'update' : 'create'} expense`;
-        
+        let friendlyError =
+          errorData.error ||
+          `Failed to ${isEditing ? "update" : "create"} expense`;
+
         // Handle specific validation errors
-        if (errorData.error && errorData.error.includes('validation failed')) {
-          if (errorData.error.includes('nextBillingDate')) {
-            friendlyError = "Start date is required for subscription and recurring expenses.";
-          } else if (errorData.error.includes('Company reference is required')) {
+        if (errorData.error && errorData.error.includes("validation failed")) {
+          if (errorData.error.includes("nextBillingDate")) {
+            friendlyError =
+              "Start date is required for subscription and recurring expenses.";
+          } else if (
+            errorData.error.includes("Company reference is required")
+          ) {
             friendlyError = "Please select a company for this expense.";
-          } else if (errorData.error.includes('Expense name is required')) {
+          } else if (errorData.error.includes("Expense name is required")) {
             friendlyError = "Please enter an expense name.";
-          } else if (errorData.error.includes('Description is required')) {
+          } else if (errorData.error.includes("Description is required")) {
             friendlyError = "Please enter a description for this expense.";
-          } else if (errorData.error.includes('Amount is required')) {
+          } else if (errorData.error.includes("Amount is required")) {
             friendlyError = "Please enter a valid amount.";
-          } else if (errorData.error.includes('frequency')) {
-            friendlyError = "Frequency is required for subscription and recurring expenses.";
+          } else if (errorData.error.includes("frequency")) {
+            friendlyError =
+              "Frequency is required for subscription and recurring expenses.";
           } else {
             friendlyError = "Please check all required fields and try again.";
           }
         }
-        
+
         setError(friendlyError);
       }
     } catch (error) {
-      console.error('Expense submission error:', error);
+      console.error("Expense submission error:", error);
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -945,9 +981,11 @@ export default function ExpenseModal({
                       {previewUrl && (
                         <div className="mt-3">
                           <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-                            <img
+                            <NextImage
                               src={previewUrl}
                               alt="Receipt Preview"
+                              width={400}
+                              height={300}
                               className="max-w-full h-auto max-h-48 object-contain"
                             />
                           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Building2, MapPin, Mail, Globe, Hash } from "lucide-react";
@@ -40,11 +40,56 @@ const industries = [
 ];
 
 const states = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
 ];
 
 export default function CompanySettingsPage() {
@@ -77,16 +122,7 @@ export default function CompanySettingsPage() {
     taxId: "",
   });
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-      return;
-    }
-    fetchCompany();
-  }, [status, router, companyId]);
-
-  const fetchCompany = async () => {
+  const fetchCompany = useCallback(async () => {
     try {
       const response = await fetch(`/api/companies/${companyId}`);
       if (response.ok) {
@@ -117,7 +153,16 @@ export default function CompanySettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+      return;
+    }
+    fetchCompany();
+  }, [status, router, companyId, fetchCompany]);
 
   const handleInputChange = (
     field: string,
@@ -128,7 +173,7 @@ export default function CompanySettingsPage() {
       setFormData((prev) => ({
         ...prev,
         [field]: {
-          ...prev[field as keyof typeof prev],
+          ...((prev[field as keyof typeof prev] as Record<string, string>) || {}),
           [subfield]: value,
         },
       }));
@@ -193,7 +238,9 @@ export default function CompanySettingsPage() {
     return (
       <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-[#0B3558] mb-2">Company Not Found</h2>
+          <h2 className="text-xl font-semibold text-[#0B3558] mb-2">
+            Company Not Found
+          </h2>
           <Link href="/" className="text-[#006BFF] hover:underline">
             Return to Dashboard
           </Link>
@@ -230,7 +277,9 @@ export default function CompanySettingsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="card">
           <div className="p-6 border-b border-[#E5E7EB]">
-            <h2 className="text-lg font-semibold text-[#0B3558]">Company Details</h2>
+            <h2 className="text-lg font-semibold text-[#0B3558]">
+              Company Details
+            </h2>
             <p className="text-sm text-[#476788] mt-1">
               Update your company information and settings
             </p>
@@ -276,7 +325,9 @@ export default function CompanySettingsPage() {
                   </label>
                   <select
                     value={formData.industry}
-                    onChange={(e) => handleInputChange("industry", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("industry", e.target.value)
+                    }
                     className="input-field w-full"
                   >
                     <option value="">Select industry</option>
@@ -305,7 +356,9 @@ export default function CompanySettingsPage() {
                   <input
                     type="text"
                     value={formData.address.street}
-                    onChange={(e) => handleInputChange("address", e.target.value, "street")}
+                    onChange={(e) =>
+                      handleInputChange("address", e.target.value, "street")
+                    }
                     className="input-field w-full"
                     placeholder="Enter street address"
                   />
@@ -319,7 +372,9 @@ export default function CompanySettingsPage() {
                     <input
                       type="text"
                       value={formData.address.city}
-                      onChange={(e) => handleInputChange("address", e.target.value, "city")}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value, "city")
+                      }
                       className="input-field w-full"
                       placeholder="Enter city"
                     />
@@ -331,7 +386,9 @@ export default function CompanySettingsPage() {
                     </label>
                     <select
                       value={formData.address.state}
-                      onChange={(e) => handleInputChange("address", e.target.value, "state")}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value, "state")
+                      }
                       className="input-field w-full"
                     >
                       <option value="">Select state</option>
@@ -350,7 +407,9 @@ export default function CompanySettingsPage() {
                     <input
                       type="text"
                       value={formData.address.zipCode}
-                      onChange={(e) => handleInputChange("address", e.target.value, "zipCode")}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value, "zipCode")
+                      }
                       className="input-field w-full"
                       placeholder="Enter ZIP code"
                     />
@@ -374,7 +433,9 @@ export default function CompanySettingsPage() {
                   <input
                     type="email"
                     value={formData.contactInfo.email}
-                    onChange={(e) => handleInputChange("contactInfo", e.target.value, "email")}
+                    onChange={(e) =>
+                      handleInputChange("contactInfo", e.target.value, "email")
+                    }
                     className="input-field w-full"
                     placeholder="Enter email address"
                   />
@@ -387,7 +448,9 @@ export default function CompanySettingsPage() {
                   <input
                     type="tel"
                     value={formData.contactInfo.phone}
-                    onChange={(e) => handleInputChange("contactInfo", e.target.value, "phone")}
+                    onChange={(e) =>
+                      handleInputChange("contactInfo", e.target.value, "phone")
+                    }
                     className="input-field w-full"
                     placeholder="Enter phone number"
                   />
@@ -405,7 +468,13 @@ export default function CompanySettingsPage() {
                   <input
                     type="url"
                     value={formData.contactInfo.website}
-                    onChange={(e) => handleInputChange("contactInfo", e.target.value, "website")}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "contactInfo",
+                        e.target.value,
+                        "website"
+                      )
+                    }
                     className="input-field w-full pl-12"
                     placeholder="https://example.com"
                   />
@@ -436,10 +505,7 @@ export default function CompanySettingsPage() {
 
             {/* Actions */}
             <div className="flex items-center justify-end space-x-3 pt-6 border-t border-[#E5E7EB]">
-              <Link
-                href="/"
-                className="btn-secondary"
-              >
+              <Link href="/" className="btn-secondary">
                 Cancel
               </Link>
               <button

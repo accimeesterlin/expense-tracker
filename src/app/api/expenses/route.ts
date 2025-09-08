@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const expenseType = searchParams.get("expenseType");
     const isActive = searchParams.get("isActive");
 
-    let query: any = { userId: session.user.id };
+    const query: { userId: string; company?: string; category?: string; expenseType?: string; isActive?: boolean } = { userId: session.user.id };
 
     if (companyId) query.company = companyId;
     if (category) query.category = category;
@@ -51,28 +51,46 @@ export async function POST(request: NextRequest) {
 
     // Calculate next billing date for subscriptions and recurring expenses
     if (
-      (body.expenseType === "subscription" || body.expenseType === "recurring") &&
+      (body.expenseType === "subscription" ||
+        body.expenseType === "recurring") &&
       body.frequency &&
       body.startDate
     ) {
       const startDate = new Date(body.startDate);
       let nextBillingDate = new Date(startDate);
 
+      // Calculate next billing date based on frequency
       switch (body.frequency) {
         case "monthly":
-          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+          nextBillingDate = new Date(
+            nextBillingDate.getFullYear(),
+            nextBillingDate.getMonth() + 1,
+            nextBillingDate.getDate()
+          );
           break;
         case "quarterly":
-          nextBillingDate.setMonth(nextBillingDate.getMonth() + 3);
+          nextBillingDate = new Date(
+            nextBillingDate.getFullYear(),
+            nextBillingDate.getMonth() + 3,
+            nextBillingDate.getDate()
+          );
           break;
         case "yearly":
-          nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+          nextBillingDate = new Date(
+            nextBillingDate.getFullYear() + 1,
+            nextBillingDate.getMonth(),
+            nextBillingDate.getDate()
+          );
           break;
         case "weekly":
-          nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+          nextBillingDate = new Date(
+            nextBillingDate.getTime() + 7 * 24 * 60 * 60 * 1000
+          );
           break;
         case "daily":
-          nextBillingDate.setDate(nextBillingDate.getDate() + 1);
+          nextBillingDate = new Date(
+            nextBillingDate.getTime() + 24 * 60 * 60 * 1000
+          );
           break;
       }
 
@@ -88,12 +106,18 @@ export async function POST(request: NextRequest) {
     const populatedExpense = await expense.populate("company", "name industry");
 
     return NextResponse.json(populatedExpense, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating expense:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError"
+    ) {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors || {}).map(
+        (err) => err.message || "Validation error"
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },

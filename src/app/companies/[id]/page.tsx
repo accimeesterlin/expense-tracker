@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -8,16 +8,12 @@ import {
   Plus,
   Search,
   Edit,
-  Trash2,
-  ArrowLeft,
-  MapPin,
   Mail,
   Users,
   User,
   CreditCard,
   Calendar,
   DollarSign,
-  Filter,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import CompanyModal from "@/components/CompanyModal";
@@ -46,13 +42,26 @@ interface Company {
 interface Expense {
   _id: string;
   name: string;
+  description?: string;
   amount: number;
   category: string;
+  tags?: string[];
   expenseType: string;
+  frequency?: string;
+  startDate?: string;
   nextBillingDate?: string;
   company: Company;
   isActive: boolean;
+  receiptUrl?: string;
+  receiptS3Key?: string;
+  receiptFileName?: string;
+  receiptContentType?: string;
+  comments: Array<{
+    text: string;
+    createdAt: string;
+  }>;
   createdAt: string;
+  updatedAt: string;
 }
 
 interface TeamMember {
@@ -82,28 +91,11 @@ export default function CompanyDetailsPage() {
   const [expenseFilter, setExpenseFilter] = useState<string>("all");
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
+    undefined
+  );
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session) {
-      router.push("/auth/signin");
-      return;
-    }
-    if (companyId) {
-      fetchCompanyDetails();
-    }
-  }, [session, status, router, companyId]);
-
-  useEffect(() => {
-    filterExpenses();
-  }, [expenses, searchTerm, expenseFilter]);
-
-  const fetchCompanyDetails = async () => {
+  const fetchCompanyDetails = useCallback(async () => {
     try {
       const [companyRes, expensesRes, teamRes] = await Promise.all([
         fetch(`/api/companies/${companyId}`),
@@ -130,10 +122,10 @@ export default function CompanyDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const filterExpenses = () => {
-    let filtered = expenses.filter((expense) => {
+  const filterExpenses = useCallback(() => {
+    const filtered = expenses.filter((expense) => {
       const matchesSearch =
         expense.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         expense.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -145,7 +137,26 @@ export default function CompanyDetailsPage() {
       return matchesSearch && matchesFilter;
     });
     setFilteredExpenses(filtered);
-  };
+  }, [expenses, searchTerm, expenseFilter]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+    if (companyId) {
+      fetchCompanyDetails();
+    }
+  }, [session, status, router, companyId, fetchCompanyDetails]);
+
+  useEffect(() => {
+    filterExpenses();
+  }, [filterExpenses]);
 
   const handleCompanyUpdated = (updatedCompany: Company) => {
     setCompany(updatedCompany);
@@ -163,7 +174,7 @@ export default function CompanyDetailsPage() {
       setExpenses((prev) => [newExpense, ...prev]);
     }
     setShowExpenseModal(false);
-    setSelectedExpense(null);
+    setSelectedExpense(undefined);
   };
 
   const handleExpenseDeleted = async (expenseId: string) => {
@@ -204,9 +215,9 @@ export default function CompanyDetailsPage() {
     0
   );
   const activeExpenses = expenses.filter((e) => e.isActive).length;
-  const monthlyRecurring = expenses
-    .filter((e) => e.expenseType === "subscription" && e.isActive)
-    .reduce((sum, e) => sum + e.amount, 0);
+  // const monthlyRecurring = expenses
+  //   .filter((e) => e.expenseType === "subscription" && e.isActive)
+  //   .reduce((sum, e) => sum + e.amount, 0);
 
   if (status === "loading" || loading || !mounted) {
     return (
@@ -264,7 +275,9 @@ export default function CompanyDetailsPage() {
             {["overview", "expenses", "team"].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() =>
+                  setActiveTab(tab as "expenses" | "team" | "overview")
+                }
                 className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                   activeTab === tab
                     ? "border-[#006BFF] text-[#006BFF]"
@@ -561,7 +574,7 @@ export default function CompanyDetailsPage() {
           isOpen={showExpenseModal}
           onClose={() => {
             setShowExpenseModal(false);
-            setSelectedExpense(null);
+            setSelectedExpense(undefined);
           }}
           companies={company ? [company] : []}
           expense={selectedExpense}

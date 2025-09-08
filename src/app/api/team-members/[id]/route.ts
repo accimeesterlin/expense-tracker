@@ -61,12 +61,13 @@ export async function PUT(
     }
 
     return NextResponse.json(teamMember);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating team member:", error);
 
-    if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err: any) => err.message
+    if (error && typeof error === "object" && "name" in error && error.name === "ValidationError") {
+      const mongooseError = error as Error & { errors: Record<string, { message: string }> };
+      const validationErrors = Object.values(mongooseError.errors).map(
+        (err) => err.message
       );
       return NextResponse.json(
         { error: "Validation failed", details: validationErrors },
@@ -74,7 +75,7 @@ export async function PUT(
       );
     }
 
-    if (error.code === 11000) {
+    if (error && typeof error === "object" && "code" in error && error.code === 11000) {
       return NextResponse.json(
         { error: "Team member with this email already exists for this company" },
         { status: 409 }

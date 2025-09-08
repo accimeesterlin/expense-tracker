@@ -1,13 +1,31 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, DollarSign, Calendar } from "lucide-react";
+import { X, DollarSign } from "lucide-react";
+
+interface Budget {
+  _id: string;
+  name: string;
+  description?: string;
+  totalAmount: number;
+  spentAmount: number;
+  currency: string;
+  category?: string;
+  period: "weekly" | "monthly" | "quarterly" | "yearly";
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  alertThreshold: number;
+  remainingAmount: number;
+  percentageUsed: number;
+  daysRemaining: number;
+}
 
 interface BudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (budget: any) => void;
-  budget?: any;
+  onSuccess: (budget: Budget) => void;
+  budget?: Budget;
 }
 
 export default function BudgetModal({
@@ -19,7 +37,9 @@ export default function BudgetModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
-  const [period, setPeriod] = useState<"weekly" | "monthly" | "quarterly" | "yearly">("monthly");
+  const [period, setPeriod] = useState<
+    "weekly" | "monthly" | "quarterly" | "yearly"
+  >("monthly");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [category, setCategory] = useState("");
@@ -44,8 +64,12 @@ export default function BudgetModal({
       } else {
         // Create mode
         const today = new Date();
-        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
-        
+        const nextMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          today.getDate()
+        );
+
         setName("");
         setDescription("");
         setTotalAmount("");
@@ -63,7 +87,7 @@ export default function BudgetModal({
       const response = await fetch("/api/categories");
       if (response.ok) {
         const data = await response.json();
-        const categoryNames = data.map((cat: any) => cat.name);
+        const categoryNames = data.map((cat: { name: string }) => cat.name);
         setCategories(categoryNames);
       }
     } catch (error) {
@@ -126,7 +150,7 @@ export default function BudgetModal({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -146,7 +170,9 @@ export default function BudgetModal({
                 {isEditing ? "Edit Budget" : "Create New Budget"}
               </h2>
               <p className="text-sm text-[#476788]">
-                {isEditing ? "Update budget details" : "Set up a new spending budget"}
+                {isEditing
+                  ? "Update budget details"
+                  : "Set up a new spending budget"}
               </p>
             </div>
           </div>
@@ -237,7 +263,15 @@ export default function BudgetModal({
               </label>
               <select
                 value={period}
-                onChange={(e) => setPeriod(e.target.value as "weekly" | "monthly" | "quarterly" | "yearly")}
+                onChange={(e) =>
+                  setPeriod(
+                    e.target.value as
+                      | "weekly"
+                      | "monthly"
+                      | "quarterly"
+                      | "yearly"
+                  )
+                }
                 className="input-field w-full"
               >
                 <option value="weekly">Weekly</option>
@@ -286,15 +320,11 @@ export default function BudgetModal({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
-            >
-              {loading 
-                ? "Saving..." 
-                : isEditing 
-                ? "Update Budget" 
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading
+                ? "Saving..."
+                : isEditing
+                ? "Update Budget"
                 : "Create Budget"}
             </button>
           </div>

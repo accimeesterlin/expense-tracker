@@ -3,7 +3,16 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, Users, ArrowLeft, Edit, Trash2, Mail, Phone, User } from "lucide-react";
+import {
+  Plus,
+  Users,
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Mail,
+  Phone,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import TeamMemberModal from "@/components/TeamMemberModal";
 import AppLayout from "@/components/AppLayout";
@@ -31,7 +40,9 @@ export default function TeamPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [editingMember, setEditingMember] = useState<TeamMember | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     if (status === "loading") return;
@@ -46,7 +57,7 @@ export default function TeamPage() {
     try {
       const [teamResponse, companiesResponse] = await Promise.all([
         fetch("/api/team-members"),
-        fetch("/api/companies")
+        fetch("/api/companies"),
       ]);
 
       if (teamResponse.ok) {
@@ -67,14 +78,16 @@ export default function TeamPage() {
 
   const handleTeamMemberSuccess = (teamMember: TeamMember) => {
     if (editingMember) {
-      setTeamMembers(prev => prev.map(member => 
-        member._id === editingMember._id ? teamMember : member
-      ));
+      setTeamMembers((prev) =>
+        prev.map((member) =>
+          member._id === editingMember._id ? teamMember : member
+        )
+      );
     } else {
-      setTeamMembers(prev => [teamMember, ...prev]);
+      setTeamMembers((prev) => [teamMember, ...prev]);
     }
     setShowModal(false);
-    setEditingMember(null);
+    setEditingMember(undefined);
   };
 
   const handleEdit = (member: TeamMember) => {
@@ -93,7 +106,7 @@ export default function TeamPage() {
       });
 
       if (response.ok) {
-        setTeamMembers(prev => prev.filter(m => m._id !== member._id));
+        setTeamMembers((prev) => prev.filter((m) => m._id !== member._id));
       } else {
         const errorData = await response.json();
         alert(errorData.error || "Failed to delete team member");
@@ -102,7 +115,6 @@ export default function TeamPage() {
       alert("Something went wrong. Please try again.");
     }
   };
-
 
   if (status === "loading" || loading) {
     return (
@@ -165,14 +177,19 @@ export default function TeamPage() {
           ) : (
             <div className="divide-y divide-[#E5E7EB]">
               {teamMembers.map((member) => (
-                <div key={member._id} className="p-6 flex items-center justify-between">
+                <div
+                  key={member._id}
+                  className="p-6 flex items-center justify-between"
+                >
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-[#006BFF]/10 rounded-full flex items-center justify-center">
                       <User className="w-6 h-6 text-[#006BFF]" />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-[#0B3558]">{member.name}</h4>
+                        <h4 className="font-medium text-[#0B3558]">
+                          {member.name}
+                        </h4>
                         {!member.isActive && (
                           <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
                             Inactive
@@ -181,18 +198,26 @@ export default function TeamPage() {
                       </div>
                       <p className="text-sm text-[#476788]">{member.role}</p>
                       {member.department && (
-                        <p className="text-xs text-[#A6BBD1]">{member.department}</p>
+                        <p className="text-xs text-[#A6BBD1]">
+                          {member.department}
+                        </p>
                       )}
-                      <p className="text-xs text-[#476788] mt-1">{member.company.name}</p>
+                      <p className="text-xs text-[#476788] mt-1">
+                        {member.company.name}
+                      </p>
                       <div className="flex items-center space-x-4 mt-2">
                         <div className="flex items-center space-x-1">
                           <Mail className="w-3 h-3 text-[#A6BBD1]" />
-                          <span className="text-xs text-[#476788]">{member.email}</span>
+                          <span className="text-xs text-[#476788]">
+                            {member.email}
+                          </span>
                         </div>
                         {member.phone && (
                           <div className="flex items-center space-x-1">
                             <Phone className="w-3 h-3 text-[#A6BBD1]" />
-                            <span className="text-xs text-[#476788]">{member.phone}</span>
+                            <span className="text-xs text-[#476788]">
+                              {member.phone}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -226,7 +251,7 @@ export default function TeamPage() {
           isOpen={showModal}
           onClose={() => {
             setShowModal(false);
-            setEditingMember(null);
+            setEditingMember(undefined);
           }}
           companies={companies}
           teamMember={editingMember}

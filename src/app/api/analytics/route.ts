@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate date ranges based on period
     const now = new Date();
-    let dateFilter: any = {};
+    let dateFilter: { createdAt?: { $gte: Date; $lte: Date } } = {};
 
     switch (period) {
       case "week":
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       .select("name amount category company createdAt");
 
     // Compare with previous period
-    let previousPeriodFilter: any = {};
+    let previousPeriodFilter: { userId?: string; createdAt?: { $gte: Date; $lte: Date } } = {};
     switch (period) {
       case "week":
         const prevWeekStart = subDays(startOfWeek(now), 7);

@@ -4,7 +4,6 @@ import {
   TrendingUp,
   TrendingDown,
   CreditCard,
-  Building2,
   PiggyBank,
   AlertTriangle,
   Calendar,
@@ -32,7 +31,6 @@ interface DashboardStats {
     monthlyCashFlow: number;
     totalPaymentMethods: number;
     activeDebts: number;
-    totalAssets: number;
   };
   upcoming: {
     expenses: number;

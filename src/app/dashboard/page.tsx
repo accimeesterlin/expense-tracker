@@ -7,16 +7,11 @@ import {
   Plus,
   Building2,
   CreditCard,
-  FileText,
-  Calendar,
   TrendingUp,
   DollarSign,
   LogOut,
   User,
-  Tag,
-  Hash,
   Settings,
-  BarChart3,
   AlertTriangle,
   PiggyBank,
   Menu,
@@ -42,24 +37,126 @@ interface Company {
   _id: string;
   name: string;
   industry: string;
+  description?: string;
   address: {
+    street?: string;
     city: string;
     state: string;
+    zipCode?: string;
   };
   contactInfo: {
     email: string;
+    phone?: string;
+    website?: string;
   };
+  createdAt: string;
 }
 
 interface Expense {
   _id: string;
   name: string;
+  description?: string;
   amount: number;
   category: string;
+  tags?: string[];
   expenseType: string;
+  frequency?: string;
+  startDate?: string;
   nextBillingDate?: string;
   company: Company;
   isActive: boolean;
+  receiptUrl?: string;
+  receiptS3Key?: string;
+  receiptFileName?: string;
+  receiptContentType?: string;
+  comments: Array<{
+    text: string;
+    createdAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PaymentMethod {
+  _id: string;
+  name: string;
+  type:
+    | "credit_card"
+    | "debit_card"
+    | "bank_account"
+    | "digital_wallet"
+    | "other";
+  provider?: string;
+  lastFourDigits?: string;
+  expiryDate?: string;
+  isDefault: boolean;
+  metadata?: {
+    cardholderName?: string;
+    bankName?: string;
+  };
+}
+
+interface Income {
+  _id: string;
+  source: string;
+  description?: string;
+  amount: number;
+  currency: string;
+  frequency: string;
+  category: string;
+  paymentMethod?: PaymentMethod;
+  company?: Company;
+  receivedDate: string;
+  nextPaymentDate?: string;
+  isRecurring: boolean;
+  isActive: boolean;
+  tags: string[];
+  notes?: string;
+}
+
+interface Debt {
+  _id: string;
+  name: string;
+  description?: string;
+  originalAmount: number;
+  currentBalance: number;
+  currency: string;
+  type: string;
+  interestRate?: number;
+  minimumPayment: number;
+  paymentFrequency: string;
+  nextPaymentDate: string;
+  paymentMethod?: PaymentMethod;
+  creditor?: string;
+  accountNumber?: string;
+  isActive: boolean;
+  tags: string[];
+  notes?: string;
+}
+
+interface Asset {
+  _id: string;
+  name: string;
+  description?: string;
+  type: string;
+  category: string;
+  currentValue: number;
+  currency: string;
+  purchaseDate?: string;
+  purchasePrice?: number;
+  appreciationRate?: number;
+  isLiquid: boolean;
+  location?: string;
+  metadata?: {
+    institution?: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    address?: string;
+  };
+  isActive: boolean;
+  tags: string[];
+  notes?: string;
 }
 
 export default function DashboardPage() {
@@ -77,12 +174,15 @@ export default function DashboardPage() {
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
-  const [selectedIncome, setSelectedIncome] = useState<any>(null);
-  const [selectedDebt, setSelectedDebt] = useState<any>(null);
-  const [selectedAsset, setSelectedAsset] = useState<any>(null);
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
+    undefined
+  );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<PaymentMethod | null>(null);
+  const [selectedIncome, setSelectedIncome] = useState<Income | null>(null);
+  const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [activeTab, setActiveTab] = useState<"overview" | "financial">(
     "overview"
   );
@@ -144,7 +244,7 @@ export default function DashboardPage() {
       setExpenses((prev) => [newExpense, ...prev]);
     }
     setShowExpenseModal(false);
-    setSelectedExpense(null);
+    setSelectedExpense(undefined);
   };
 
   const handleCompanyDeleted = (companyId: string) => {
@@ -174,42 +274,42 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePaymentMethodCreated = (newPaymentMethod: any) => {
+  const handlePaymentMethodCreated = (newPaymentMethod: PaymentMethod) => {
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(null);
   };
 
-  const handlePaymentMethodUpdated = (updatedPaymentMethod: any) => {
+  const handlePaymentMethodUpdated = (updatedPaymentMethod: PaymentMethod) => {
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(null);
   };
 
-  const handleIncomeCreated = (newIncome: any) => {
+  const handleIncomeCreated = (newIncome: Income) => {
     setShowIncomeModal(false);
     setSelectedIncome(null);
   };
 
-  const handleIncomeUpdated = (updatedIncome: any) => {
+  const handleIncomeUpdated = (updatedIncome: Income) => {
     setShowIncomeModal(false);
     setSelectedIncome(null);
   };
 
-  const handleDebtCreated = (newDebt: any) => {
+  const handleDebtCreated = (newDebt: Debt) => {
     setShowDebtModal(false);
     setSelectedDebt(null);
   };
 
-  const handleDebtUpdated = (updatedDebt: any) => {
+  const handleDebtUpdated = (updatedDebt: Debt) => {
     setShowDebtModal(false);
     setSelectedDebt(null);
   };
 
-  const handleAssetCreated = (newAsset: any) => {
+  const handleAssetCreated = (newAsset: Asset) => {
     setShowAssetModal(false);
     setSelectedAsset(null);
   };
 
-  const handleAssetUpdated = (updatedAsset: any) => {
+  const handleAssetUpdated = (updatedAsset: Asset) => {
     setShowAssetModal(false);
     setSelectedAsset(null);
   };
@@ -230,7 +330,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#F8F9FB] flex">
       {/* Sidebar */}
       <Sidebar isOpen={showSidebar} onClose={() => setShowSidebar(false)} />
-      
+
       {/* Main content area */}
       <div className="flex-1 lg:ml-0">
         {/* Header */}
@@ -254,415 +354,425 @@ export default function DashboardPage() {
                   Dashboard
                 </h1>
               </div>
-            <div className="flex items-center space-x-4">
-              {/* Global Search */}
-              <GlobalSearch />
+              <div className="flex items-center space-x-4">
+                {/* Global Search */}
+                <GlobalSearch />
 
-              {/* User Menu */}
-              <div className="flex items-center space-x-3">
-                <div className="hidden sm:flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-[#006BFF]" />
+                {/* User Menu */}
+                <div className="flex items-center space-x-3">
+                  <div className="hidden sm:flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-[#006BFF]" />
+                    </div>
+                    <span className="text-sm font-medium text-[#0B3558]">
+                      {session.user?.name}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-[#0B3558]">
-                    {session.user?.name}
-                  </span>
-                </div>
 
-                <button
-                  onClick={() => setShowSettingsModal(true)}
-                  className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
-                  title="Settings"
-                >
-                  <Settings className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                  className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
-                  title="Sign out"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
+                  <button
+                    onClick={() => setShowSettingsModal(true)}
+                    className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
+                    title="Settings"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                    className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
+                    title="Sign out"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "overview"
-                  ? "border-[#006BFF] text-[#006BFF]"
-                  : "border-transparent text-[#476788] hover:text-[#0B3558] hover:border-gray-300"
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("financial")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "financial"
-                  ? "border-[#006BFF] text-[#006BFF]"
-                  : "border-transparent text-[#476788] hover:text-[#0B3558] hover:border-gray-300"
-              }`}
-            >
-              Financial Dashboard
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "overview" ? (
-          <>
-            {/* Dashboard Stats */}
-            <DashboardStats companies={companies} expenses={expenses} />
-
-            {/* Quick Actions - Essential Only */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Navigation Tabs */}
+        <div className="bg-white border-b border-[#E5E7EB]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav className="flex space-x-8">
               <button
-                onClick={() => setShowSimpleIncomeModal(true)}
-                className="card p-6 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200"
+                onClick={() => setActiveTab("overview")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "overview"
+                    ? "border-[#006BFF] text-[#006BFF]"
+                    : "border-transparent text-[#476788] hover:text-[#0B3558] hover:border-gray-300"
+                }`}
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-800">Add Income</h3>
-                    <p className="text-sm text-green-600">Track your earnings quickly</p>
-                  </div>
-                </div>
+                Overview
               </button>
-
               <button
-                onClick={() => setShowExpenseModal(true)}
-                className="card p-6 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200"
+                onClick={() => setActiveTab("financial")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === "financial"
+                    ? "border-[#006BFF] text-[#006BFF]"
+                    : "border-transparent text-[#476788] hover:text-[#0B3558] hover:border-gray-300"
+                }`}
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                    <CreditCard className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-800">Add Expense</h3>
-                    <p className="text-sm text-blue-600">Track business expenses quickly</p>
-                  </div>
-                </div>
+                Financial Dashboard
               </button>
-            </div>
+            </nav>
+          </div>
+        </div>
 
-            {/* Upcoming Subscriptions */}
-            <div className="mt-8">
-              <UpcomingSubscriptions expenses={expenses} />
-            </div>
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {activeTab === "overview" ? (
+            <>
+              {/* Dashboard Stats */}
+              <DashboardStats companies={companies} expenses={expenses} />
 
-            {/* Companies and Expenses Grid */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Companies Section */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <Building2 className="w-6 h-6 text-[#006BFF]" />
-                    <h2 className="text-xl font-semibold text-[#0B3558]">
-                      Companies
-                    </h2>
+              {/* Quick Actions - Essential Only */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button
+                  onClick={() => setShowSimpleIncomeModal(true)}
+                  className="card p-6 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-800">
+                        Add Income
+                      </h3>
+                      <p className="text-sm text-green-600">
+                        Track your earnings quickly
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2.5 py-1 rounded-full">
-                      {companies.length}
-                    </span>
-                    <button
-                      onClick={() => setShowCompanyModal(true)}
-                      className="btn-primary text-xs px-3 py-1.5 inline-flex items-center space-x-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-                </div>
+                </button>
 
-                {companies.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Building2 className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
-                    <p className="text-[#476788] mb-4">
-                      No companies added yet
-                    </p>
-                    <button
-                      onClick={() => setShowCompanyModal(true)}
-                      className="btn-primary inline-flex items-center space-x-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Your First Company</span>
-                    </button>
+                <button
+                  onClick={() => setShowExpenseModal(true)}
+                  className="card p-6 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                      <CreditCard className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-800">
+                        Add Expense
+                      </h3>
+                      <p className="text-sm text-blue-600">
+                        Track business expenses quickly
+                      </p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {companies.map((company) => (
-                      <CompanyCard
-                        key={company._id}
-                        company={company}
-                        onEdit={() => {
-                          setSelectedCompany(company);
-                          setShowCompanyModal(true);
-                        }}
-                        onDelete={() => handleCompanyDeleted(company._id)}
-                      />
-                    ))}
-                  </div>
-                )}
+                </button>
               </div>
 
-              {/* Expenses Section */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <CreditCard className="w-6 h-6 text-[#006BFF]" />
-                    <h2 className="text-xl font-semibold text-[#0B3558]">
-                      Recent Expenses
-                    </h2>
+              {/* Upcoming Subscriptions */}
+              <div className="mt-8">
+                <UpcomingSubscriptions expenses={expenses} />
+              </div>
+
+              {/* Companies and Expenses Grid */}
+              <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Companies Section */}
+                <div className="card p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <Building2 className="w-6 h-6 text-[#006BFF]" />
+                      <h2 className="text-xl font-semibold text-[#0B3558]">
+                        Companies
+                      </h2>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2.5 py-1 rounded-full">
+                        {companies.length}
+                      </span>
+                      <button
+                        onClick={() => setShowCompanyModal(true)}
+                        className="btn-primary text-xs px-3 py-1.5 inline-flex items-center space-x-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2.5 py-1 rounded-full">
-                      {expenses.length}
-                    </span>
-                    <button
-                      onClick={() => setShowExpenseModal(true)}
-                      className="btn-primary text-xs px-3 py-1.5 inline-flex items-center space-x-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Add</span>
-                    </button>
-                  </div>
+
+                  {companies.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Building2 className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
+                      <p className="text-[#476788] mb-4">
+                        No companies added yet
+                      </p>
+                      <button
+                        onClick={() => setShowCompanyModal(true)}
+                        className="btn-primary inline-flex items-center space-x-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Your First Company</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {companies.map((company) => (
+                        <CompanyCard
+                          key={company._id}
+                          company={company}
+                          onEdit={() => {
+                            setSelectedCompany(company);
+                            setShowCompanyModal(true);
+                          }}
+                          onDelete={() => handleCompanyDeleted(company._id)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {expenses.length === 0 ? (
-                  <div className="text-center py-12">
-                    <CreditCard className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
-                    <p className="text-[#476788] mb-4">
-                      No expenses tracked yet
-                    </p>
-                    <button
-                      onClick={() => setShowExpenseModal(true)}
-                      className="btn-primary inline-flex items-center space-x-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Add Your First Expense</span>
-                    </button>
+                {/* Expenses Section */}
+                <div className="card p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <CreditCard className="w-6 h-6 text-[#006BFF]" />
+                      <h2 className="text-xl font-semibold text-[#0B3558]">
+                        Recent Expenses
+                      </h2>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2.5 py-1 rounded-full">
+                        {expenses.length}
+                      </span>
+                      <button
+                        onClick={() => setShowExpenseModal(true)}
+                        className="btn-primary text-xs px-3 py-1.5 inline-flex items-center space-x-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add</span>
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {expenses.slice(0, 5).map((expense) => (
-                      <ExpenseCard
-                        key={expense._id}
-                        expense={expense}
-                        onEdit={() => {
-                          setSelectedExpense(expense);
-                          setShowExpenseModal(true);
-                        }}
-                        onDelete={() => handleExpenseDeleted(expense._id)}
-                      />
-                    ))}
-                    {expenses.length > 5 && (
-                      <div className="text-center pt-4">
-                        <button className="text-[#006BFF] hover:text-[#0052CC] text-sm font-medium transition-colors">
-                          View All Expenses →
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+
+                  {expenses.length === 0 ? (
+                    <div className="text-center py-12">
+                      <CreditCard className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
+                      <p className="text-[#476788] mb-4">
+                        No expenses tracked yet
+                      </p>
+                      <button
+                        onClick={() => setShowExpenseModal(true)}
+                        className="btn-primary inline-flex items-center space-x-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Your First Expense</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {expenses.slice(0, 5).map((expense) => (
+                        <ExpenseCard
+                          key={expense._id}
+                          expense={expense}
+                          onEdit={() => {
+                            setSelectedExpense(expense);
+                            setShowExpenseModal(true);
+                          }}
+                          onDelete={() => handleExpenseDeleted(expense._id)}
+                        />
+                      ))}
+                      {expenses.length > 5 && (
+                        <div className="text-center pt-4">
+                          <button className="text-[#006BFF] hover:text-[#0052CC] text-sm font-medium transition-colors">
+                            View All Expenses →
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </>
-        ) : (
-          <FinancialDashboard
-            onAddIncome={() => setShowSimpleIncomeModal(true)}
-            onAddDebt={() => setShowSimpleDebtModal(true)}
+            </>
+          ) : (
+            <FinancialDashboard
+              onAddIncome={() => setShowSimpleIncomeModal(true)}
+              onAddDebt={() => setShowSimpleDebtModal(true)}
+            />
+          )}
+        </main>
+
+        {/* Mobile Floating Action Button */}
+        <div className="fixed bottom-6 right-6 sm:hidden z-40">
+          <div className="relative">
+            {showMobileMenu && (
+              <div className="absolute bottom-16 right-0 space-y-3">
+                <button
+                  onClick={() => {
+                    setShowAssetModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-10 h-10 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+                  title="Add Asset"
+                >
+                  <PiggyBank className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSimpleDebtModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-10 h-10 bg-orange-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-orange-700 transition-colors"
+                  title="Add Debt"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSimpleIncomeModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-10 h-10 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+                  title="Add Income"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPaymentMethodModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-10 h-10 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+                  title="Add Payment Method"
+                >
+                  <CreditCard className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setShowExpenseModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-10 h-10 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-colors"
+                  title="Add Expense"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="w-12 h-12 bg-[#006BFF] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0052CC] transition-colors"
+            >
+              <Plus
+                className={`w-5 h-5 transition-transform ${
+                  showMobileMenu ? "rotate-45" : ""
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Modals */}
+        {showCompanyModal && (
+          <CompanyModal
+            isOpen={showCompanyModal}
+            onClose={() => {
+              setShowCompanyModal(false);
+              setSelectedCompany(null);
+            }}
+            company={selectedCompany}
+            onSuccess={handleCompanyCreated}
           />
         )}
-      </main>
 
-      {/* Mobile Floating Action Button */}
-      <div className="fixed bottom-6 right-6 sm:hidden z-40">
-        <div className="relative">
-          {showMobileMenu && (
-            <div className="absolute bottom-16 right-0 space-y-3">
-              <button
-                onClick={() => {
-                  setShowAssetModal(true);
-                  setShowMobileMenu(false);
-                }}
-                className="w-10 h-10 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
-                title="Add Asset"
-              >
-                <PiggyBank className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => {
-                  setShowSimpleDebtModal(true);
-                  setShowMobileMenu(false);
-                }}
-                className="w-10 h-10 bg-orange-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-orange-700 transition-colors"
-                title="Add Debt"
-              >
-                <AlertTriangle className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => {
-                  setShowSimpleIncomeModal(true);
-                  setShowMobileMenu(false);
-                }}
-                className="w-10 h-10 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
-                title="Add Income"
-              >
-                <TrendingUp className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => {
-                  setShowPaymentMethodModal(true);
-                  setShowMobileMenu(false);
-                }}
-                className="w-10 h-10 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
-                title="Add Payment Method"
-              >
-                <CreditCard className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => {
-                  setShowExpenseModal(true);
-                  setShowMobileMenu(false);
-                }}
-                className="w-10 h-10 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-colors"
-                title="Add Expense"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="w-12 h-12 bg-[#006BFF] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0052CC] transition-colors"
-          >
-            <Plus
-              className={`w-5 h-5 transition-transform ${
-                showMobileMenu ? "rotate-45" : ""
-              }`}
-            />
-          </button>
-        </div>
-      </div>
+        {showExpenseModal && (
+          <ExpenseModal
+            isOpen={showExpenseModal}
+            onClose={() => {
+              setShowExpenseModal(false);
+              setSelectedExpense(undefined);
+            }}
+            companies={companies}
+            expense={selectedExpense}
+            onSuccess={handleExpenseCreated}
+          />
+        )}
 
-      {/* Modals */}
-      {showCompanyModal && (
-        <CompanyModal
-          isOpen={showCompanyModal}
-          onClose={() => {
-            setShowCompanyModal(false);
-            setSelectedCompany(null);
-          }}
-          company={selectedCompany}
-          onSuccess={handleCompanyCreated}
-        />
-      )}
+        {showPaymentMethodModal && (
+          <PaymentMethodModal
+            isOpen={showPaymentMethodModal}
+            onClose={() => {
+              setShowPaymentMethodModal(false);
+              setSelectedPaymentMethod(null);
+            }}
+            paymentMethod={selectedPaymentMethod}
+            onSuccess={
+              selectedPaymentMethod
+                ? handlePaymentMethodUpdated
+                : handlePaymentMethodCreated
+            }
+          />
+        )}
 
-      {showExpenseModal && (
-        <ExpenseModal
-          isOpen={showExpenseModal}
-          onClose={() => {
-            setShowExpenseModal(false);
-            setSelectedExpense(null);
-          }}
-          companies={companies}
-          expense={selectedExpense}
-          onSuccess={handleExpenseCreated}
-        />
-      )}
+        {showIncomeModal && (
+          <IncomeModal
+            isOpen={showIncomeModal}
+            onClose={() => {
+              setShowIncomeModal(false);
+              setSelectedIncome(null);
+            }}
+            income={selectedIncome}
+            companies={companies}
+            paymentMethods={paymentMethods}
+            onSuccess={
+              selectedIncome ? handleIncomeUpdated : handleIncomeCreated
+            }
+          />
+        )}
 
-      {showPaymentMethodModal && (
-        <PaymentMethodModal
-          isOpen={showPaymentMethodModal}
-          onClose={() => {
-            setShowPaymentMethodModal(false);
-            setSelectedPaymentMethod(null);
-          }}
-          paymentMethod={selectedPaymentMethod}
-          onSuccess={
-            selectedPaymentMethod
-              ? handlePaymentMethodUpdated
-              : handlePaymentMethodCreated
-          }
-        />
-      )}
+        {showDebtModal && (
+          <DebtModal
+            isOpen={showDebtModal}
+            onClose={() => {
+              setShowDebtModal(false);
+              setSelectedDebt(null);
+            }}
+            debt={selectedDebt}
+            paymentMethods={paymentMethods}
+            onSuccess={selectedDebt ? handleDebtUpdated : handleDebtCreated}
+          />
+        )}
 
-      {showIncomeModal && (
-        <IncomeModal
-          isOpen={showIncomeModal}
-          onClose={() => {
-            setShowIncomeModal(false);
-            setSelectedIncome(null);
-          }}
-          income={selectedIncome}
-          companies={companies}
-          paymentMethods={paymentMethods}
-          onSuccess={selectedIncome ? handleIncomeUpdated : handleIncomeCreated}
-        />
-      )}
+        {showAssetModal && (
+          <AssetModal
+            isOpen={showAssetModal}
+            onClose={() => {
+              setShowAssetModal(false);
+              setSelectedAsset(null);
+            }}
+            asset={selectedAsset}
+            onSuccess={selectedAsset ? handleAssetUpdated : handleAssetCreated}
+          />
+        )}
 
-      {showDebtModal && (
-        <DebtModal
-          isOpen={showDebtModal}
-          onClose={() => {
-            setShowDebtModal(false);
-            setSelectedDebt(null);
-          }}
-          debt={selectedDebt}
-          paymentMethods={paymentMethods}
-          onSuccess={selectedDebt ? handleDebtUpdated : handleDebtCreated}
-        />
-      )}
+        {showSettingsModal && (
+          <SettingsModal
+            isOpen={showSettingsModal}
+            onClose={() => setShowSettingsModal(false)}
+            userEmail={session?.user?.email || undefined}
+            userName={session?.user?.name || undefined}
+          />
+        )}
 
-      {showAssetModal && (
-        <AssetModal
-          isOpen={showAssetModal}
-          onClose={() => {
-            setShowAssetModal(false);
-            setSelectedAsset(null);
-          }}
-          asset={selectedAsset}
-          onSuccess={selectedAsset ? handleAssetUpdated : handleAssetCreated}
-        />
-      )}
+        {showSimpleIncomeModal && (
+          <SimpleIncomeModal
+            isOpen={showSimpleIncomeModal}
+            onClose={() => setShowSimpleIncomeModal(false)}
+            onSuccess={handleIncomeCreated}
+          />
+        )}
 
-      {showSettingsModal && (
-        <SettingsModal
-          isOpen={showSettingsModal}
-          onClose={() => setShowSettingsModal(false)}
-          userEmail={session?.user?.email}
-          userName={session?.user?.name}
-        />
-      )}
-
-      {showSimpleIncomeModal && (
-        <SimpleIncomeModal
-          isOpen={showSimpleIncomeModal}
-          onClose={() => setShowSimpleIncomeModal(false)}
-          onSuccess={handleIncomeCreated}
-        />
-      )}
-
-      {showSimpleDebtModal && (
-        <SimpleDebtModal
-          isOpen={showSimpleDebtModal}
-          onClose={() => setShowSimpleDebtModal(false)}
-          onSuccess={handleDebtCreated}
-        />
-      )}
+        {showSimpleDebtModal && (
+          <SimpleDebtModal
+            isOpen={showSimpleDebtModal}
+            onClose={() => setShowSimpleDebtModal(false)}
+            onSuccess={handleDebtCreated}
+          />
+        )}
       </div>
     </div>
   );

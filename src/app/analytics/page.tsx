@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -16,10 +16,8 @@ import {
   Cell,
   LineChart,
   Line,
-  Legend
 } from "recharts";
 import {
-  ArrowLeft,
   TrendingUp,
   TrendingDown,
   DollarSign,
@@ -29,7 +27,6 @@ import {
   BarChart3
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
-import Link from "next/link";
 
 interface AnalyticsData {
   summary: {
@@ -59,23 +56,14 @@ const COLORS = [
 ];
 
 export default function AnalyticsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-      return;
-    }
-    fetchAnalytics();
-  }, [status, selectedPeriod, router]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/analytics?period=${selectedPeriod}`);
@@ -91,7 +79,16 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPeriod]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+      return;
+    }
+    fetchAnalytics();
+  }, [status, selectedPeriod, router, fetchAnalytics]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -327,7 +324,7 @@ export default function AnalyticsPage() {
               Top Companies by Spending
             </h3>
             <div className="space-y-3">
-              {insights.topCompanies.map((company, index) => (
+              {insights.topCompanies.map((company) => (
                 <div key={company._id} className="flex items-center justify-between p-3 bg-[#F8F9FB] rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-[#006BFF]/10 rounded-lg flex items-center justify-center">

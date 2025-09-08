@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -23,13 +23,19 @@ interface Company {
   _id: string;
   name: string;
   industry: string;
+  description?: string;
   address: {
+    street?: string;
     city: string;
     state: string;
+    zipCode?: string;
   };
   contactInfo: {
     email: string;
+    phone?: string;
+    website?: string;
   };
+  createdAt: string;
   expenseCount?: number;
   teamCount?: number;
 }
@@ -43,19 +49,6 @@ export default function CompaniesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session) {
-      router.push("/auth/signin");
-      return;
-    }
-    fetchCompanies();
-  }, [session, status, router]);
-
-  useEffect(() => {
-    filterCompanies();
-  }, [companies, searchTerm]);
 
   const fetchCompanies = async () => {
     try {
@@ -71,13 +64,26 @@ export default function CompaniesPage() {
     }
   };
 
-  const filterCompanies = () => {
+  const filterCompanies = useCallback(() => {
     const filtered = companies.filter((company) =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.industry.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCompanies(filtered);
-  };
+  }, [companies, searchTerm]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+    fetchCompanies();
+  }, [session, status, router]);
+
+  useEffect(() => {
+    filterCompanies();
+  }, [filterCompanies]);
 
   const handleCompanyCreated = (newCompany: Company) => {
     if (selectedCompany) {

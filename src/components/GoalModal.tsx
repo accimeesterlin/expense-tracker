@@ -1,13 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Target, Calendar } from "lucide-react";
+import { X, Target } from "lucide-react";
+
+interface Goal {
+  _id: string;
+  name: string;
+  description?: string;
+  targetAmount: number;
+  currentAmount: number;
+  currency: string;
+  goalType:
+    | "savings"
+    | "debt_payoff"
+    | "investment"
+    | "emergency_fund"
+    | "purchase"
+    | "other";
+  targetDate: string;
+  priority: "low" | "medium" | "high";
+  isCompleted: boolean;
+  isActive: boolean;
+  remainingAmount: number;
+  percentageCompleted: number;
+  daysRemaining: number;
+  requiredMonthlySavings: number;
+  milestones: {
+    amount: number;
+    date: string;
+    achieved: boolean;
+    achievedDate?: string;
+  }[];
+}
 
 interface GoalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (goal: any) => void;
-  goal?: any;
+  onSuccess: (goal: Goal) => void;
+  goal?: Goal;
 }
 
 export default function GoalModal({
@@ -20,7 +50,14 @@ export default function GoalModal({
   const [description, setDescription] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [currentAmount, setCurrentAmount] = useState("0");
-  const [goalType, setGoalType] = useState<"savings" | "debt_payoff" | "investment" | "emergency_fund" | "other">("savings");
+  const [goalType, setGoalType] = useState<
+    | "savings"
+    | "debt_payoff"
+    | "investment"
+    | "emergency_fund"
+    | "purchase"
+    | "other"
+  >("savings");
   const [targetDate, setTargetDate] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [loading, setLoading] = useState(false);
@@ -106,7 +143,7 @@ export default function GoalModal({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -126,7 +163,9 @@ export default function GoalModal({
                 {isEditing ? "Edit Goal" : "Create New Goal"}
               </h2>
               <p className="text-sm text-[#476788]">
-                {isEditing ? "Update goal details" : "Set up a new financial goal"}
+                {isEditing
+                  ? "Update goal details"
+                  : "Set up a new financial goal"}
               </p>
             </div>
           </div>
@@ -167,7 +206,16 @@ export default function GoalModal({
               </label>
               <select
                 value={goalType}
-                onChange={(e) => setGoalType(e.target.value as any)}
+                onChange={(e) =>
+                  setGoalType(
+                    e.target.value as
+                      | "savings"
+                      | "debt_payoff"
+                      | "investment"
+                      | "purchase"
+                      | "other"
+                  )
+                }
                 className="input-field w-full"
               >
                 <option value="savings">Savings</option>
@@ -230,7 +278,9 @@ export default function GoalModal({
               </label>
               <select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
+                onChange={(e) =>
+                  setPriority(e.target.value as "low" | "medium" | "high")
+                }
                 className="input-field w-full"
               >
                 <option value="low">Low</option>
@@ -263,15 +313,11 @@ export default function GoalModal({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
-            >
-              {loading 
-                ? "Saving..." 
-                : isEditing 
-                ? "Update Goal" 
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading
+                ? "Saving..."
+                : isEditing
+                ? "Update Goal"
                 : "Create Goal"}
             </button>
           </div>
