@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 
-export default function SignInPage() {
+function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -189,4 +189,25 @@ export default function SignInPage() {
       </div>
     </div>
   );
+}
+
+export default function SignInPage() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#006BFF] to-[#0B3558]">
+        <div className="animate-pulse">
+          <div className="w-12 h-12 bg-white rounded-lg mx-auto mb-4"></div>
+          <div className="w-32 h-4 bg-white/30 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return <SignInForm />;
 }

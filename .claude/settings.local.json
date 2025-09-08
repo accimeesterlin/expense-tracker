@@ -9,7 +9,8 @@
       "Bash(npx tsc:*)",
       "Bash(node:*)",
       "Bash(yarn build)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npm show:*)"
     ],
     "deny": [],
     "ask": [],

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import {
   Search,
   X,
@@ -251,6 +252,23 @@ export default function GlobalSearch() {
     });
   };
 
+  const getResultUrl = (result: SearchResult) => {
+    switch (result.type) {
+      case "company":
+        return `/companies/${result.id}`;
+      case "expense":
+        return `/expenses/${result.id}`;
+      case "income":
+        return `/income`;
+      case "debt":
+        return `/debts`;
+      case "asset":
+        return `/dashboard`; // or wherever assets are managed
+      default:
+        return "/dashboard";
+    }
+  };
+
   return (
     <div className="relative" ref={searchRef}>
       <div className="relative">
@@ -286,9 +304,11 @@ export default function GlobalSearch() {
           ) : results.length > 0 ? (
             <div className="py-2">
               {results.map((result) => (
-                <div
+                <Link
                   key={`${result.type}-${result.id}`}
+                  href={getResultUrl(result)}
                   className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => setIsOpen(false)}
                 >
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center ${getTypeColor(
@@ -322,7 +342,7 @@ export default function GlobalSearch() {
                       {formatCurrency(result.amount)}
                     </div>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
