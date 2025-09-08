@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, Tag, ArrowLeft, Edit, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Tag, Edit, Trash2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 interface Category {
@@ -15,11 +14,11 @@ interface Category {
 }
 
 export default function CategoriesPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(true); // Always show form
+  const [showForm] = useState(true); // Always show form
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
     name: "",

@@ -18,7 +18,21 @@ export async function GET() {
       isActive: true
     }).sort({ startDate: -1 });
     
-    return NextResponse.json(budgets);
+    // Calculate virtual properties manually since they're not included by default
+    const budgetsWithCalculations = budgets.map(budget => {
+      const budgetObj = budget.toObject();
+      budgetObj.remainingAmount = Math.max(0, budget.totalAmount - budget.spentAmount);
+      budgetObj.percentageUsed = budget.totalAmount > 0 ? (budget.spentAmount / budget.totalAmount) * 100 : 0;
+      
+      const now = new Date();
+      const endDate = new Date(budget.endDate);
+      const diffTime = endDate.getTime() - now.getTime();
+      budgetObj.daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      
+      return budgetObj;
+    });
+    
+    return NextResponse.json(budgetsWithCalculations);
   } catch (error) {
     console.error("Error fetching budgets:", error);
     return NextResponse.json(

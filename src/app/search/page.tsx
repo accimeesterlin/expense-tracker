@@ -60,7 +60,7 @@ interface SearchResult {
 }
 
 function SearchPageContent() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -234,14 +234,14 @@ function SearchPageContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Bar */}
         <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#476788]" />
+          <div className="input-field-with-icon">
+            <Search className="icon w-5 h-5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search expenses, companies, categories..."
-              className="w-full pl-12 pr-12 py-3 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006BFF]/20 focus:border-[#006BFF]"
+              className="w-full pr-12 py-3 border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#006BFF]/20 focus:border-[#006BFF]"
             />
             <button
               onClick={() => setShowFilters(!showFilters)}

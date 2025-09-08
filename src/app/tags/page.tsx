@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, Hash, ArrowLeft, Edit, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Hash, Edit, Trash2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 
 interface Tag {
@@ -19,11 +18,11 @@ const predefinedColors = [
 ];
 
 export default function TagsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(true); // Always show form
+  const [showForm] = useState(true); // Always show form
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [formData, setFormData] = useState({
     name: "",

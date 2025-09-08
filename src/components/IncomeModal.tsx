@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, DollarSign, Calendar, Building2, CreditCard } from "lucide-react";
+import { X, DollarSign, Calendar, Building2 } from "lucide-react";
 
 interface Company {
   _id: string;

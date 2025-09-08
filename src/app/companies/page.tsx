@@ -10,7 +10,6 @@ import {
   Search,
   Edit,
   Trash2,
-  ArrowLeft,
   MapPin,
   Mail,
   Users,
@@ -136,25 +135,25 @@ export default function CompaniesPage() {
   return (
     <AppLayout title="Companies">
       {/* Page Header */}
-      <div className="bg-white border-b border-[#E5E7EB] -m-6 mb-6">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-blue-600" />
+      <div className="bg-white border-b border-[#E5E7EB] -m-4 sm:-m-6 mb-4 sm:mb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-[#0B3558]">
+                <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558]">
                   Companies
                 </h1>
-                <p className="text-sm text-[#476788]">
+                <p className="text-xs sm:text-sm text-[#476788]">
                   Manage your business partners
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowCompanyModal(true)}
-              className="btn-primary inline-flex items-center space-x-2"
+              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               <span>Add Company</span>
@@ -163,43 +162,43 @@ export default function CompaniesPage() {
         </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="card p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                <Building2 className="w-6 h-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Total Companies</p>
-                <p className="text-2xl font-bold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">Total Companies</p>
+                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
                   {companies.length}
                 </p>
               </div>
             </div>
           </div>
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                <CreditCard className="w-6 h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Active Expenses</p>
-                <p className="text-2xl font-bold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">Active Expenses</p>
+                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
                   {companies.reduce((sum, c) => sum + (c.expenseCount || 0), 0)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="card p-6">
+          <div className="card p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                <Users className="w-6 h-6 text-purple-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-[#476788]">Team Members</p>
-                <p className="text-2xl font-bold text-[#0B3558]">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">Team Members</p>
+                <p className="text-xl sm:text-2xl font-bold text-[#0B3558]">
                   {companies.reduce((sum, c) => sum + (c.teamCount || 0), 0)}
                 </p>
               </div>
@@ -208,108 +207,108 @@ export default function CompaniesPage() {
         </div>
 
         {/* Search */}
-        <div className="card p-6">
-          <div className="relative">
-            <Search className="w-5 h-5 text-[#476788] absolute left-4 top-1/2 transform -translate-y-1/2" />
+        <div className="card p-4 sm:p-6">
+          <div className="input-field-with-icon">
+            <Search className="icon w-5 h-5" />
             <input
               type="text"
               placeholder="Search companies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-12 w-full"
+              className="input-field w-full text-sm sm:text-base"
             />
           </div>
         </div>
 
         {/* Companies List */}
         {filteredCompanies.length === 0 ? (
-          <div className="card p-12 text-center">
-            <Building2 className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
-            <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+          <div className="card p-8 sm:p-12 text-center">
+            <Building2 className="w-12 h-12 sm:w-16 sm:h-16 text-[#A6BBD1] mx-auto mb-4 sm:mb-8" />
+            <h3 className="text-base sm:text-lg font-medium text-[#0B3558] mb-2">
               {companies.length === 0 ? "No companies yet" : "No companies match your search"}
             </h3>
-            <p className="text-[#476788] mb-6">
+            <p className="text-sm sm:text-base text-[#476788] mb-4 sm:mb-6">
               {companies.length === 0
                 ? "Start by adding your first business partner or vendor"
                 : "Try adjusting your search terms"}
             </p>
             <button
               onClick={() => setShowCompanyModal(true)}
-              className="btn-primary inline-flex items-center space-x-2"
+              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
             >
               <Plus className="w-4 h-4" />
               <span>Add Your First Company</span>
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredCompanies.map((company) => (
-              <div key={company._id} className="card p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
+              <div key={company._id} className="card p-4 sm:p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className="flex-1 min-w-0">
                     <Link
                       href={`/companies/${company._id}`}
                       className="block hover:text-[#006BFF] transition-colors"
                     >
-                      <h3 className="text-lg font-semibold text-[#0B3558] mb-1">
+                      <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-1 truncate">
                         {company.name}
                       </h3>
-                      <p className="text-sm text-[#006BFF] font-medium">
+                      <p className="text-xs sm:text-sm text-[#006BFF] font-medium truncate">
                         {company.industry}
                       </p>
                     </Link>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 ml-2">
                     <button
                       onClick={() => {
                         setSelectedCompany(company);
                         setShowCompanyModal(true);
                       }}
-                      className="p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors"
+                      className="p-1.5 sm:p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors"
                       title="Edit company"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteCompany(company._id)}
-                      className="p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete company"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-sm text-[#476788]">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-[#476788]">
                   {company.address?.city && company.address?.state && (
                     <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>{company.address.city}, {company.address.state}</span>
+                      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{company.address.city}, {company.address.state}</span>
                     </div>
                   )}
                   {company.contactInfo?.email && (
                     <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4" />
-                      <span>{company.contactInfo.email}</span>
+                      <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{company.contactInfo.email}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-4">
+                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[#E5E7EB]">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 text-xs sm:text-sm">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
                       <div className="flex items-center space-x-1 text-[#476788]">
-                        <CreditCard className="w-4 h-4" />
+                        <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span>{company.expenseCount || 0} expenses</span>
                       </div>
                       <div className="flex items-center space-x-1 text-[#476788]">
-                        <Users className="w-4 h-4" />
+                        <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span>{company.teamCount || 0} team</span>
                       </div>
                     </div>
                     <Link
                       href={`/companies/${company._id}`}
-                      className="text-[#006BFF] hover:text-[#0052CC] font-medium"
+                      className="text-[#006BFF] hover:text-[#0052CC] font-medium text-xs sm:text-sm whitespace-nowrap"
                     >
                       View Details →
                     </Link>

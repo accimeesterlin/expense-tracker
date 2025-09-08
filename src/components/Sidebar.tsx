@@ -11,7 +11,6 @@ import {
   Hash,
   User,
   BarChart3,
-  Search,
   Home,
   DollarSign,
   Target,

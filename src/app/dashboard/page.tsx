@@ -274,42 +274,42 @@ export default function DashboardPage() {
     }
   };
 
-  const handlePaymentMethodCreated = (newPaymentMethod: PaymentMethod) => {
+  const handlePaymentMethodCreated = () => {
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(null);
   };
 
-  const handlePaymentMethodUpdated = (updatedPaymentMethod: PaymentMethod) => {
+  const handlePaymentMethodUpdated = () => {
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(null);
   };
 
-  const handleIncomeCreated = (newIncome: Income) => {
+  const handleIncomeCreated = () => {
     setShowIncomeModal(false);
     setSelectedIncome(null);
   };
 
-  const handleIncomeUpdated = (updatedIncome: Income) => {
+  const handleIncomeUpdated = () => {
     setShowIncomeModal(false);
     setSelectedIncome(null);
   };
 
-  const handleDebtCreated = (newDebt: Debt) => {
+  const handleDebtCreated = () => {
     setShowDebtModal(false);
     setSelectedDebt(null);
   };
 
-  const handleDebtUpdated = (updatedDebt: Debt) => {
+  const handleDebtUpdated = () => {
     setShowDebtModal(false);
     setSelectedDebt(null);
   };
 
-  const handleAssetCreated = (newAsset: Asset) => {
+  const handleAssetCreated = () => {
     setShowAssetModal(false);
     setSelectedAsset(null);
   };
 
-  const handleAssetUpdated = (updatedAsset: Asset) => {
+  const handleAssetUpdated = () => {
     setShowAssetModal(false);
     setSelectedAsset(null);
   };
@@ -337,34 +337,34 @@ export default function DashboardPage() {
         <header className="bg-white border-b border-[#E5E7EB]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <button
                   onClick={() => setShowSidebar(true)}
                   className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden"
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                <div className="w-10 h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden">
-                  <DollarSign className="w-6 h-6 text-white" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden">
+                  <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <h1 className="text-2xl font-semibold text-[#0B3558] lg:hidden">
+                <h1 className="text-lg sm:text-2xl font-semibold text-[#0B3558] lg:hidden">
                   ExpenseTracker
                 </h1>
                 <h1 className="text-2xl font-semibold text-[#0B3558] hidden lg:block">
                   Dashboard
                 </h1>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* Global Search */}
                 <GlobalSearch />
 
                 {/* User Menu */}
-                <div className="flex items-center space-x-3">
-                  <div className="hidden sm:flex items-center space-x-3">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="hidden sm:flex items-center space-x-2 sm:space-x-3">
                     <div className="w-8 h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center">
                       <User className="w-4 h-4 text-[#006BFF]" />
                     </div>
-                    <span className="text-sm font-medium text-[#0B3558]">
+                    <span className="text-sm font-medium text-[#0B3558] hidden md:block">
                       {session.user?.name}
                     </span>
                   </div>
@@ -418,27 +418,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {activeTab === "overview" ? (
             <>
               {/* Dashboard Stats */}
               <DashboardStats companies={companies} expenses={expenses} />
 
               {/* Quick Actions - Essential Only */}
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <button
                   onClick={() => setShowSimpleIncomeModal(true)}
-                  className="card p-6 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200"
+                  className="card p-4 sm:p-6 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-white" />
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-600 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-green-800">
+                      <h3 className="text-base sm:text-lg font-semibold text-green-800">
                         Add Income
                       </h3>
-                      <p className="text-sm text-green-600">
+                      <p className="text-xs sm:text-sm text-green-600">
                         Track your earnings quickly
                       </p>
                     </div>
@@ -447,17 +447,17 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowExpenseModal(true)}
-                  className="card p-6 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200"
+                  className="card p-4 sm:p-6 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                      <CreditCard className="w-6 h-6 text-white" />
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-blue-800">
+                      <h3 className="text-base sm:text-lg font-semibold text-blue-800">
                         Add Expense
                       </h3>
-                      <p className="text-sm text-blue-600">
+                      <p className="text-xs sm:text-sm text-blue-600">
                         Track business expenses quickly
                       </p>
                     </div>
@@ -466,44 +466,56 @@ export default function DashboardPage() {
               </div>
 
               {/* Upcoming Subscriptions */}
-              <div className="mt-8">
-                <UpcomingSubscriptions expenses={expenses} />
+              <div className="mt-6 sm:mt-8">
+                <UpcomingSubscriptions 
+                  expenses={expenses}
+                  onEdit={(expense) => {
+                    setSelectedExpense(expense);
+                    setShowExpenseModal(true);
+                  }}
+                  onViewDetails={(expenseId) => {
+                    window.location.href = `/expenses/${expenseId}`;
+                  }}
+                  onCancel={(expenseId) => {
+                    handleExpenseDeleted(expenseId);
+                  }}
+                />
               </div>
 
               {/* Companies and Expenses Grid */}
-              <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="mt-6 sm:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                 {/* Companies Section */}
-                <div className="card p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <Building2 className="w-6 h-6 text-[#006BFF]" />
-                      <h2 className="text-xl font-semibold text-[#0B3558]">
+                <div className="card p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-[#006BFF]" />
+                      <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">
                         Companies
                       </h2>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2.5 py-1 rounded-full">
+                    <div className="flex items-center justify-between sm:space-x-3">
+                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2 sm:px-2.5 py-1 rounded-full">
                         {companies.length}
                       </span>
                       <button
                         onClick={() => setShowCompanyModal(true)}
-                        className="btn-primary text-xs px-3 py-1.5 inline-flex items-center space-x-1"
+                        className="btn-primary text-xs px-2 sm:px-3 py-1 sm:py-1.5 inline-flex items-center space-x-1 ml-2"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Add</span>
+                        <span className="hidden sm:inline">Add</span>
                       </button>
                     </div>
                   </div>
 
                   {companies.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Building2 className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
-                      <p className="text-[#476788] mb-4">
+                    <div className="text-center py-8 sm:py-12">
+                      <Building2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#A6BBD1] mx-auto mb-3 sm:mb-4" />
+                      <p className="text-sm sm:text-base text-[#476788] mb-3 sm:mb-4">
                         No companies added yet
                       </p>
                       <button
                         onClick={() => setShowCompanyModal(true)}
-                        className="btn-primary inline-flex items-center space-x-2"
+                        className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
                       >
                         <Plus className="w-4 h-4" />
                         <span>Add Your First Company</span>
@@ -527,37 +539,37 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Expenses Section */}
-                <div className="card p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <CreditCard className="w-6 h-6 text-[#006BFF]" />
-                      <h2 className="text-xl font-semibold text-[#0B3558]">
+                <div className="card p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-[#006BFF]" />
+                      <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">
                         Recent Expenses
                       </h2>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2.5 py-1 rounded-full">
+                    <div className="flex items-center justify-between sm:space-x-3">
+                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2 sm:px-2.5 py-1 rounded-full">
                         {expenses.length}
                       </span>
                       <button
                         onClick={() => setShowExpenseModal(true)}
-                        className="btn-primary text-xs px-3 py-1.5 inline-flex items-center space-x-1"
+                        className="btn-primary text-xs px-2 sm:px-3 py-1 sm:py-1.5 inline-flex items-center space-x-1 ml-2"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Add</span>
+                        <span className="hidden sm:inline">Add</span>
                       </button>
                     </div>
                   </div>
 
                   {expenses.length === 0 ? (
-                    <div className="text-center py-12">
-                      <CreditCard className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
-                      <p className="text-[#476788] mb-4">
+                    <div className="text-center py-8 sm:py-12">
+                      <CreditCard className="w-10 h-10 sm:w-12 sm:h-12 text-[#A6BBD1] mx-auto mb-3 sm:mb-4" />
+                      <p className="text-sm sm:text-base text-[#476788] mb-3 sm:mb-4">
                         No expenses tracked yet
                       </p>
                       <button
                         onClick={() => setShowExpenseModal(true)}
-                        className="btn-primary inline-flex items-center space-x-2"
+                        className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
                       >
                         <Plus className="w-4 h-4" />
                         <span>Add Your First Expense</span>
@@ -578,7 +590,7 @@ export default function DashboardPage() {
                       ))}
                       {expenses.length > 5 && (
                         <div className="text-center pt-4">
-                          <button className="text-[#006BFF] hover:text-[#0052CC] text-sm font-medium transition-colors">
+                          <button className="text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm font-medium transition-colors">
                             View All Expenses →
                           </button>
                         </div>

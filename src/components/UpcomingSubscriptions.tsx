@@ -1,26 +1,78 @@
-import { Calendar, AlertCircle } from "lucide-react";
+import { Calendar, AlertCircle, Edit, X, MoreVertical } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 interface Company {
   _id: string;
   name: string;
+  industry: string;
+  description?: string;
+  address: {
+    street?: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+  };
+  contactInfo: {
+    email: string;
+    phone?: string;
+    website?: string;
+  };
+  createdAt: string;
 }
 
 interface Expense {
   _id: string;
   name: string;
+  description?: string;
   amount: number;
+  category: string;
+  tags?: string[];
+  expenseType: string;
+  frequency?: string;
+  startDate?: string;
   nextBillingDate?: string;
   company: Company;
-  category: string;
+  isActive: boolean;
+  receiptUrl?: string;
+  receiptS3Key?: string;
+  receiptFileName?: string;
+  receiptContentType?: string;
+  comments: Array<{
+    text: string;
+    createdAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UpcomingSubscriptionsProps {
   expenses: Expense[];
+  onEdit?: (expense: Expense) => void;
+  onCancel?: (expenseId: string) => void;
+  onViewDetails?: (expenseId: string) => void;
 }
 
 export default function UpcomingSubscriptions({
   expenses,
+  onEdit,
+  onCancel,
+  onViewDetails,
 }: UpcomingSubscriptionsProps) {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
   const upcomingExpenses = expenses
     .filter((expense) => expense.nextBillingDate)
     .sort(
@@ -125,6 +177,62 @@ export default function UpcomingSubscriptions({
                 >
                   {statusText}
                 </span>
+                
+                {/* Action Buttons */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() =>
+                      setOpenDropdown(openDropdown === expense._id ? null : expense._id)
+                    }
+                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                    title="Actions"
+                  >
+                    <MoreVertical className="w-4 h-4 text-gray-600" />
+                  </button>
+                  
+                  {openDropdown === expense._id && (
+                    <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                      {onViewDetails && (
+                        <button
+                          onClick={() => {
+                            onViewDetails(expense._id);
+                            setOpenDropdown(null);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          <span>View Details</span>
+                        </button>
+                      )}
+                      {onEdit && (
+                        <button
+                          onClick={() => {
+                            onEdit(expense);
+                            setOpenDropdown(null);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                      {onCancel && (
+                        <button
+                          onClick={() => {
+                            if (confirm('Are you sure you want to cancel this subscription?')) {
+                              onCancel(expense._id);
+                            }
+                            setOpenDropdown(null);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                        >
+                          <X className="w-4 h-4" />
+                          <span>Cancel</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );

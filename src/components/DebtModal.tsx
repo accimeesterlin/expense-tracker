@@ -5,8 +5,6 @@ import {
   X,
   AlertTriangle,
   Calendar,
-  CreditCard,
-  Building2,
 } from "lucide-react";
 
 interface PaymentMethod {

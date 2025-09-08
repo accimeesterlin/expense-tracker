@@ -93,7 +93,7 @@ const states = [
 ];
 
 export default function CompanySettingsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const params = useParams();
   const companyId = params.id as string;

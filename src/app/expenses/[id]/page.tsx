@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Edit,
@@ -551,9 +552,11 @@ export default function ExpenseDetailPage() {
 
                 {expense.receiptUrl.startsWith("data:image") ? (
                   <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-                    <img
+                    <Image
                       src={expense.receiptUrl}
                       alt="Receipt"
+                      width={400}
+                      height={384}
                       className="max-w-full h-auto max-h-96 object-contain"
                     />
                   </div>

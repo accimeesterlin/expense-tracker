@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build search filters
-    const searchFilters: Record<string, any> = { userId: session.user.id };
+    const searchFilters: Record<string, unknown> = { userId: session.user.id };
 
     // Text search
     if (query) {
@@ -119,10 +119,10 @@ export async function GET(request: NextRequest) {
     if (minAmount || maxAmount) {
       searchFilters.amount = {};
       if (minAmount) {
-        searchFilters.amount.$gte = parseFloat(minAmount);
+        (searchFilters.amount as { $gte?: number }).$gte = parseFloat(minAmount);
       }
       if (maxAmount) {
-        searchFilters.amount.$lte = parseFloat(maxAmount);
+        (searchFilters.amount as { $lte?: number }).$lte = parseFloat(maxAmount);
       }
     }
 
@@ -130,10 +130,10 @@ export async function GET(request: NextRequest) {
     if (startDate || endDate) {
       searchFilters.createdAt = {};
       if (startDate) {
-        searchFilters.createdAt.$gte = new Date(startDate);
+        (searchFilters.createdAt as { $gte?: Date }).$gte = new Date(startDate);
       }
       if (endDate) {
-        searchFilters.createdAt.$lte = new Date(endDate);
+        (searchFilters.createdAt as { $lte?: Date }).$lte = new Date(endDate);
       }
     }
 
@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     if (type === "companies" || type === "all") {
       // Search companies
-      const companyFilters: Record<string, any> = { userId: session.user.id };
+      const companyFilters: Record<string, unknown> = { userId: session.user.id };
 
       if (query) {
         const searchRegex = new RegExp(query, "i");

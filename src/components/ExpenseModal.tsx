@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CreditCard, FileText } from "lucide-react";
+import { X, CreditCard, FileText, Camera } from "lucide-react";
 import NextImage from "next/image";
 
 interface Company {
@@ -56,18 +56,6 @@ interface ExpenseModalProps {
   onSuccess: (expense: Expense) => void;
 }
 
-const categories = [
-  "Software & Subscriptions",
-  "Office & Supplies",
-  "Travel & Entertainment",
-  "Marketing & Advertising",
-  "Professional Services",
-  "Insurance",
-  "Utilities",
-  "Rent & Leasing",
-  "Equipment",
-  "Other",
-];
 
 const expenseTypes = [
   { value: "one-time", label: "One-time" },
@@ -115,6 +103,7 @@ export default function ExpenseModal({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [scanningReceipt, setScanningReceipt] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Check if user has companies
   const hasCompanies = companies.length > 0;
@@ -146,8 +135,9 @@ export default function ExpenseModal({
     }
   }, [expense, companies, hasCompanies]);
 
-  // Reset showAdvanced for new expenses
+  // Set mounted state and reset showAdvanced for new expenses
   useEffect(() => {
+    setMounted(true);
     if (!expense) {
       setShowAdvanced(false);
     }
@@ -501,12 +491,44 @@ export default function ExpenseModal({
               {isEditing ? "Edit Expense" : "Add New Expense"}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* Quick Receipt Upload */}
+            <label 
+              htmlFor="quick-receipt-upload"
+              className="p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors cursor-pointer"
+              title="Quick receipt upload"
+            >
+              <Camera className="w-5 h-5" />
+              <input
+                id="quick-receipt-upload"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0] || null;
+                  if (file) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      receipt: file,
+                      removeReceipt: false,
+                    }));
+
+                    // Create preview URL
+                    if (file.type.startsWith("image/")) {
+                      const url = URL.createObjectURL(file);
+                      setPreviewUrl(url);
+                    }
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={onClose}
+              className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Form */}
@@ -648,7 +670,7 @@ export default function ExpenseModal({
               )}
 
               {/* Advanced Options Toggle */}
-              {!isEditing && (
+              {mounted && !isEditing && (
                 <div className="border-t border-[#E5E7EB] pt-4">
                   <button
                     type="button"
@@ -670,7 +692,7 @@ export default function ExpenseModal({
               )}
 
               {/* Advanced Fields - Show when editing or when toggle is on */}
-              {(showAdvanced || isEditing) && (
+              {mounted && (showAdvanced || isEditing) && (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-[#0B3558] mb-2">

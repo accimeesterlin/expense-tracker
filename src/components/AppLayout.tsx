@@ -84,7 +84,9 @@ export default function AppLayout({
         </header>
 
         {/* Page content */}
-        <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-full overflow-x-hidden">{children}</div>
+        </div>
 
         {/* Settings Modal */}
         {showSettingsModal && (

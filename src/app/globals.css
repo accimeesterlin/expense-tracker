@@ -90,6 +90,18 @@ body {
   z-index: 10;
 }
 
+/* Ensure proper mobile responsiveness for icon inputs */
+@media (max-width: 640px) {
+  .input-field-with-icon input {
+    padding-left: 40px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .input-field-with-icon .icon {
+    left: 12px;
+  }
+}
+
 .card {
   background: white;
   border-radius: 12px;

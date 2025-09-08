@@ -114,39 +114,40 @@ export default function FinancialDashboard({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Net Worth & Cash Flow Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Net Worth</p>
-              <p className="text-3xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Net Worth</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 truncate" title={formatCurrency(stats.summary.netWorth)}>
                 {formatCurrency(stats.summary.netWorth)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <PiggyBank className="w-6 h-6 text-blue-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center ml-2 sm:ml-3">
+              <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
                 Monthly Cash Flow
               </p>
               <p
-                className={`text-3xl font-bold ${getCashFlowColor(
+                className={`text-2xl sm:text-3xl font-bold truncate ${getCashFlowColor(
                   stats.summary.monthlyCashFlow
                 )}`}
+                title={formatCurrency(stats.summary.monthlyCashFlow)}
               >
                 {formatCurrency(stats.summary.monthlyCashFlow)}
               </p>
             </div>
             <div
-              className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ml-2 sm:ml-3 ${
                 stats.summary.monthlyCashFlow > 0
                   ? "bg-green-100"
                   : stats.summary.monthlyCashFlow < 0
@@ -161,77 +162,77 @@ export default function FinancialDashboard({
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Assets</p>
-              <p className="text-3xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Assets</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 truncate" title={formatCurrency(stats.summary.totalAssets)}>
                 {formatCurrency(stats.summary.totalAssets)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center ml-2 sm:ml-3">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Financial Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-              <TrendingUp className="w-5 h-5 text-green-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Income</p>
-              <p className="text-xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Income</p>
+              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={formatCurrency(stats.summary.totalIncome)}>
                 {formatCurrency(stats.summary.totalIncome)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-              <TrendingDown className="w-5 h-5 text-red-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4">
+              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
                 Total Expenses
               </p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={formatCurrency(stats.summary.totalExpenses)}>
                 {formatCurrency(stats.summary.totalExpenses)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Debt</p>
-              <p className="text-xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Debt</p>
+              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={formatCurrency(stats.summary.totalDebt)}>
                 {formatCurrency(stats.summary.totalDebt)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 col-span-2 lg:col-span-1">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-              <CreditCard className="w-5 h-5 text-blue-600" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
                 Payment Methods
               </p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-lg sm:text-xl font-bold text-gray-900">
                 {stats.counts.paymentMethods}
               </p>
             </div>
@@ -240,41 +241,41 @@ export default function FinancialDashboard({
       </div>
 
       {/* Upcoming Payments */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <Calendar className="w-6 h-6 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
             Upcoming Payments (30 days)
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <TrendingDown className="w-6 h-6 text-red-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="text-center p-3 sm:p-4 bg-red-50 rounded-lg">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
+              <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
             </div>
-            <p className="text-sm font-medium text-gray-600">Expenses Due</p>
-            <p className="text-2xl font-bold text-red-600">
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Expenses Due</p>
+            <p className="text-xl sm:text-2xl font-bold text-red-600">
               {stats.upcoming.expenses}
             </p>
           </div>
 
-          <div className="text-center p-4 bg-orange-50 rounded-lg">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6 text-orange-600" />
+          <div className="text-center p-3 sm:p-4 bg-orange-50 rounded-lg">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
             </div>
-            <p className="text-sm font-medium text-gray-600">Debt Payments</p>
-            <p className="text-2xl font-bold text-orange-600">
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Debt Payments</p>
+            <p className="text-xl sm:text-2xl font-bold text-orange-600">
               {stats.upcoming.debtPayments}
             </p>
           </div>
 
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+          <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg sm:col-span-2 lg:col-span-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             </div>
-            <p className="text-sm font-medium text-gray-600">Income Expected</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-xs sm:text-sm font-medium text-gray-600">Income Expected</p>
+            <p className="text-xl sm:text-2xl font-bold text-green-600">
               {stats.upcoming.income}
             </p>
           </div>
@@ -282,39 +283,39 @@ export default function FinancialDashboard({
       </div>
 
       {/* Monthly Recurring Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Monthly Income
             </h3>
-            <TrendingUp className="w-5 h-5 text-green-600" />
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
           </div>
-          <p className="text-2xl font-bold text-green-600">
+          <p className="text-xl sm:text-2xl font-bold text-green-600 truncate" title={formatCurrency(stats.summary.monthlyRecurringIncome)}>
             {formatCurrency(stats.summary.monthlyRecurringIncome)}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Monthly Expenses
             </h3>
-            <TrendingDown className="w-5 h-5 text-red-600" />
+            <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
           </div>
-          <p className="text-2xl font-bold text-red-600">
+          <p className="text-xl sm:text-2xl font-bold text-red-600 truncate" title={formatCurrency(stats.summary.monthlyRecurringExpenses)}>
             {formatCurrency(stats.summary.monthlyRecurringExpenses)}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
               Monthly Debt
             </h3>
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
+            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
           </div>
-          <p className="text-2xl font-bold text-orange-600">
+          <p className="text-xl sm:text-2xl font-bold text-orange-600 truncate" title={formatCurrency(stats.summary.monthlyDebtPayments)}>
             {formatCurrency(stats.summary.monthlyDebtPayments)}
           </p>
         </div>

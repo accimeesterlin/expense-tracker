@@ -9,8 +9,6 @@ import {
   Calendar,
   TrendingUp,
   CheckCircle,
-  Circle,
-  Flag,
   Edit,
   Trash2,
 } from "lucide-react";
@@ -48,7 +46,7 @@ interface Goal {
 }
 
 export default function GoalsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,23 +171,23 @@ export default function GoalsPage() {
 
   return (
     <AppLayout title="Goals">
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <Target className="w-8 h-8 text-[#006BFF]" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Target className="w-6 h-6 sm:w-8 sm:h-8 text-[#006BFF]" />
             <div>
-              <h1 className="text-2xl font-semibold text-[#0B3558]">
+              <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558]">
                 Financial Goals
               </h1>
-              <p className="text-sm text-[#476788]">
+              <p className="text-xs sm:text-sm text-[#476788]">
                 Set and track your financial objectives
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="btn-primary inline-flex items-center space-x-2"
+            className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
           >
             <Plus className="w-4 h-4" />
             <span>Create Goal</span>
@@ -209,93 +207,94 @@ export default function GoalsPage() {
 
         {/* Goals List */}
         {goals.length === 0 ? (
-          <div className="card p-12 text-center">
-            <Target className="w-16 h-16 text-[#A6BBD1] mx-auto mb-8" />
-            <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+          <div className="card p-8 sm:p-12 text-center">
+            <Target className="w-12 h-12 sm:w-16 sm:h-16 text-[#A6BBD1] mx-auto mb-4 sm:mb-8" />
+            <h3 className="text-base sm:text-lg font-medium text-[#0B3558] mb-2">
               No goals yet
             </h3>
-            <p className="text-[#476788] mb-6">
+            <p className="text-sm sm:text-base text-[#476788] mb-4 sm:mb-6">
               Set your first financial goal to start tracking your progress
             </p>
             <button
               onClick={() => setShowModal(true)}
-              className="btn-primary inline-flex items-center space-x-2"
+              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
             >
               <Plus className="w-4 h-4" />
               <span>Create Your First Goal</span>
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {goals.map((goal) => (
-              <div key={goal._id} className="card p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">
+              <div key={goal._id} className="card p-4 sm:p-6">
+                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                  <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                    <span className="text-xl sm:text-2xl flex-shrink-0">
                       {getGoalTypeIcon(goal.goalType)}
                     </span>
-                    <div>
-                      <h3 className="font-semibold text-[#0B3558]">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-[#0B3558] text-sm sm:text-base truncate">
                         {goal.name}
                       </h3>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                          className={`px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs font-medium ${getPriorityColor(
                             goal.priority
                           )}`}
                         >
                           {goal.priority}
                         </span>
                         {goal.isCompleted && (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
                     <button
                       onClick={() => handleEdit(goal)}
                       className="p-1 text-[#476788] hover:text-[#0B3558] rounded"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(goal)}
                       className="p-1 text-[#476788] hover:text-red-600 rounded"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#476788]">Current</span>
-                    <span className="font-medium text-[#0B3558]">
+                    <span className="text-xs sm:text-sm text-[#476788]">Current</span>
+                    <span className="font-medium text-[#0B3558] text-xs sm:text-sm truncate ml-2" title={formatCurrency(goal.currentAmount)}>
                       {formatCurrency(goal.currentAmount)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#476788]">Target</span>
-                    <span className="font-medium text-[#0B3558]">
+                    <span className="text-xs sm:text-sm text-[#476788]">Target</span>
+                    <span className="font-medium text-[#0B3558] text-xs sm:text-sm truncate ml-2" title={formatCurrency(goal.targetAmount)}>
                       {formatCurrency(goal.targetAmount)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#476788]">Remaining</span>
+                    <span className="text-xs sm:text-sm text-[#476788]">Remaining</span>
                     <span
-                      className={`font-medium ${
+                      className={`font-medium text-xs sm:text-sm truncate ml-2 ${
                         goal.remainingAmount <= 0
                           ? "text-green-600"
                           : "text-[#0B3558]"
                       }`}
+                      title={formatCurrency(goal.remainingAmount)}
                     >
                       {formatCurrency(goal.remainingAmount)}
                     </span>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-[#476788]">Progress</span>
                       <span
@@ -308,9 +307,9 @@ export default function GoalsPage() {
                         {Math.round(goal.percentageCompleted)}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
+                        className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                           goal.percentageCompleted >= 100
                             ? "bg-green-500"
                             : "bg-[#006BFF]"
@@ -322,15 +321,15 @@ export default function GoalsPage() {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-[#E5E7EB] space-y-2">
-                    <div className="flex justify-between items-center text-xs text-[#476788]">
+                  <div className="pt-2 border-t border-[#E5E7EB] space-y-1.5 sm:space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0 text-xs text-[#476788]">
                       <span className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
                         <span>{goal.daysRemaining} days left</span>
                       </span>
                       <span className="flex items-center space-x-1">
-                        <TrendingUp className="w-3 h-3" />
-                        <span>
+                        <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate" title={`${formatCurrency(goal.requiredMonthlySavings)}/month`}>
                           {formatCurrency(goal.requiredMonthlySavings)}/month
                         </span>
                       </span>
