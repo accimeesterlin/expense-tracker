@@ -38,10 +38,10 @@ export default function AppLayout({
                 >
                   <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0">
-                  <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0">
+                  <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 lg:w-6 lg:h-6 text-white" />
                 </div>
-                <h1 className="text-base sm:text-xl lg:text-2xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
+                <h1 className="text-sm sm:text-base lg:text-xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
                   ExpenseTracker
                 </h1>
                 <h1 className="text-xl lg:text-2xl font-semibold text-[#0B3558] hidden lg:block truncate min-w-0">
