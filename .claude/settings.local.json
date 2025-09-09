@@ -11,7 +11,8 @@
       "Bash(yarn build)",
       "mcp__ide__getDiagnostics",
       "Bash(npm show:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(touch:*)"
     ],
     "deny": [],
     "ask": [],

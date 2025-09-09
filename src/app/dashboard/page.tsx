@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   PiggyBank,
   Menu,
+  Scan,
 } from "lucide-react";
 import CompanyModal from "@/components/CompanyModal";
 import ExpenseModal from "@/components/ExpenseModal";
@@ -32,132 +33,8 @@ import AssetModal from "@/components/AssetModal";
 import SettingsModal from "@/components/SettingsModal";
 import GlobalSearch from "@/components/GlobalSearch";
 import Sidebar from "@/components/Sidebar";
-
-interface Company {
-  _id: string;
-  name: string;
-  industry: string;
-  description?: string;
-  address: {
-    street?: string;
-    city: string;
-    state: string;
-    zipCode?: string;
-  };
-  contactInfo: {
-    email: string;
-    phone?: string;
-    website?: string;
-  };
-  createdAt: string;
-}
-
-interface Expense {
-  _id: string;
-  name: string;
-  description?: string;
-  amount: number;
-  category: string;
-  tags?: string[];
-  expenseType: string;
-  frequency?: string;
-  startDate?: string;
-  nextBillingDate?: string;
-  company: Company;
-  isActive: boolean;
-  receiptUrl?: string;
-  receiptS3Key?: string;
-  receiptFileName?: string;
-  receiptContentType?: string;
-  comments: Array<{
-    text: string;
-    createdAt: string;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PaymentMethod {
-  _id: string;
-  name: string;
-  type:
-    | "credit_card"
-    | "debit_card"
-    | "bank_account"
-    | "digital_wallet"
-    | "other";
-  provider?: string;
-  lastFourDigits?: string;
-  expiryDate?: string;
-  isDefault: boolean;
-  metadata?: {
-    cardholderName?: string;
-    bankName?: string;
-  };
-}
-
-interface Income {
-  _id: string;
-  source: string;
-  description?: string;
-  amount: number;
-  currency: string;
-  frequency: string;
-  category: string;
-  paymentMethod?: PaymentMethod;
-  company?: Company;
-  receivedDate: string;
-  nextPaymentDate?: string;
-  isRecurring: boolean;
-  isActive: boolean;
-  tags: string[];
-  notes?: string;
-}
-
-interface Debt {
-  _id: string;
-  name: string;
-  description?: string;
-  originalAmount: number;
-  currentBalance: number;
-  currency: string;
-  type: string;
-  interestRate?: number;
-  minimumPayment: number;
-  paymentFrequency: string;
-  nextPaymentDate: string;
-  paymentMethod?: PaymentMethod;
-  creditor?: string;
-  accountNumber?: string;
-  isActive: boolean;
-  tags: string[];
-  notes?: string;
-}
-
-interface Asset {
-  _id: string;
-  name: string;
-  description?: string;
-  type: string;
-  category: string;
-  currentValue: number;
-  currency: string;
-  purchaseDate?: string;
-  purchasePrice?: number;
-  appreciationRate?: number;
-  isLiquid: boolean;
-  location?: string;
-  metadata?: {
-    institution?: string;
-    make?: string;
-    model?: string;
-    year?: number;
-    address?: string;
-  };
-  isActive: boolean;
-  tags: string[];
-  notes?: string;
-}
+import ReceiptScannerModal from "@/components/ReceiptScannerModal";
+import type { Company, Expense, PaymentMethod, Income, Debt, Asset } from "@/types/shared";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -173,6 +50,7 @@ export default function DashboardPage() {
   const [showSimpleDebtModal, setShowSimpleDebtModal] = useState(false);
   const [showAssetModal, setShowAssetModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showReceiptScannerModal, setShowReceiptScannerModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
     undefined
@@ -314,6 +192,49 @@ export default function DashboardPage() {
     setSelectedAsset(null);
   };
 
+  const handleReceiptScanned = (expenseData: {
+    name: string;
+    description: string;
+    amount: number;
+    category: string;
+    tags: string[];
+    expenseType: string;
+    receiptUrl: string;
+    receiptS3Key: string;
+    receiptFileName: string;
+    receiptContentType: string;
+  }) => {
+    // Pre-fill the expense modal with scanned data
+    setSelectedExpense({
+      _id: '',
+      name: expenseData.name,
+      description: expenseData.description,
+      amount: expenseData.amount,
+      category: expenseData.category,
+      tags: expenseData.tags,
+      expenseType: expenseData.expenseType,
+      frequency: '',
+      startDate: '',
+      nextBillingDate: '',
+      company: companies[0] || {
+        _id: 'temp',
+        name: 'Unknown Company',
+        industry: 'Other',
+        createdAt: new Date().toISOString()
+      },
+      isActive: true,
+      receiptUrl: expenseData.receiptUrl,
+      receiptS3Key: expenseData.receiptS3Key,
+      receiptFileName: expenseData.receiptFileName,
+      receiptContentType: expenseData.receiptContentType,
+      comments: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    setShowReceiptScannerModal(false);
+    setShowExpenseModal(true);
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
@@ -425,10 +346,10 @@ export default function DashboardPage() {
               <DashboardStats companies={companies} expenses={expenses} />
 
               {/* Quick Actions - Essential Only */}
-              <div className="mt-3 sm:mt-4 lg:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4 w-full">
+              <div className="mt-3 sm:mt-4 lg:mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 w-full">
                 <button
                   onClick={() => setShowSimpleIncomeModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200 flex-1 sm:max-w-xs"
+                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -447,7 +368,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowExpenseModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200 flex-1 sm:max-w-xs"
+                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -459,6 +380,25 @@ export default function DashboardPage() {
                       </h3>
                       <p className="text-xs text-blue-600 truncate hidden sm:block">
                         Track business expenses quickly
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setShowReceiptScannerModal(true)}
+                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-purple-50 hover:bg-purple-100 border-purple-200 sm:col-span-2 lg:col-span-1"
+                >
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Scan className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-purple-800 truncate">
+                        Scan Receipt
+                      </h3>
+                      <p className="text-xs text-purple-600 truncate hidden sm:block">
+                        Auto-extract expense from receipt
                       </p>
                     </div>
                   </div>
@@ -613,6 +553,16 @@ export default function DashboardPage() {
           <div className="relative">
             {showMobileMenu && (
               <div className="absolute bottom-14 right-0 space-y-2">
+                <button
+                  onClick={() => {
+                    setShowReceiptScannerModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-9 h-9 bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-purple-700 transition-colors"
+                  title="Scan Receipt"
+                >
+                  <Scan className="w-3.5 h-3.5" />
+                </button>
                 <button
                   onClick={() => {
                     setShowAssetModal(true);
@@ -783,6 +733,14 @@ export default function DashboardPage() {
             isOpen={showSimpleDebtModal}
             onClose={() => setShowSimpleDebtModal(false)}
             onSuccess={handleDebtCreated}
+          />
+        )}
+
+        {showReceiptScannerModal && (
+          <ReceiptScannerModal
+            isOpen={showReceiptScannerModal}
+            onClose={() => setShowReceiptScannerModal(false)}
+            onExpenseCreated={handleReceiptScanned}
           />
         )}
       </div>

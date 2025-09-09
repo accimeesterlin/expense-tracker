@@ -49,56 +49,46 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Recalculate next billing date if frequency or start date changed
+    // Handle nextBillingDate for subscription and recurring expenses
     if (
-      body.expenseType === "subscription" &&
+      (body.expenseType === "subscription" || body.expenseType === "recurring") &&
       body.frequency &&
-      body.startDate
+      body.startDate &&
+      !body.nextBillingDate
     ) {
       const startDate = new Date(body.startDate);
-      let nextBillingDate = new Date(startDate);
+      const nextBillingDate = new Date(startDate);
 
       // Calculate next billing date based on frequency
       switch (body.frequency) {
         case "monthly":
-          nextBillingDate = new Date(
-            nextBillingDate.getFullYear(),
-            nextBillingDate.getMonth() + 1,
-            nextBillingDate.getDate()
-          );
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
           break;
         case "quarterly":
-          nextBillingDate = new Date(
-            nextBillingDate.getFullYear(),
-            nextBillingDate.getMonth() + 3,
-            nextBillingDate.getDate()
-          );
+          nextBillingDate.setMonth(nextBillingDate.getMonth() + 3);
           break;
         case "yearly":
-          nextBillingDate = new Date(
-            nextBillingDate.getFullYear() + 1,
-            nextBillingDate.getMonth(),
-            nextBillingDate.getDate()
-          );
+          nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
           break;
         case "weekly":
-          nextBillingDate = new Date(
-            nextBillingDate.getTime() + 7 * 24 * 60 * 60 * 1000
-          );
+          nextBillingDate.setDate(nextBillingDate.getDate() + 7);
           break;
         case "daily":
-          nextBillingDate = new Date(
-            nextBillingDate.getTime() + 24 * 60 * 60 * 1000
-          );
+          nextBillingDate.setDate(nextBillingDate.getDate() + 1);
           break;
       }
 
       body.nextBillingDate = nextBillingDate;
     }
 
+    // Remove undefined fields to prevent validation errors
+    const cleanedBody = Object.fromEntries(
+      Object.entries(body).filter(([, value]) => value !== undefined)
+    );
+
     const expense = await Expense.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      body,
+      cleanedBody,
       {
         new: true,
         runValidators: true,

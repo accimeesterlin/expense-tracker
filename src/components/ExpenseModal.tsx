@@ -393,10 +393,14 @@ export default function ExpenseModal({
         };
       }
 
+      // Ensure we always have a description (required field)
+      const description = formData.description.trim() || formData.name.trim();
+      
+      // Build expense data with proper field validation
       const expenseData = {
         company: formData.company,
         name: formData.name.trim(),
-        description: formData.description.trim() || formData.name.trim(),
+        description,
         amount: parseFloat(formData.amount),
         currency: "USD",
         category: formData.category,
@@ -411,6 +415,37 @@ export default function ExpenseModal({
         tags,
         ...receiptData,
       };
+
+      // Add nextBillingDate for subscription/recurring expenses
+      if (
+        (formData.expenseType === "subscription" ||
+          formData.expenseType === "recurring") &&
+        formData.startDate &&
+        formData.frequency
+      ) {
+        const startDate = new Date(formData.startDate);
+        const nextBillingDate = new Date(startDate);
+
+        switch (formData.frequency) {
+          case "monthly":
+            nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+            break;
+          case "quarterly":
+            nextBillingDate.setMonth(nextBillingDate.getMonth() + 3);
+            break;
+          case "yearly":
+            nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
+            break;
+          case "weekly":
+            nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+            break;
+          case "daily":
+            nextBillingDate.setDate(nextBillingDate.getDate() + 1);
+            break;
+        }
+
+        expenseData.nextBillingDate = nextBillingDate.toISOString();
+      }
 
       const url = expense ? `/api/expenses/${expense._id}` : "/api/expenses";
       const method = expense ? "PUT" : "POST";
@@ -485,7 +520,7 @@ export default function ExpenseModal({
         }
       }}
     >
-      <div className="card max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
+      <div className="card max-w-4xl w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">

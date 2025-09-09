@@ -1,274 +1,459 @@
-# AWS S3 Configuration for Receipt Uploads
+# AWS S3 Setup Guide for Receipt Scanning
 
-This guide will help you configure AWS S3 bucket and IAM permissions for uploading and storing expense receipts.
+This guide will help you set up AWS S3 with proper permissions and policies for the receipt scanning functionality in your expense tracker application.
 
 ## Prerequisites
 
 - AWS Account
 - AWS CLI installed (optional but recommended)
-- Basic understanding of AWS S3 and IAM
+- Basic understanding of AWS IAM
 
 ## Step 1: Create S3 Bucket
 
-1. **Log into AWS Console**
-   - Go to [AWS Console](https://aws.amazon.com/console/)
-   - Navigate to S3 service
+### Using AWS Console:
 
-2. **Create a New Bucket**
-   - Click "Create bucket"
-   - Choose a unique bucket name (e.g., `your-company-expense-receipts`)
-   - Select your preferred AWS Region
-   - Keep "Block all public access" enabled for security
+1. **Sign in to AWS Console** and navigate to S3
+2. **Click "Create bucket"**
+3. **Configure bucket settings:**
+   - **Bucket name:** `expense-tracker-receipts-[your-unique-suffix]` 
+     - Example: `expense-tracker-receipts-prod-2024`
+     - Must be globally unique
+   - **Region:** Choose your preferred region (e.g., `us-east-1`)
+   - **Object Ownership:** ACLs disabled (recommended)
+   - **Block Public Access:** Keep all boxes checked (recommended for security)
+   - **Bucket Versioning:** Enable (optional, helps with data recovery)
+   - **Server-side encryption:** Enable with SSE-S3 (recommended)
 
-3. **Configure Bucket Settings**
-   - Enable "Bucket Versioning" (recommended)
-   - Enable "Server-side encryption" with Amazon S3 managed keys (SSE-S3)
-   - Click "Create bucket"
+4. **Click "Create bucket"**
 
-## Step 2: Configure CORS Policy
+### Using AWS CLI:
+```bash
+# Replace with your unique bucket name and region
+aws s3 mb s3://expense-tracker-receipts-prod-2024 --region us-east-1
+```
 
-1. **Navigate to your bucket**
-2. **Go to "Permissions" tab**
+## Step 2: Create IAM Policy
+
+### Method A: Using AWS Console
+
+1. **Navigate to IAM Console**
+2. **Click "Policies" → "Create Policy"**
+3. **Select JSON tab** and paste the following policy:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowReceiptOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::expense-tracker-receipts-prod-2024/*"
+            ]
+        },
+        {
+            "Sid": "AllowBucketOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+            ],
+            "Resource": [
+                "arn:aws:s3:::expense-tracker-receipts-prod-2024"
+            ]
+        }
+    ]
+}
+```
+
+4. **Name the policy:** `ExpenseTrackerReceiptsPolicy`
+5. **Add description:** Policy for expense tracker receipt upload and management
+6. **Click "Create policy"**
+
+### Method B: Using AWS CLI
+```bash
+# Save the policy to a file first
+cat > receipt-policy.json << 'EOF'
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowReceiptOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:PutObjectAcl",
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::expense-tracker-receipts-prod-2024/*"
+            ]
+        },
+        {
+            "Sid": "AllowBucketOperations",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+            ],
+            "Resource": [
+                "arn:aws:s3:::expense-tracker-receipts-prod-2024"
+            ]
+        }
+    ]
+}
+EOF
+
+# Create the policy
+aws iam create-policy \
+    --policy-name ExpenseTrackerReceiptsPolicy \
+    --policy-document file://receipt-policy.json
+```
+
+## Step 3: Create IAM User
+
+### Using AWS Console:
+
+1. **Navigate to IAM → Users**
+2. **Click "Create user"**
+3. **User details:**
+   - **User name:** `expense-tracker-receipts-user`
+   - **Provide user access to AWS Management Console:** Uncheck (this is a programmatic user)
+
+4. **Set permissions:**
+   - Select "Attach existing policies directly"
+   - Search for and select `ExpenseTrackerReceiptsPolicy`
+
+5. **Review and create user**
+
+6. **Create Access Keys:**
+   - Click on the created user
+   - Go to "Security credentials" tab
+   - Click "Create access key"
+   - Select "Application running outside AWS"
+   - **Save the Access Key ID and Secret Access Key securely**
+
+### Using AWS CLI:
+```bash
+# Create user
+aws iam create-user --user-name expense-tracker-receipts-user
+
+# Attach policy to user (replace with your actual policy ARN)
+aws iam attach-user-policy \
+    --user-name expense-tracker-receipts-user \
+    --policy-arn arn:aws:iam::YOUR_ACCOUNT_ID:policy/ExpenseTrackerReceiptsPolicy
+
+# Create access key
+aws iam create-access-key --user-name expense-tracker-receipts-user
+```
+
+## Step 4: Configure CORS Policy (Optional)
+
+If you plan to upload directly from the browser, configure CORS:
+
+1. **Go to your S3 bucket**
+2. **Navigate to "Permissions" tab**
 3. **Scroll to "Cross-origin resource sharing (CORS)"**
-4. **Add the following CORS configuration:**
+4. **Click "Edit" and add:**
 
 ```json
 [
     {
-        "AllowedHeaders": [
-            "*"
-        ],
-        "AllowedMethods": [
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "HEAD"
-        ],
+        "AllowedHeaders": ["*"],
+        "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
         "AllowedOrigins": [
             "http://localhost:3000",
-            "http://localhost:3002",
             "https://your-domain.com"
         ],
-        "ExposeHeaders": [
-            "ETag",
-            "x-amz-delete-marker",
-            "x-amz-id-2",
-            "x-amz-request-id",
-            "x-amz-server-side-encryption",
-            "x-amz-version-id"
-        ],
+        "ExposeHeaders": ["ETag"],
         "MaxAgeSeconds": 3000
     }
 ]
 ```
 
-## Step 3: Create IAM User for Programmatic Access
+## Step 5: Set Up Environment Variables
 
-1. **Navigate to IAM service**
-2. **Click "Users" → "Add user"**
-3. **Configure user:**
-   - Username: `expense-tracker-s3-user`
-   - Access type: ✅ Programmatic access
-   - Click "Next: Permissions"
-
-## Step 4: Create IAM Policy
-
-1. **Click "Attach existing policies directly"**
-2. **Click "Create policy"**
-3. **Choose "JSON" tab**
-4. **Add the following policy** (replace `your-bucket-name` with your actual bucket name):
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ListObjectsInBucket",
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket"
-            ],
-            "Resource": [
-                "arn:aws:s3:::your-bucket-name"
-            ]
-        },
-        {
-            "Sid": "AllowObjectActions",
-            "Effect": "Allow",
-            "Action": [
-                "s3:GetObject",
-                "s3:PutObject",
-                "s3:DeleteObject",
-                "s3:GetObjectVersion",
-                "s3:PutObjectAcl"
-            ],
-            "Resource": [
-                "arn:aws:s3:::your-bucket-name/*"
-            ]
-        }
-    ]
-}
-```
-
-5. **Click "Next: Tags" → "Next: Review"**
-6. **Name the policy:** `ExpenseTrackerS3Policy`
-7. **Click "Create policy"**
-
-## Step 5: Attach Policy to User
-
-1. **Go back to user creation**
-2. **Refresh policies and search for:** `ExpenseTrackerS3Policy`
-3. **Select the policy and click "Next: Tags"**
-4. **Click "Next: Review" → "Create user"**
-5. **⚠️ IMPORTANT:** Copy the Access Key ID and Secret Access Key
-
-## Step 6: Configure Environment Variables
-
-Add the following environment variables to your `.env.local` file:
+Create or update your `.env.local` file:
 
 ```bash
 # AWS S3 Configuration
+AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your_access_key_id_here
 AWS_SECRET_ACCESS_KEY=your_secret_access_key_here
-AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=your-bucket-name
-
-# Optional: Custom S3 endpoint (for LocalStack or other S3-compatible services)
-# AWS_S3_ENDPOINT=http://localhost:4566
+AWS_S3_BUCKET_NAME=expense-tracker-receipts-prod-2024
 ```
 
-## Step 7: Test the Configuration
+**⚠️ Security Note:** Never commit these credentials to version control. Use environment variables or AWS IAM roles in production.
 
-1. **Start your application:**
-   ```bash
-   npm run dev
-   ```
+## Step 6: Test the Configuration
 
-2. **Try uploading a receipt:**
-   - Create a new expense
-   - Click "Show advanced options"
-   - Upload a receipt image
-   - Check if the file appears in your S3 bucket
+Create a test script to verify everything works:
+
+```javascript
+// test-s3.js
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+async function testUpload() {
+  try {
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: 'test/test-file.txt',
+      Body: 'This is a test file',
+      ContentType: 'text/plain',
+    });
+
+    const result = await s3Client.send(command);
+    console.log('✅ Upload successful:', result);
+  } catch (error) {
+    console.error('❌ Upload failed:', error);
+  }
+}
+
+testUpload();
+```
+
+Run the test:
+```bash
+node test-s3.js
+```
 
 ## Security Best Practices
 
-### 1. Bucket Policies
-Consider adding a bucket policy for additional security:
+### 1. Least Privilege Principle
+- Grant only the minimum permissions required
+- Use resource-specific ARNs instead of wildcards when possible
+
+### 2. Access Key Security
+```bash
+# Rotate access keys regularly
+aws iam create-access-key --user-name expense-tracker-receipts-user
+aws iam delete-access-key --user-name expense-tracker-receipts-user --access-key-id OLD_KEY_ID
+```
+
+### 3. Use IAM Roles in Production
+For production deployments (EC2, Lambda, ECS), use IAM roles instead of access keys:
 
 ```json
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "DenyIncorrectEncryptionHeader",
-            "Effect": "Deny",
-            "Principal": "*",
-            "Action": "s3:PutObject",
-            "Resource": "arn:aws:s3:::your-bucket-name/*",
-            "Condition": {
-                "StringNotEquals": {
-                    "s3:x-amz-server-side-encryption": "AES256"
-                }
-            }
-        },
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+```
+
+### 4. Enable CloudTrail
+Monitor S3 API calls:
+```bash
+aws cloudtrail create-trail \
+    --name expense-tracker-s3-trail \
+    --s3-bucket-name your-cloudtrail-bucket
+```
+
+### 5. Set Up Lifecycle Policies
+Automatically delete old receipts or move to cheaper storage:
+
+```json
+{
+    "Rules": [
         {
-            "Sid": "DenyUnSecureCommunications",
-            "Effect": "Deny",
-            "Principal": "*",
-            "Action": "s3:*",
-            "Resource": [
-                "arn:aws:s3:::your-bucket-name/*",
-                "arn:aws:s3:::your-bucket-name"
-            ],
-            "Condition": {
-                "Bool": {
-                    "aws:SecureTransport": "false"
+            "ID": "ReceiptLifecycle",
+            "Status": "Enabled",
+            "Filter": {
+                "Prefix": "receipts/"
+            },
+            "Transitions": [
+                {
+                    "Days": 30,
+                    "StorageClass": "STANDARD_IA"
+                },
+                {
+                    "Days": 90,
+                    "StorageClass": "GLACIER"
                 }
+            ],
+            "Expiration": {
+                "Days": 2555
             }
         }
     ]
 }
 ```
 
-### 2. Lifecycle Policies
-Set up lifecycle rules to manage costs:
+## Monitoring and Alerts
 
-1. **Go to bucket → "Management" tab**
-2. **Create lifecycle rule:**
-   - Name: `ExpenseReceiptLifecycle`
-   - Apply to all objects
-   - Transition to IA after 30 days
-   - Transition to Glacier after 90 days
-   - Delete after 7 years (adjust as needed for compliance)
+### CloudWatch Metrics
+Monitor your bucket usage:
+- `BucketSizeBytes`
+- `NumberOfObjects`
+- Request metrics (GetObject, PutObject)
 
-### 3. Monitoring and Logging
-
-1. **Enable CloudTrail** for API logging
-2. **Set up CloudWatch** for monitoring
-3. **Configure S3 access logging** if needed
+### Cost Alerts
+Set up billing alerts for S3 usage to avoid unexpected charges.
 
 ## Troubleshooting
 
 ### Common Issues:
 
-1. **"Access Denied" Error:**
+1. **Access Denied Error:**
    - Check IAM policy permissions
-   - Verify bucket name in policy ARN
-   - Ensure CORS is configured correctly
+   - Verify bucket name in policy matches actual bucket
+   - Ensure access keys are correct
 
-2. **"Bucket not found" Error:**
-   - Verify bucket name in environment variables
-   - Check AWS region configuration
-   - Ensure bucket exists in the specified region
+2. **Bucket Not Found:**
+   - Verify bucket name and region
+   - Check if bucket exists in the correct AWS account
 
-3. **Upload timeout:**
-   - Check network connectivity
-   - Verify file size limits (default: 10MB)
-   - Check CORS configuration
+3. **CORS Issues:**
+   - Add your domain to CORS policy
+   - Check browser console for CORS errors
 
-### Environment Variables Check:
+4. **Large File Uploads:**
+   - Consider using multipart uploads for files > 100MB
+   - Implement progress tracking
 
-Create a test file to verify your configuration:
+### Debug Commands:
+```bash
+# Test AWS credentials
+aws sts get-caller-identity
 
+# List buckets
+aws s3 ls
+
+# Check bucket policy
+aws s3api get-bucket-policy --bucket your-bucket-name
+
+# Test upload
+aws s3 cp test-file.txt s3://your-bucket-name/test/
+```
+
+## Production Considerations
+
+### 1. Real OCR Integration Options
+
+The current implementation uses mock OCR. For production, consider:
+
+#### AWS Textract (Recommended)
+```bash
+# Add Textract permissions to your IAM policy
+{
+    "Effect": "Allow",
+    "Action": [
+        "textract:DetectDocumentText",
+        "textract:AnalyzeDocument"
+    ],
+    "Resource": "*"
+}
+```
+
+#### Google Cloud Vision API
 ```javascript
-// test-s3.js
-const AWS = require('aws-sdk');
+// Install Google Cloud Vision
+npm install @google-cloud/vision
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-});
+// Usage example
+const vision = require('@google-cloud/vision');
+const client = new vision.ImageAnnotatorClient();
 
-s3.listBuckets((err, data) => {
-  if (err) {
-    console.error('Error:', err);
-  } else {
-    console.log('Buckets:', data.Buckets);
-  }
+const [result] = await client.textDetection({
+  image: { content: buffer }
 });
 ```
 
-Run: `node test-s3.js`
+#### Azure Cognitive Services
+```javascript
+// Install Azure SDK
+npm install @azure/cognitiveservices-computervision
 
-## Cost Optimization
+// Usage example
+const { ComputerVisionClient } = require('@azure/cognitiveservices-computervision');
+const client = new ComputerVisionClient(endpoint, credentials);
+```
 
-- **Use appropriate storage classes** (Standard → IA → Glacier)
-- **Set up lifecycle policies** for automatic transitions
-- **Monitor usage** with AWS Cost Explorer
-- **Delete unused objects** regularly
-- **Use S3 Transfer Acceleration** only if needed
+### 2. Enhanced Security
 
-## Support
+#### Virus Scanning
+```bash
+# Add ClamAV Lambda function for file scanning
+aws lambda create-function \
+    --function-name scan-uploaded-receipts \
+    --runtime nodejs18.x \
+    --handler index.handler
+```
 
-If you encounter issues:
+#### Content-based Access Control
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::your-bucket/*",
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-server-side-encryption": "AES256"
+                }
+            }
+        }
+    ]
+}
+```
 
-1. Check AWS CloudTrail logs
-2. Review IAM policy permissions
-3. Verify environment variables
-4. Test with AWS CLI: `aws s3 ls s3://your-bucket-name`
+### 3. Cost Optimization
 
----
+#### Intelligent Tiering
+```bash
+# Enable Intelligent Tiering
+aws s3api put-bucket-intelligent-tiering-configuration \
+    --bucket your-bucket-name \
+    --id EntireBucket \
+    --intelligent-tiering-configuration Id=EntireBucket,Status=Enabled
+```
 
-**⚠️ Security Note:** Never commit AWS credentials to version control. Always use environment variables or AWS IAM roles for production deployments.
+#### Request Metrics
+```bash
+# Enable request metrics for cost tracking
+aws s3api put-bucket-metrics-configuration \
+    --bucket your-bucket-name \
+    --id EntireBucket \
+    --metrics-configuration Id=EntireBucket,Status=Enabled
+```
+
+## Summary
+
+Your S3 setup should now include:
+- ✅ Secure S3 bucket with proper naming
+- ✅ IAM policy with least-privilege permissions  
+- ✅ Dedicated IAM user for the application
+- ✅ Environment variables configured
+- ✅ CORS policy for browser uploads
+- ✅ Security best practices implemented
+- ✅ Production considerations documented
+
+The receipt scanning feature will now have secure, scalable cloud storage for all uploaded receipts with proper access controls and monitoring capabilities.
+
+**Important:** Remember to replace placeholder values (bucket names, account IDs, etc.) with your actual values before using these configurations.

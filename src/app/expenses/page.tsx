@@ -14,50 +14,7 @@ import {
 import AppLayout from "@/components/AppLayout";
 import ExpenseModal from "@/components/ExpenseModal";
 import ExpenseCard from "@/components/ExpenseCard";
-
-interface Company {
-  _id: string;
-  name: string;
-  industry: string;
-  description?: string;
-  address: {
-    street?: string;
-    city: string;
-    state: string;
-    zipCode?: string;
-  };
-  contactInfo: {
-    email: string;
-    phone?: string;
-    website?: string;
-  };
-  createdAt: string;
-}
-
-interface Expense {
-  _id: string;
-  name: string;
-  description?: string;
-  amount: number;
-  category: string;
-  tags?: string[];
-  expenseType: string;
-  frequency?: string;
-  startDate?: string;
-  nextBillingDate?: string;
-  company: Company;
-  isActive: boolean;
-  receiptUrl?: string;
-  receiptS3Key?: string;
-  receiptFileName?: string;
-  receiptContentType?: string;
-  comments: Array<{
-    text: string;
-    createdAt: string;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Company, Expense } from "@/types/shared";
 
 export default function ExpensesPage() {
   const { data: session, status } = useSession();
