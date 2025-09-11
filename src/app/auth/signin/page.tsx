@@ -12,46 +12,9 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [autoSignInEnabled, setAutoSignInEnabled] = useState(false);
+  const [autoSignInCompleted, setAutoSignInCompleted] = useState(false);
   const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError("Invalid email or password");
-      } else {
-        // Check if session was created successfully
-        const session = await getSession();
-        if (session) {
-          router.push("/");
-          router.refresh();
-        }
-      }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      await signIn("google", { callbackUrl: "/" });
-    } catch (error) {
-      setError("An error occurred with Google sign-in");
-      setIsLoading(false);
-    }
-  };
 
   const handleDemoSignIn = async () => {
     setIsLoading(true);
@@ -102,6 +65,53 @@ function SignInForm() {
     }
   };
 
+  // Auto sign-in effect
+  useEffect(() => {
+    if (autoSignInEnabled && !autoSignInCompleted && !isLoading) {
+      handleDemoSignIn();
+      setAutoSignInCompleted(true);
+    }
+  }, [autoSignInEnabled, autoSignInCompleted, isLoading]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password");
+      } else {
+        // Check if session was created successfully
+        const session = await getSession();
+        if (session) {
+          router.push("/");
+          router.refresh();
+        }
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signIn("google", { callbackUrl: "/" });
+    } catch (error) {
+      setError("An error occurred with Google sign-in");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-xs w-full">
@@ -120,6 +130,24 @@ function SignInForm() {
               {error}
             </div>
           )}
+
+          {/* Auto Sign-in Toggle */}
+          <div className="flex items-center justify-between mb-6">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoSignInEnabled}
+                onChange={(e) => setAutoSignInEnabled(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-600 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm text-gray-700">Auto sign-in with demo</span>
+            </label>
+            {autoSignInEnabled && (
+              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                Auto-signing in...
+              </span>
+            )}
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -196,14 +224,14 @@ function SignInForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+            <div className="grid grid-cols-1 gap-3 mt-4">
               <button
                 onClick={handleDemoSignIn}
                 disabled={isLoading}
                 className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 <ArrowRight className="w-4 h-4" />
-                <span>Demo Login</span>
+                <span>Quick Demo Sign-In</span>
               </button>
               
               <button

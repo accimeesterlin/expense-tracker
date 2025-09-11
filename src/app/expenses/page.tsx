@@ -66,7 +66,7 @@ function ExpensesPageContent() {
     // Set initial filters from URL parameters
     const categoryParam = searchParams.get("category");
     const tagParam = searchParams.get("tag");
-    
+
     if (categoryParam) {
       setSelectedCategories([categoryParam]);
     }
@@ -77,12 +77,13 @@ function ExpensesPageContent() {
 
   const fetchData = async () => {
     try {
-      const [expensesRes, companiesRes, categoriesRes, tagsRes] = await Promise.all([
-        fetch("/api/expenses"),
-        fetch("/api/companies"),
-        fetch("/api/categories"),
-        fetch("/api/tags"),
-      ]);
+      const [expensesRes, companiesRes, categoriesRes, tagsRes] =
+        await Promise.all([
+          fetch("/api/expenses"),
+          fetch("/api/companies"),
+          fetch("/api/categories"),
+          fetch("/api/tags"),
+        ]);
 
       if (expensesRes.ok) {
         const expensesData = await expensesRes.json();
@@ -96,12 +97,20 @@ function ExpensesPageContent() {
 
       if (categoriesRes.ok) {
         const categoriesData = await categoriesRes.json();
-        setCategories(Array.isArray(categoriesData) ? categoriesData.map((cat: any) => cat.name) : []);
+        setCategories(
+          Array.isArray(categoriesData)
+            ? categoriesData.map((cat: { name: string }) => cat.name)
+            : []
+        );
       }
 
       if (tagsRes.ok) {
         const tagsData = await tagsRes.json();
-        setTags(Array.isArray(tagsData) ? tagsData.map((tag: any) => tag.name) : []);
+        setTags(
+          Array.isArray(tagsData)
+            ? tagsData.map((tag: { name: string }) => tag.name)
+            : []
+        );
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -118,16 +127,26 @@ function ExpensesPageContent() {
         expense.company.name.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory =
-        selectedCategories.length === 0 || selectedCategories.includes(expense.category);
+        selectedCategories.length === 0 ||
+        selectedCategories.includes(expense.category);
       const matchesType =
-        selectedTypes.length === 0 || selectedTypes.includes(expense.expenseType);
+        selectedTypes.length === 0 ||
+        selectedTypes.includes(expense.expenseType);
       const matchesCompany =
-        selectedCompanies.length === 0 || selectedCompanies.includes(expense.company._id);
+        selectedCompanies.length === 0 ||
+        selectedCompanies.includes(expense.company._id);
       const matchesTag =
-        selectedTags.length === 0 || 
-        (expense.tags && expense.tags.some(tag => selectedTags.includes(tag)));
+        selectedTags.length === 0 ||
+        (expense.tags &&
+          expense.tags.some((tag) => selectedTags.includes(tag)));
 
-      return matchesSearch && matchesCategory && matchesType && matchesCompany && matchesTag;
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesType &&
+        matchesCompany &&
+        matchesTag
+      );
     });
 
     // Sort expenses
@@ -150,7 +169,15 @@ function ExpensesPageContent() {
     });
 
     setFilteredExpenses(filtered);
-  }, [expenses, searchTerm, selectedCategories, selectedTypes, selectedCompanies, selectedTags, sortBy]);
+  }, [
+    expenses,
+    searchTerm,
+    selectedCategories,
+    selectedTypes,
+    selectedCompanies,
+    selectedTags,
+    sortBy,
+  ]);
 
   useEffect(() => {
     filterAndSortExpenses();
@@ -204,7 +231,11 @@ function ExpensesPageContent() {
     }
   };
 
-  const handleQuickUpdate = async (expenseId: string, field: string, value: string) => {
+  const handleQuickUpdate = async (
+    expenseId: string,
+    field: string,
+    value: string
+  ) => {
     try {
       const response = await fetch(`/api/expenses/${expenseId}`, {
         method: "PUT",
@@ -259,15 +290,15 @@ function ExpensesPageContent() {
       const expenseCategories = expenses
         .map((expense) => expense.category)
         .filter((category) => category && category.trim() !== "");
-      
+
       const allCategories = [...new Set([...categories, ...expenseCategories])];
       return allCategories.sort();
     }
-    
+
     // Fallback to default categories if no database categories exist
     const defaultCategories = [
       "Software & Subscriptions",
-      "Office & Supplies", 
+      "Office & Supplies",
       "Travel & Entertainment",
       "Marketing & Advertising",
       "Professional Services",
@@ -275,16 +306,18 @@ function ExpensesPageContent() {
       "Utilities",
       "Rent & Leasing",
       "Equipment",
-      "Other"
+      "Other",
     ];
-    
+
     // Get categories from existing expenses
     const expenseCategories = expenses
       .map((expense) => expense.category)
       .filter((category) => category && category.trim() !== "");
-    
+
     // Combine and deduplicate
-    const allCategories = [...new Set([...defaultCategories, ...expenseCategories])];
+    const allCategories = [
+      ...new Set([...defaultCategories, ...expenseCategories]),
+    ];
     return allCategories.sort();
   };
 
@@ -300,11 +333,11 @@ function ExpensesPageContent() {
       const expenseTags = expenses
         .flatMap((expense) => expense.tags || [])
         .filter((tag) => tag && tag.trim() !== "");
-      
+
       const allTags = [...new Set([...tags, ...expenseTags])];
       return allTags.sort();
     }
-    
+
     // Fallback to expense tags only
     const expenseTags = expenses
       .flatMap((expense) => expense.tags || [])
@@ -319,34 +352,30 @@ function ExpensesPageContent() {
 
   // Helper functions for multi-select
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev =>
+    setSelectedCategories((prev) =>
       prev.includes(category)
-        ? prev.filter(c => c !== category)
+        ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
   };
 
   const toggleType = (type: string) => {
-    setSelectedTypes(prev =>
-      prev.includes(type)
-        ? prev.filter(t => t !== type)
-        : [...prev, type]
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   };
 
   const toggleCompany = (companyId: string) => {
-    setSelectedCompanies(prev =>
+    setSelectedCompanies((prev) =>
       prev.includes(companyId)
-        ? prev.filter(c => c !== companyId)
+        ? prev.filter((c) => c !== companyId)
         : [...prev, companyId]
     );
   };
 
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
@@ -434,7 +463,10 @@ function ExpensesPageContent() {
                 <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                   Total Amount
                 </p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate" title={formatCurrency(totalExpenseAmount)}>
+                <p
+                  className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate"
+                  title={formatCurrency(totalExpenseAmount)}
+                >
                   {formatCurrency(totalExpenseAmount)}
                 </p>
               </div>
@@ -464,7 +496,10 @@ function ExpensesPageContent() {
                 <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                   Monthly Recurring
                 </p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate" title={formatCurrency(monthlyRecurring)}>
+                <p
+                  className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate"
+                  title={formatCurrency(monthlyRecurring)}
+                >
                   {formatCurrency(monthlyRecurring)}
                 </p>
               </div>
@@ -488,139 +523,211 @@ function ExpensesPageContent() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`inline-flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors relative ${
-                (selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0)
+                selectedCategories.length > 0 ||
+                selectedTypes.length > 0 ||
+                selectedCompanies.length > 0 ||
+                selectedTags.length > 0
                   ? "text-[#006BFF] bg-blue-50 hover:bg-blue-100"
                   : "text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB]"
               }`}
             >
               <Filter className="w-4 h-4" />
               <span>Filters</span>
-              {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
+              {(selectedCategories.length > 0 ||
+                selectedTypes.length > 0 ||
+                selectedCompanies.length > 0 ||
+                selectedTags.length > 0) && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#006BFF] rounded-full"></span>
               )}
-              {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showFilters ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
             </button>
           </div>
 
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
               {/* Active Filters */}
-              {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
+              {(selectedCategories.length > 0 ||
+                selectedTypes.length > 0 ||
+                selectedCompanies.length > 0 ||
+                selectedTags.length > 0) && (
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <span className="text-sm font-medium text-[#476788]">Active filters:</span>
-                  {selectedCategories.map(category => (
-                    <span key={category} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  <span className="text-sm font-medium text-[#476788]">
+                    Active filters:
+                  </span>
+                  {selectedCategories.map((category) => (
+                    <span
+                      key={category}
+                      className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                    >
                       {category}
-                      <button onClick={() => toggleCategory(category)} className="ml-1 hover:text-blue-900">×</button>
+                      <button
+                        onClick={() => toggleCategory(category)}
+                        className="ml-1 hover:text-blue-900"
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
-                  {selectedTypes.map(type => (
-                    <span key={type} className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                  {selectedTypes.map((type) => (
+                    <span
+                      key={type}
+                      className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
+                    >
                       {type}
-                      <button onClick={() => toggleType(type)} className="ml-1 hover:text-green-900">×</button>
+                      <button
+                        onClick={() => toggleType(type)}
+                        className="ml-1 hover:text-green-900"
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
-                  {selectedCompanies.map(companyId => {
-                    const company = companies.find(c => c._id === companyId);
+                  {selectedCompanies.map((companyId) => {
+                    const company = companies.find((c) => c._id === companyId);
                     return company ? (
-                      <span key={companyId} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                      <span
+                        key={companyId}
+                        className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full"
+                      >
                         {company.name}
-                        <button onClick={() => toggleCompany(companyId)} className="ml-1 hover:text-purple-900">×</button>
+                        <button
+                          onClick={() => toggleCompany(companyId)}
+                          className="ml-1 hover:text-purple-900"
+                        >
+                          ×
+                        </button>
                       </span>
                     ) : null;
                   })}
-                  {selectedTags.map(tag => (
-                    <span key={tag} className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                  {selectedTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full"
+                    >
                       {tag}
-                      <button onClick={() => toggleTag(tag)} className="ml-1 hover:text-orange-900">×</button>
+                      <button
+                        onClick={() => toggleTag(tag)}
+                        className="ml-1 hover:text-orange-900"
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
-                  <button onClick={clearAllFilters} className="text-xs text-red-600 hover:text-red-800 font-medium">
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-xs text-red-600 hover:text-red-800 font-medium"
+                  >
                     Clear all
                   </button>
                 </div>
               )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#476788] mb-1">Categories</label>
-                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
-                  {getUniqueCategories().map((category) => (
-                    <label key={category} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(category)}
-                        onChange={() => toggleCategory(category)}
-                        className="mr-2 text-blue-600"
-                      />
-                      {category}
-                    </label>
-                  ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#476788] mb-1">
+                    Categories
+                  </label>
+                  <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                    {getUniqueCategories().map((category) => (
+                      <label
+                        key={category}
+                        className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category)}
+                          onChange={() => toggleCategory(category)}
+                          className="mr-2 text-blue-600"
+                        />
+                        {category}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#476788] mb-1">
+                    Types
+                  </label>
+                  <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                    {getUniqueTypes().map((type) => (
+                      <label
+                        key={type}
+                        className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTypes.includes(type)}
+                          onChange={() => toggleType(type)}
+                          className="mr-2 text-blue-600"
+                        />
+                        {type.replace("-", " ").toUpperCase()}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#476788] mb-1">
+                    Companies
+                  </label>
+                  <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                    {companies.map((company) => (
+                      <label
+                        key={company._id}
+                        className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCompanies.includes(company._id)}
+                          onChange={() => toggleCompany(company._id)}
+                          className="mr-2 text-blue-600"
+                        />
+                        {company.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#476788] mb-1">
+                    Tags
+                  </label>
+                  <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                    {getUniqueTags().map((tag) => (
+                      <label
+                        key={tag}
+                        className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTags.includes(tag)}
+                          onChange={() => toggleTag(tag)}
+                          className="mr-2 text-blue-600"
+                        />
+                        {tag}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#476788] mb-1">
+                    Sort
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="input-field text-sm sm:text-base w-full"
+                  >
+                    <option value="date">Sort by Date</option>
+                    <option value="amount">Sort by Amount</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="company">Sort by Company</option>
+                    <option value="category">Sort by Category</option>
+                  </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-[#476788] mb-1">Types</label>
-                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
-                  {getUniqueTypes().map((type) => (
-                    <label key={type} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedTypes.includes(type)}
-                        onChange={() => toggleType(type)}
-                        className="mr-2 text-blue-600"
-                      />
-                      {type.replace("-", " ").toUpperCase()}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#476788] mb-1">Companies</label>
-                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
-                  {companies.map((company) => (
-                    <label key={company._id} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedCompanies.includes(company._id)}
-                        onChange={() => toggleCompany(company._id)}
-                        className="mr-2 text-blue-600"
-                      />
-                      {company.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#476788] mb-1">Tags</label>
-                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
-                  {getUniqueTags().map((tag) => (
-                    <label key={tag} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedTags.includes(tag)}
-                        onChange={() => toggleTag(tag)}
-                        className="mr-2 text-blue-600"
-                      />
-                      {tag}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#476788] mb-1">Sort</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="input-field text-sm sm:text-base w-full"
-                >
-                  <option value="date">Sort by Date</option>
-                  <option value="amount">Sort by Amount</option>
-                  <option value="name">Sort by Name</option>
-                  <option value="company">Sort by Company</option>
-                  <option value="category">Sort by Category</option>
-                </select>
-              </div>
-            </div>
             </div>
           )}
         </div>
@@ -659,7 +766,9 @@ function ExpensesPageContent() {
                 }}
                 onDelete={() => handleExpenseDeleted(expense._id)}
                 onQuickUpdate={handleQuickUpdate}
-                availableCategories={categories.length > 0 ? categories : getUniqueCategories()}
+                availableCategories={
+                  categories.length > 0 ? categories : getUniqueCategories()
+                }
               />
             ))}
           </div>
@@ -694,9 +803,13 @@ function ExpensesPageContent() {
 
 export default function ExpensesPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006BFF]"></div>
-    </div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006BFF]"></div>
+        </div>
+      }
+    >
       <ExpensesPageContent />
     </Suspense>
   );

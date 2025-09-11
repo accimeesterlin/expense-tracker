@@ -18,6 +18,8 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import ExpenseModal from "@/components/ExpenseModal";
 import AppLayout from "@/components/AppLayout";
@@ -55,6 +57,7 @@ interface Expense {
   company: Company;
   isActive: boolean;
   receiptUrl?: string;
+  receiptContentType?: string;
   comments: Array<{
     text: string;
     createdAt: string;
@@ -84,6 +87,7 @@ export default function ExpenseDetailPage() {
     field: null as string | null,
     value: "",
   });
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
 
   const fetchExpense = useCallback(async () => {
     try {
@@ -373,37 +377,37 @@ export default function ExpenseDetailPage() {
     <AppLayout title="Expense Details">
       <div className="max-w-4xl mx-auto">
         {/* Header Actions */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <button
               onClick={() => router.push("/")}
-              className="text-[#476788] hover:text-[#0B3558] transition-colors"
+              className="text-[#476788] hover:text-[#0B3558] transition-colors flex-shrink-0"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#006BFF] rounded-xl flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-semibold text-[#0B3558]">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#0B3558] truncate">
                 {expense.name}
               </h1>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-shrink-0">
             <button
               onClick={() => setShowEditModal(true)}
-              className="btn-secondary inline-flex items-center space-x-2"
+              className="btn-secondary inline-flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-1 sm:flex-none justify-center"
             >
               <Edit className="w-4 h-4" />
-              <span>Edit</span>
+              <span className="hidden sm:inline">Edit</span>
             </button>
             <button
               onClick={handleDelete}
-              className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 inline-flex items-center space-x-2"
+              className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 inline-flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-1 sm:flex-none justify-center"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
+              <span className="hidden sm:inline">Delete</span>
             </button>
           </div>
         </div>
@@ -768,56 +772,120 @@ export default function ExpenseDetailPage() {
             {/* Receipt Section */}
             {expense.receiptUrl && (
               <div className="card p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-[#0B3558]">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                  <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">
                     Receipt
                   </h2>
-                  <button
-                    onClick={handleRemoveReceipt}
-                    className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-sm"
-                  >
-                    Remove Receipt
-                  </button>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => setIsImageExpanded(!isImageExpanded)}
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1"
+                    >
+                      {isImageExpanded ? (
+                        <>
+                          <Minimize2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Collapse</span>
+                          <span className="sm:hidden">Small</span>
+                        </>
+                      ) : (
+                        <>
+                          <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Expand</span>
+                          <span className="sm:hidden">Large</span>
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={expense.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center"
+                    >
+                      <span className="hidden sm:inline">Open Full Size</span>
+                      <span className="sm:hidden">Full Size</span>
+                    </a>
+                    <button
+                      onClick={handleRemoveReceipt}
+                      className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm flex-1 sm:flex-none text-center"
+                    >
+                      <span className="hidden sm:inline">Remove Receipt</span>
+                      <span className="sm:hidden">Remove</span>
+                    </button>
+                  </div>
                 </div>
 
                 {(expense.receiptUrl.startsWith("data:image") || 
                   expense.receiptContentType?.startsWith("image/") ||
                   expense.receiptUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) ? (
-                  <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
-                    <Image
-                      src={expense.receiptUrl}
-                      alt="Receipt"
-                      width={400}
-                      height={384}
-                      className="max-w-full h-auto max-h-96 object-contain"
-                    />
+                  <div className="border border-[#E5E7EB] rounded-lg overflow-hidden bg-gray-50 cursor-pointer" onClick={() => setIsImageExpanded(!isImageExpanded)}>
+                    <div className="relative">
+                      <Image
+                        src={expense.receiptUrl}
+                        alt="Receipt"
+                        width={isImageExpanded ? 800 : 400}
+                        height={isImageExpanded ? 600 : 300}
+                        className={`w-full h-auto object-contain transition-all duration-300 ${
+                          isImageExpanded ? 'max-h-[600px]' : 'max-h-[250px] sm:max-h-[300px]'
+                        }`}
+                        unoptimized={expense.receiptUrl.startsWith("data:") || expense.receiptUrl.includes("amazonaws.com")}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="flex flex-col items-center justify-center p-8 text-gray-500 min-h-[200px]">
+                                <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-gray-600 mb-2">Image could not be loaded</p>
+                                <a href="${expense.receiptUrl}" target="_blank" class="text-blue-600 hover:underline">
+                                  Try opening in new tab →
+                                </a>
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
+                      {!isImageExpanded && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                      )}
+                      {!isImageExpanded && (
+                        <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                          Click to expand
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (expense.receiptUrl.startsWith("data:application/pdf") || 
                        expense.receiptContentType === "application/pdf" ||
                        expense.receiptUrl.match(/\.pdf(\?|$)/i)) ? (
-                  <div className="border border-[#E5E7EB] rounded-lg p-4 text-center">
-                    <FileText className="w-12 h-12 text-[#006BFF] mx-auto mb-2" />
-                    <p className="text-[#476788]">PDF Receipt</p>
+                  <div className="border border-[#E5E7EB] rounded-lg p-8 text-center bg-gray-50">
+                    <FileText className="w-16 h-16 text-[#006BFF] mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-[#0B3558] mb-2">PDF Receipt</h3>
+                    <p className="text-[#476788] mb-4">Click below to view the PDF receipt</p>
                     <a
                       href={expense.receiptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#006BFF] hover:underline text-sm"
+                      className="btn-primary inline-flex items-center space-x-2"
                     >
-                      View PDF Receipt
+                      <FileText className="w-4 h-4" />
+                      <span>View PDF Receipt</span>
                     </a>
                   </div>
                 ) : (
-                  <div className="border border-[#E5E7EB] rounded-lg p-4 text-center">
-                    <FileText className="w-12 h-12 text-[#476788] mx-auto mb-2" />
-                    <p className="text-[#476788]">Receipt file attached</p>
+                  <div className="border border-[#E5E7EB] rounded-lg p-8 text-center bg-gray-50">
+                    <FileText className="w-16 h-16 text-[#476788] mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-[#0B3558] mb-2">Receipt File</h3>
+                    <p className="text-[#476788] mb-4">Receipt file is attached to this expense</p>
                     <a
                       href={expense.receiptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#006BFF] hover:underline text-sm block mt-2"
+                      className="btn-primary inline-flex items-center space-x-2"
                     >
-                      View Receipt
+                      <FileText className="w-4 h-4" />
+                      <span>View Receipt File</span>
                     </a>
                   </div>
                 )}
