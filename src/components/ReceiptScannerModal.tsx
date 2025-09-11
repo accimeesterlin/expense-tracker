@@ -28,6 +28,7 @@ interface SuggestedExpense {
   receiptS3Key: string;
   receiptFileName: string;
   receiptContentType: string;
+  paymentDate?: string;
   tags: string[];
 }
 

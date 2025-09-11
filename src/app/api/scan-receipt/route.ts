@@ -385,9 +385,47 @@ export async function POST(request: NextRequest) {
         name: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]' 
           ? `${parsedData.merchantName} - ${parsedData.date || 'Receipt'}` 
           : `Receipt - ${new Date().toLocaleDateString()}`,
-        description: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]'
-          ? `Receipt from ${parsedData.merchantName}`
-          : 'Receipt expense - Please update merchant name and amount',
+        description: (() => {
+          const descriptionParts: string[] = [];
+          
+          // Add merchant name if available
+          if (parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]') {
+            descriptionParts.push(`Receipt from ${parsedData.merchantName}`);
+          } else {
+            descriptionParts.push('Receipt expense');
+          }
+          
+          // Add date if available
+          if (parsedData.date) {
+            descriptionParts.push(`Date: ${parsedData.date}`);
+          }
+          
+          // Add tax amount if available
+          if (parsedData.taxAmount && parsedData.taxAmount > 0) {
+            descriptionParts.push(`Tax: $${parsedData.taxAmount.toFixed(2)}`);
+          }
+          
+          // Add subtotal if available and different from total
+          if (parsedData.subtotal && parsedData.subtotal > 0 && 
+              parsedData.totalAmount && Math.abs(parsedData.subtotal - parsedData.totalAmount) > 0.01) {
+            descriptionParts.push(`Subtotal: $${parsedData.subtotal.toFixed(2)}`);
+          }
+          
+          // Add line items if available (up to 5 items)
+          if (parsedData.items && parsedData.items.length > 0) {
+            const itemsToShow = parsedData.items.slice(0, 5);
+            const itemsText = itemsToShow.map(item => 
+              `• ${item.description}: $${item.amount.toFixed(2)}`
+            ).join('\n');
+            descriptionParts.push(`Items:\n${itemsText}`);
+            
+            if (parsedData.items.length > 5) {
+              descriptionParts.push(`... and ${parsedData.items.length - 5} more items`);
+            }
+          }
+          
+          return descriptionParts.join('\n');
+        })(),
         amount: parsedData.totalAmount && parsedData.totalAmount > 0 ? parsedData.totalAmount : 0,
         category: parsedData.category || 'Other',
         expenseType: 'one-time',
@@ -395,6 +433,7 @@ export async function POST(request: NextRequest) {
         receiptS3Key: uploadResult.key,
         receiptFileName: file.name,
         receiptContentType: file.type,
+        paymentDate: parsedData.paymentDate || parsedData.date || new Date().toISOString().split('T')[0],
         tags: (() => {
           const suggestedTags: string[] = [];
           

@@ -235,8 +235,25 @@ export default function DashboardPage() {
     receiptS3Key: string;
     receiptFileName: string;
     receiptContentType: string;
+    paymentDate?: string;
   }) => {
     try {
+      // Check if we have companies
+      if (!companies || companies.length === 0) {
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "No Companies Available",
+          message: "Please create a company first before adding expenses from receipts.",
+        });
+        return;
+      }
+
+      // Get the saved company preference or use the first company
+      const savedCompanyId = localStorage.getItem("expense-tracker-last-company");
+      const validCompany = savedCompanyId && companies.find(c => c._id === savedCompanyId);
+      const selectedCompanyId = validCompany ? savedCompanyId : companies[0]._id;
+
       // Create the expense directly
       const response = await fetch("/api/expenses", {
         method: "POST",
@@ -244,7 +261,7 @@ export default function DashboardPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          company: companies[0]?._id || "",
+          company: selectedCompanyId,
           name: expenseData.name,
           description: expenseData.description,
           amount: expenseData.amount,
@@ -252,6 +269,7 @@ export default function DashboardPage() {
           category: expenseData.category,
           expenseType: expenseData.expenseType,
           startDate: new Date().toISOString().split("T")[0],
+          paymentDate: expenseData.paymentDate || new Date().toISOString().split("T")[0],
           isActive: true,
           tags: expenseData.tags,
           receiptUrl: expenseData.receiptUrl,
@@ -274,12 +292,15 @@ export default function DashboardPage() {
           message: "Expense created successfully from receipt!",
         });
       } else {
-        const errorData = await response.json();
+        console.error("Failed to create expense from receipt. Status:", response.status);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error occurred" }));
+        console.error("Error response:", errorData);
+        
         setNotification({
           isOpen: true,
           type: "error",
           title: "Failed to Create Expense",
-          message: errorData.error || "Unknown error",
+          message: errorData.error || `Server error (${response.status})`,
         });
       }
     } catch (error) {
