@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
-import { Menu, Settings, LogOut, User, DollarSign } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Menu, Settings, User, DollarSign } from "lucide-react";
 import Sidebar from "./Sidebar";
 import GlobalSearch from "./GlobalSearch";
 import SettingsModal from "./SettingsModal";
@@ -71,14 +71,6 @@ export default function AppLayout({
                     title="Settings"
                   >
                     <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center gap-1"
-                    title="Sign out"
-                  >
-                    <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">Exit</span>
                   </button>
                 </div>
               </div>

@@ -178,16 +178,31 @@ export default function IncomeModal({
         }),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      
       if (response.ok) {
         const result = await response.json();
+        console.log("Success response:", result);
         onSuccess(result);
         onClose();
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || "Failed to save income");
+        let errorMessage = "Failed to save income";
+        try {
+          const errorData = await response.json();
+          console.log("Error response data:", errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.log("Failed to parse error response:", parseError);
+          errorMessage = response.statusText || errorMessage;
+        }
+        console.error("Income submission error:", response.status, errorMessage);
+        setError(errorMessage);
       }
     } catch (error) {
-      setError("Something went wrong. Please try again.");
+      console.error("Income submission network error:", error);
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }

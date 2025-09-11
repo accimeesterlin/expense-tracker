@@ -51,7 +51,9 @@ export default function ReceiptScannerModal({
     suggestedExpense: SuggestedExpense;
   } | null>(null);
   const [error, setError] = useState("");
+  const [showingCamera, setShowingCamera] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
@@ -75,6 +77,19 @@ export default function ReceiptScannerModal({
     if (file) {
       handleFileSelect(file);
     }
+  };
+
+  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setShowingCamera(false);
+      handleFileSelect(file);
+    }
+  };
+
+  const openCamera = () => {
+    setShowingCamera(true);
+    cameraInputRef.current?.click();
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -160,8 +175,12 @@ export default function ReceiptScannerModal({
     setPreviewUrl(null);
     setScanResult(null);
     setError("");
+    setShowingCamera(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
     }
   };
 
@@ -216,30 +235,60 @@ export default function ReceiptScannerModal({
 
           {!selectedFile ? (
             /* File Upload Area */
-            <div
-              className="border-2 border-dashed border-[#E5E7EB] rounded-xl p-8 sm:p-12 text-center hover:border-[#006BFF] transition-colors cursor-pointer"
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
-              <h3 className="text-base sm:text-lg font-medium text-[#0B3558] mb-2">
-                Upload Receipt
-              </h3>
-              <p className="text-sm text-[#476788] mb-4">
-                Drag and drop your receipt image or PDF, or click to browse
-              </p>
-              <p className="text-xs text-[#A6BBD1]">
-                Supported formats: JPG, PNG, GIF, WebP, PDF (max 10MB)
-              </p>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileInputChange}
-                className="hidden"
-              />
+            <div className="space-y-4">
+              <div
+                className="border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 sm:p-8 text-center hover:border-[#006BFF] transition-colors cursor-pointer"
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-[#A6BBD1] mx-auto mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-[#0B3558] mb-2">
+                  Upload Receipt
+                </h3>
+                <p className="text-sm text-[#476788] mb-3 sm:mb-4">
+                  Drag and drop your receipt image or PDF, or click to browse
+                </p>
+                <p className="text-xs text-[#A6BBD1] mb-4">
+                  Supported formats: JPG, PNG, GIF, WebP, PDF (max 10MB)
+                </p>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Camera Option */}
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-3">
+                  <hr className="flex-1 border-gray-300" />
+                  <span className="px-3 text-xs text-gray-500 font-medium">OR</span>
+                  <hr className="flex-1 border-gray-300" />
+                </div>
+                <button
+                  onClick={openCamera}
+                  className="inline-flex items-center space-x-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Take Photo</span>
+                </button>
+                <p className="text-xs text-[#A6BBD1] mt-2">
+                  Use your device's camera to capture a receipt
+                </p>
+                
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleCameraCapture}
+                  className="hidden"
+                />
+              </div>
             </div>
           ) : !scanResult ? (
             /* File Preview and Scan */

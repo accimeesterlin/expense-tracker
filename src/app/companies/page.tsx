@@ -77,7 +77,7 @@ export default function CompaniesPage() {
     const filtered = companies.filter(
       (company) =>
         company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        company.industry.toLowerCase().includes(searchTerm.toLowerCase())
+        (company.industry && company.industry.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     setFilteredCompanies(filtered);
   }, [companies, searchTerm]);

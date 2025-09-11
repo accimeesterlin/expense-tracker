@@ -104,17 +104,24 @@ export async function POST(request: NextRequest) {
       body.nextPaymentDate = nextPaymentDate;
     }
 
+    console.log("Creating income with data:", { ...body, userId: session.user.id });
+    
     const income = new Income({
       ...body,
       userId: session.user.id,
     });
 
+    console.log("Saving income to database...");
     await income.save();
+    console.log("Income saved successfully:", income._id);
 
-    const populatedIncome = await income
+    console.log("Populating income relationships...");
+    const populatedIncome = await Income.findById(income._id)
       .populate("paymentMethod", "name type lastFourDigits")
       .populate("company", "name industry");
+    console.log("Income populated successfully");
 
+    console.log("Returning success response with status 201");
     return NextResponse.json(populatedIncome, { status: 201 });
   } catch (error: unknown) {
     console.error("Error creating income:", error);

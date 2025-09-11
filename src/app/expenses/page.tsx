@@ -10,6 +10,9 @@ import {
   Calendar,
   DollarSign,
   Building2,
+  Filter,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import ExpenseModal from "@/components/ExpenseModal";
@@ -33,6 +36,7 @@ function ExpensesPageContent() {
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("date");
+  const [showFilters, setShowFilters] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
     undefined
@@ -468,10 +472,10 @@ function ExpensesPageContent() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Search and Filter Toggle */}
         <div className="card p-4 sm:p-6">
-          <div className="grid grid-cols-1 gap-4">
-            <div className="input-field-with-icon">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center">
+            <div className="flex-1 input-field-with-icon">
               <Search className="icon w-5 h-5" />
               <input
                 type="text"
@@ -481,6 +485,26 @@ function ExpensesPageContent() {
                 className="input-field w-full text-sm sm:text-base"
               />
             </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`inline-flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors relative ${
+                (selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0)
+                  ? "text-[#006BFF] bg-blue-50 hover:bg-blue-100"
+                  : "text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB]"
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+              {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#006BFF] rounded-full"></span>
+              )}
+              {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
+            <div className="grid grid-cols-1 gap-4">
             {/* Active Filters */}
             {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
               <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -598,7 +622,8 @@ function ExpensesPageContent() {
                 </select>
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Expenses List */}
