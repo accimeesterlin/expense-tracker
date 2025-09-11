@@ -504,43 +504,42 @@ function ExpensesPageContent() {
 
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
-            <div className="grid grid-cols-1 gap-4">
-            {/* Active Filters */}
-            {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="text-sm font-medium text-[#476788]">Active filters:</span>
-                {selectedCategories.map(category => (
-                  <span key={category} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    {category}
-                    <button onClick={() => toggleCategory(category)} className="ml-1 hover:text-blue-900">×</button>
-                  </span>
-                ))}
-                {selectedTypes.map(type => (
-                  <span key={type} className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                    {type}
-                    <button onClick={() => toggleType(type)} className="ml-1 hover:text-green-900">×</button>
-                  </span>
-                ))}
-                {selectedCompanies.map(companyId => {
-                  const company = companies.find(c => c._id === companyId);
-                  return company ? (
-                    <span key={companyId} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                      {company.name}
-                      <button onClick={() => toggleCompany(companyId)} className="ml-1 hover:text-purple-900">×</button>
+              {/* Active Filters */}
+              {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <span className="text-sm font-medium text-[#476788]">Active filters:</span>
+                  {selectedCategories.map(category => (
+                    <span key={category} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {category}
+                      <button onClick={() => toggleCategory(category)} className="ml-1 hover:text-blue-900">×</button>
                     </span>
-                  ) : null;
-                })}
-                {selectedTags.map(tag => (
-                  <span key={tag} className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-                    {tag}
-                    <button onClick={() => toggleTag(tag)} className="ml-1 hover:text-orange-900">×</button>
-                  </span>
-                ))}
-                <button onClick={clearAllFilters} className="text-xs text-red-600 hover:text-red-800 font-medium">
-                  Clear all
-                </button>
-              </div>
-            )}
+                  ))}
+                  {selectedTypes.map(type => (
+                    <span key={type} className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      {type}
+                      <button onClick={() => toggleType(type)} className="ml-1 hover:text-green-900">×</button>
+                    </span>
+                  ))}
+                  {selectedCompanies.map(companyId => {
+                    const company = companies.find(c => c._id === companyId);
+                    return company ? (
+                      <span key={companyId} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                        {company.name}
+                        <button onClick={() => toggleCompany(companyId)} className="ml-1 hover:text-purple-900">×</button>
+                      </span>
+                    ) : null;
+                  })}
+                  {selectedTags.map(tag => (
+                    <span key={tag} className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                      {tag}
+                      <button onClick={() => toggleTag(tag)} className="ml-1 hover:text-orange-900">×</button>
+                    </span>
+                  ))}
+                  <button onClick={clearAllFilters} className="text-xs text-red-600 hover:text-red-800 font-medium">
+                    Clear all
+                  </button>
+                </div>
+              )}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               <div>
