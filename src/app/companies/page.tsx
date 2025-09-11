@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import CompanyModal from "@/components/CompanyModal";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Company {
   _id: string;
@@ -48,6 +49,15 @@ export default function CompaniesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   const fetchCompanies = async () => {
     try {
@@ -117,11 +127,19 @@ export default function CompaniesPage() {
         setCompanies((prev) => prev.filter((c) => c._id !== companyId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete company");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete company",
+        });
       }
     } catch (error) {
       console.error("Error deleting company:", error);
-      alert("Failed to delete company. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Failed to delete company. Please try again.",
+      });
     }
   };
 
@@ -352,6 +370,14 @@ export default function CompaniesPage() {
           onSuccess={handleCompanyCreated}
         />
       )}
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
     </AppLayout>
   );
 }

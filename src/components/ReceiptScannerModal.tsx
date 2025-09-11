@@ -53,7 +53,7 @@ export default function ReceiptScannerModal({
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
     setError("");
     setScanResult(null);
@@ -61,6 +61,13 @@ export default function ReceiptScannerModal({
     // Create preview URL
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+
+    // Auto-start scanning for images immediately after selection
+    if (file.type.startsWith('image/')) {
+      setTimeout(() => {
+        scanReceipt(file);
+      }, 500); // Small delay to allow UI to update
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,15 +94,16 @@ export default function ReceiptScannerModal({
     e.preventDefault();
   };
 
-  const scanReceipt = async () => {
-    if (!selectedFile) return;
+  const scanReceipt = async (fileToScan?: File) => {
+    const file = fileToScan || selectedFile;
+    if (!file) return;
 
     setScanning(true);
     setError("");
 
     try {
       const formData = new FormData();
-      formData.append('receipt', selectedFile);
+      formData.append('receipt', file);
 
       const response = await fetch('/api/scan-receipt', {
         method: 'POST',
@@ -110,8 +118,27 @@ export default function ReceiptScannerModal({
           parsedData: result.parsedData,
           suggestedExpense: result.suggestedExpense,
         });
+        
+        // Show warning if upload failed but processing succeeded
+        if (result.warning) {
+          console.warn('Receipt processing warning:', result.warning);
+        }
       } else {
-        setError(result.error || 'Failed to scan receipt');
+        console.error('Receipt scan error:', result);
+        let errorMessage = result.error || 'Failed to scan receipt';
+        
+        // Provide helpful error messages
+        if (result.error?.includes('AWS') || result.error?.includes('S3')) {
+          errorMessage = 'Upload service temporarily unavailable. Your receipt has been processed locally.';
+        } else if (result.error?.includes('Unauthorized')) {
+          errorMessage = 'Session expired. Please sign in again.';
+        } else if (result.error?.includes('File too large')) {
+          errorMessage = 'File is too large. Please use a file smaller than 10MB.';
+        } else if (result.error?.includes('Invalid file type')) {
+          errorMessage = 'Invalid file type. Please use JPG, PNG, GIF, WebP, or PDF files.';
+        }
+        
+        setError(errorMessage);
       }
     } catch (error) {
       console.error('Error scanning receipt:', error);
@@ -154,7 +181,7 @@ export default function ReceiptScannerModal({
         }
       }}
     >
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-sm w-full mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
@@ -272,7 +299,7 @@ export default function ReceiptScannerModal({
                   Choose Different File
                 </button>
                 <button
-                  onClick={scanReceipt}
+                  onClick={() => scanReceipt()}
                   disabled={scanning}
                   className="btn-primary w-full sm:w-auto inline-flex items-center justify-center space-x-2"
                 >

@@ -14,6 +14,7 @@ import {
 import AppLayout from "@/components/AppLayout";
 import ExpenseModal from "@/components/ExpenseModal";
 import ExpenseCard from "@/components/ExpenseCard";
+import NotificationModal from "@/components/NotificationModal";
 import type { Company, Expense } from "@/types/shared";
 
 export default function ExpensesPage() {
@@ -32,6 +33,17 @@ export default function ExpensesPage() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
     undefined
   );
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    type: "success" | "error";
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -123,10 +135,6 @@ export default function ExpensesPage() {
   };
 
   const handleExpenseDeleted = async (expenseId: string) => {
-    if (!confirm("Are you sure you want to delete this expense?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/expenses/${expenseId}`, {
         method: "DELETE",
@@ -134,13 +142,29 @@ export default function ExpensesPage() {
 
       if (response.ok) {
         setExpenses((prev) => prev.filter((e) => e._id !== expenseId));
+        setNotification({
+          isOpen: true,
+          type: "success",
+          title: "Success",
+          message: "Expense deleted successfully",
+        });
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete expense");
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete expense",
+        });
       }
     } catch (error) {
       console.error("Error deleting expense:", error);
-      alert("Failed to delete expense. Please try again.");
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Delete Failed",
+        message: "Failed to delete expense. Please try again.",
+      });
     }
   };
 
@@ -152,9 +176,27 @@ export default function ExpensesPage() {
   };
 
   const getUniqueCategories = () => {
-    const categories = [
-      ...new Set(expenses.map((expense) => expense.category)),
+    // Default categories to always show
+    const defaultCategories = [
+      "Software & Subscriptions",
+      "Office & Supplies", 
+      "Travel & Entertainment",
+      "Marketing & Advertising",
+      "Professional Services",
+      "Insurance",
+      "Utilities",
+      "Rent & Leasing",
+      "Equipment",
+      "Other"
     ];
+    
+    // Get categories from existing expenses
+    const expenseCategories = expenses
+      .map((expense) => expense.category)
+      .filter((category) => category && category.trim() !== "");
+    
+    // Combine and deduplicate
+    const categories = [...new Set([...defaultCategories, ...expenseCategories])];
     return categories.sort();
   };
 
@@ -209,7 +251,7 @@ export default function ExpensesPage() {
             </div>
             <button
               onClick={() => setShowExpenseModal(true)}
-              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               <span>Add Expense</span>
@@ -400,6 +442,15 @@ export default function ExpensesPage() {
           onSuccess={handleExpenseCreated}
         />
       )}
+
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+      />
     </AppLayout>
   );
 }

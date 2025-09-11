@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Hash, Edit, Trash2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Tag {
   _id: string;
@@ -38,6 +39,15 @@ export default function TagsPage() {
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -133,10 +143,18 @@ export default function TagsPage() {
         setTags((prev) => prev.filter((t) => t._id !== tag._id));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete tag");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete tag",
+        });
       }
     } catch (error) {
-      alert("Something went wrong. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Something went wrong. Please try again.",
+      });
     }
   };
 
@@ -305,6 +323,14 @@ export default function TagsPage() {
           )}
         </div>
       </div>
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
     </AppLayout>
   );
 }

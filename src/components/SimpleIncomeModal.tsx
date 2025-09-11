@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, DollarSign, Calendar } from "lucide-react";
+import { DollarSign, Calendar, X } from "lucide-react";
+import { Modal, ModalHeader, ModalContent, ModalFooter, ModalTitle, ModalDescription } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { FormField, FormLabel, FormInput, FormSelect, FormError } from "@/components/ui/Form";
 
 interface Income {
   _id: string;
@@ -156,7 +159,7 @@ export default function SimpleIncomeModal({
         }
       }}
     >
-      <div className="card max-w-2xl w-full mx-2 sm:mx-4">
+      <div className="card max-w-sm w-full mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import GoalModal from "@/components/GoalModal";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Goal {
   _id: string;
@@ -52,6 +53,15 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -115,10 +125,18 @@ export default function GoalsPage() {
         setGoals((prev) => prev.filter((g) => g._id !== goal._id));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete goal");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete goal",
+        });
       }
     } catch (error) {
-      alert("Something went wrong. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Something went wrong. Please try again.",
+      });
     }
   };
 
@@ -333,7 +351,10 @@ export default function GoalsPage() {
                             : "bg-[#006BFF]"
                         }`}
                         style={{
-                          width: `${Math.min(100, goal.percentageCompleted || 0)}%`,
+                          width: `${Math.min(
+                            100,
+                            goal.percentageCompleted || 0
+                          )}%`,
                         }}
                       ></div>
                     </div>
@@ -353,7 +374,8 @@ export default function GoalsPage() {
                             goal.requiredMonthlySavings || 0
                           )}/month`}
                         >
-                          {formatCurrency(goal.requiredMonthlySavings || 0)}/month
+                          {formatCurrency(goal.requiredMonthlySavings || 0)}
+                          /month
                         </span>
                       </span>
                     </div>
@@ -364,6 +386,14 @@ export default function GoalsPage() {
           </div>
         )}
       </div>
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
     </AppLayout>
   );
 }

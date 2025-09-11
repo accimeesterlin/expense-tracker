@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Plus, DollarSign, Edit, Trash2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import BudgetModal from "@/components/BudgetModal";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Budget {
   _id: string;
@@ -34,6 +35,15 @@ export default function BudgetPage() {
   const [editingBudget, setEditingBudget] = useState<Budget | undefined>(
     undefined
   );
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -93,10 +103,18 @@ export default function BudgetPage() {
         setBudgets((prev) => prev.filter((b) => b._id !== budget._id));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete budget");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete budget",
+        });
       }
     } catch (error) {
-      alert("Something went wrong. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Something went wrong. Please try again.",
+      });
     }
   };
 
@@ -302,6 +320,14 @@ export default function BudgetPage() {
         }}
         onSuccess={handleBudgetSuccess}
         budget={editingBudget}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
       />
     </AppLayout>
   );

@@ -28,10 +28,10 @@ export default function AppLayout({
       {/* Main content area */}
       <div className="flex-1 lg:ml-0 min-w-0 w-full overflow-x-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-[#E5E7EB] w-full overflow-x-hidden">
-          <div className="w-full max-w-none px-3 sm:px-4 lg:px-6 overflow-x-hidden">
-            <div className="flex justify-between items-center h-16 min-w-0 gap-2 sm:gap-3">
-              <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-shrink">
+        <header className="bg-white border-b border-[#E5E7EB] w-full">
+          <div className="w-full px-3 sm:px-4 lg:px-6">
+            <div className="flex justify-between items-center h-16 gap-2">
+              <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
                 <button
                   onClick={() => setShowSidebar(true)}
                   className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden flex-shrink-0"
@@ -48,7 +48,7 @@ export default function AppLayout({
                   {title}
                 </h1>
               </div>
-              <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 flex-shrink-0">
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                 {/* Global Search */}
                 <GlobalSearch />
 
@@ -72,10 +72,11 @@ export default function AppLayout({
                   </button>
                   <button
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center space-x-1 shadow-sm"
                     title="Sign out"
                   >
-                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <LogOut className="w-4 h-4" />
+                    <span>Exit</span>
                   </button>
                 </div>
               </div>

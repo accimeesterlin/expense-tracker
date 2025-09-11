@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import SimpleIncomeModal from "@/components/SimpleIncomeModal";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Income {
   _id: string;
@@ -75,6 +76,15 @@ export default function IncomePage() {
   const [selectedIncome, setSelectedIncome] = useState<Income | undefined>(
     undefined
   );
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -161,11 +171,19 @@ export default function IncomePage() {
         setIncomes((prev) => prev.filter((i) => i._id !== incomeId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete income");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete income",
+        });
       }
     } catch (error) {
       console.error("Error deleting income:", error);
-      alert("Failed to delete income. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Failed to delete income. Please try again.",
+      });
     }
   };
 
@@ -475,6 +493,14 @@ export default function IncomePage() {
           income={selectedIncome}
         />
       )}
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
     </AppLayout>
   );
 }

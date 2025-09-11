@@ -26,6 +26,7 @@ export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,8 +39,26 @@ export default function GlobalSearch() {
       }
     };
 
+    const updateDropdownPosition = () => {
+      if (searchRef.current) {
+        const rect = searchRef.current.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+        });
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", updateDropdownPosition);
+    window.addEventListener("scroll", updateDropdownPosition);
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", updateDropdownPosition);
+      window.removeEventListener("scroll", updateDropdownPosition);
+    };
   }, []);
 
   const searchData = useCallback(async () => {
@@ -281,7 +300,18 @@ export default function GlobalSearch() {
           placeholder="Search..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            setIsOpen(true);
+            // Update position when opening
+            if (searchRef.current) {
+              const rect = searchRef.current.getBoundingClientRect();
+              setDropdownPosition({
+                top: rect.bottom + window.scrollY + 4,
+                left: rect.left + window.scrollX,
+                width: rect.width,
+              });
+            }
+          }}
           className="w-full pr-8 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         {query && (
@@ -298,7 +328,14 @@ export default function GlobalSearch() {
       </div>
 
       {isOpen && query.length > 2 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 sm:max-h-96 overflow-y-auto min-w-64">
+        <div 
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-64 sm:max-h-96 overflow-y-auto min-w-64"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: Math.max(dropdownPosition.width, 256), // min-w-64 = 256px
+          }}
+        >
           {loading ? (
             <div className="p-4 text-center text-gray-500">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>

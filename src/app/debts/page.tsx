@@ -11,10 +11,10 @@ import {
   DollarSign,
   Edit,
   Trash2,
-  ArrowLeft,
 } from "lucide-react";
 import SimpleDebtModal from "@/components/SimpleDebtModal";
 import Sidebar from "@/components/Sidebar";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Debt {
   _id: string;
@@ -31,7 +31,12 @@ interface Debt {
   paymentMethod?: {
     _id: string;
     name: string;
-    type: "credit_card" | "debit_card" | "bank_account" | "digital_wallet" | "other";
+    type:
+      | "credit_card"
+      | "debit_card"
+      | "bank_account"
+      | "digital_wallet"
+      | "other";
     lastFourDigits?: string;
     isDefault: boolean;
   };
@@ -55,6 +60,15 @@ export default function DebtsPage() {
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<Debt | undefined>(undefined);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -140,11 +154,19 @@ export default function DebtsPage() {
         setDebts((prev) => prev.filter((d) => d._id !== debtId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete debt");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete debt",
+        });
       }
     } catch (error) {
       console.error("Error deleting debt:", error);
-      alert("Failed to delete debt. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Failed to delete debt. Please try again.",
+      });
     }
   };
 
@@ -179,7 +201,10 @@ export default function DebtsPage() {
     return types.sort();
   };
 
-  const totalDebtAmount = debts.reduce((sum, debt) => sum + debt.currentBalance, 0);
+  const totalDebtAmount = debts.reduce(
+    (sum, debt) => sum + debt.currentBalance,
+    0
+  );
 
   if (status === "loading" || loading) {
     return (
@@ -202,12 +227,6 @@ export default function DebtsPage() {
           <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 py-4 sm:py-0 sm:h-16">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <button
-                  onClick={() => router.back()}
-                  className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-xl flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                 </div>
@@ -244,7 +263,10 @@ export default function DebtsPage() {
                   <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                     Total Debt
                   </p>
-                  <p className="text-xl sm:text-2xl font-bold text-[#0B3558] truncate" title={formatCurrency(totalDebtAmount)}>
+                  <p
+                    className="text-xl sm:text-2xl font-bold text-[#0B3558] truncate"
+                    title={formatCurrency(totalDebtAmount)}
+                  >
                     {formatCurrency(totalDebtAmount)}
                   </p>
                 </div>
@@ -438,6 +460,14 @@ export default function DebtsPage() {
             debt={selectedDebt}
           />
         )}
+
+        {/* Error Modal */}
+        <ErrorModal
+          isOpen={errorModal.isOpen}
+          onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+          title={errorModal.title}
+          message={errorModal.message}
+        />
       </div>
     </div>
   );

@@ -56,7 +56,6 @@ interface ExpenseModalProps {
   onSuccess: (expense: Expense) => void;
 }
 
-
 const expenseTypes = [
   { value: "one-time", label: "One-time" },
   { value: "subscription", label: "Subscription" },
@@ -395,9 +394,9 @@ export default function ExpenseModal({
 
       // Ensure we always have a description (required field)
       const description = formData.description.trim() || formData.name.trim();
-      
+
       // Build expense data with proper field validation
-      const expenseData = {
+      const expenseData: any = {
         company: formData.company,
         name: formData.name.trim(),
         description,
@@ -520,7 +519,7 @@ export default function ExpenseModal({
         }
       }}
     >
-      <div className="card max-w-4xl w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
+      <div className="card max-w-md w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">
@@ -533,7 +532,7 @@ export default function ExpenseModal({
           </div>
           <div className="flex items-center space-x-2">
             {/* Quick Receipt Upload */}
-            <label 
+            <label
               htmlFor="quick-receipt-upload"
               className="p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors cursor-pointer"
               title="Quick receipt upload"
@@ -749,7 +748,8 @@ export default function ExpenseModal({
                       className="input-field w-full"
                     >
                       {/* Default categories if user hasn't created any custom ones */}
-                      {(!Array.isArray(categories) || categories.length === 0) && (
+                      {(!Array.isArray(categories) ||
+                        categories.length === 0) && (
                         <>
                           <option value="Software & Subscriptions">
                             Software & Subscriptions
@@ -774,13 +774,15 @@ export default function ExpenseModal({
                         </>
                       )}
                       {/* User-created categories */}
-                      {Array.isArray(categories) && categories.map((category) => (
-                        <option key={category._id} value={category.name}>
-                          {category.name}
-                        </option>
-                      ))}
+                      {Array.isArray(categories) &&
+                        categories.map((category) => (
+                          <option key={category._id} value={category.name}>
+                            {category.name}
+                          </option>
+                        ))}
                     </select>
-                    {(!Array.isArray(categories) || categories.length === 0) && (
+                    {(!Array.isArray(categories) ||
+                      categories.length === 0) && (
                       <p className="text-xs text-[#476788] mt-1">
                         <a
                           href="/categories"

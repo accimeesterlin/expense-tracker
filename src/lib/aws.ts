@@ -1,8 +1,17 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { TextractClient, DetectDocumentTextCommand, AnalyzeExpenseCommand } from '@aws-sdk/client-textract';
 
 const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  },
+});
+
+const textractClient = new TextractClient({
   region: process.env.AWS_REGION || 'us-east-1',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
@@ -105,5 +114,132 @@ export function parseS3Key(url: string): string | null {
     return url; // Assume it's already a key
   } catch (error) {
     return null;
+  }
+}
+
+export interface TextractExpenseData {
+  merchantName?: string;
+  totalAmount?: number;
+  date?: string;
+  taxAmount?: number;
+  subtotal?: number;
+  lineItems?: Array<{
+    description: string;
+    amount: number;
+  }>;
+}
+
+export async function extractTextWithTextract(fileBuffer: Buffer, contentType: string): Promise<string> {
+  try {
+    const command = new DetectDocumentTextCommand({
+      Document: {
+        Bytes: fileBuffer,
+      },
+    });
+
+    const response = await textractClient.send(command);
+    
+    if (!response.Blocks) {
+      throw new Error('No text blocks found in document');
+    }
+
+    // Extract text from LINE blocks
+    const textLines = response.Blocks
+      .filter(block => block.BlockType === 'LINE')
+      .map(block => block.Text || '')
+      .filter(text => text.length > 0);
+
+    return textLines.join('\n');
+  } catch (error) {
+    console.error('Textract text extraction failed:', error);
+    throw new Error(`Textract text extraction failed: ${error}`);
+  }
+}
+
+export async function analyzeExpenseWithTextract(fileBuffer: Buffer): Promise<TextractExpenseData> {
+  try {
+    const command = new AnalyzeExpenseCommand({
+      Document: {
+        Bytes: fileBuffer,
+      },
+    });
+
+    const response = await textractClient.send(command);
+    
+    if (!response.ExpenseDocuments || response.ExpenseDocuments.length === 0) {
+      throw new Error('No expense data found in document');
+    }
+
+    const expenseDoc = response.ExpenseDocuments[0];
+    const result: TextractExpenseData = {};
+
+    // Extract summary fields
+    if (expenseDoc.SummaryFields) {
+      for (const field of expenseDoc.SummaryFields) {
+        const type = field.Type?.Text?.toLowerCase();
+        const value = field.ValueDetection?.Text;
+
+        if (!type || !value) continue;
+
+        switch (type) {
+          case 'vendor_name':
+          case 'merchant_name':
+            result.merchantName = value;
+            break;
+          case 'total':
+          case 'amount_paid':
+            result.totalAmount = parseFloat(value.replace(/[^0-9.]/g, ''));
+            break;
+          case 'date':
+          case 'invoice_receipt_date':
+            result.date = value;
+            break;
+          case 'tax':
+          case 'total_tax':
+            result.taxAmount = parseFloat(value.replace(/[^0-9.]/g, ''));
+            break;
+          case 'subtotal':
+            result.subtotal = parseFloat(value.replace(/[^0-9.]/g, ''));
+            break;
+        }
+      }
+    }
+
+    // Extract line items
+    if (expenseDoc.LineItemGroups) {
+      result.lineItems = [];
+      for (const group of expenseDoc.LineItemGroups) {
+        if (group.LineItems) {
+          for (const item of group.LineItems) {
+            let description = '';
+            let amount = 0;
+
+            if (item.LineItemExpenseFields) {
+              for (const field of item.LineItemExpenseFields) {
+                const type = field.Type?.Text?.toLowerCase();
+                const value = field.ValueDetection?.Text;
+
+                if (!type || !value) continue;
+
+                if (type === 'item' || type === 'description') {
+                  description = value;
+                } else if (type === 'price' || type === 'amount') {
+                  amount = parseFloat(value.replace(/[^0-9.]/g, ''));
+                }
+              }
+            }
+
+            if (description || amount > 0) {
+              result.lineItems.push({ description, amount });
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Textract expense analysis failed:', error);
+    throw new Error(`Textract expense analysis failed: ${error}`);
   }
 }

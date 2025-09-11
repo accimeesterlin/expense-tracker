@@ -19,6 +19,7 @@ import AppLayout from "@/components/AppLayout";
 import CompanyModal from "@/components/CompanyModal";
 import ExpenseModal from "@/components/ExpenseModal";
 import ExpenseCard from "@/components/ExpenseCard";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Company {
   _id: string;
@@ -94,6 +95,15 @@ export default function CompanyDetailsPage() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
     undefined
   );
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   const fetchCompanyDetails = useCallback(async () => {
     try {
@@ -191,11 +201,19 @@ export default function CompanyDetailsPage() {
         setExpenses((prev) => prev.filter((e) => e._id !== expenseId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete expense");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete expense",
+        });
       }
     } catch (error) {
       console.error("Error deleting expense:", error);
-      alert("Failed to delete expense. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Failed to delete expense. Please try again.",
+      });
     }
   };
 
@@ -245,7 +263,9 @@ export default function CompanyDetailsPage() {
                 <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558] truncate">
                   {company.name}
                 </h1>
-                <p className="text-xs sm:text-sm text-[#476788] truncate">{company.industry}</p>
+                <p className="text-xs sm:text-sm text-[#476788] truncate">
+                  {company.industry}
+                </p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
@@ -306,14 +326,18 @@ export default function CompanyDetailsPage() {
                     <label className="text-xs sm:text-sm font-medium text-[#476788] block">
                       Industry
                     </label>
-                    <p className="text-sm sm:text-base text-[#0B3558]">{company.industry}</p>
+                    <p className="text-sm sm:text-base text-[#0B3558]">
+                      {company.industry}
+                    </p>
                   </div>
                   {company.description && (
                     <div>
                       <label className="text-xs sm:text-sm font-medium text-[#476788] block">
                         Description
                       </label>
-                      <p className="text-sm sm:text-base text-[#0B3558]">{company.description}</p>
+                      <p className="text-sm sm:text-base text-[#0B3558]">
+                        {company.description}
+                      </p>
                     </div>
                   )}
                   <div>
@@ -337,14 +361,21 @@ export default function CompanyDetailsPage() {
                       {(company.address?.city || company.address?.state) && (
                         <p>
                           {company.address.city && company.address.city}
-                          {company.address.city && company.address.state && ", "}
+                          {company.address.city &&
+                            company.address.state &&
+                            ", "}
                           {company.address.state && company.address.state}
-                          {company.address.zipCode && ` ${company.address.zipCode}`}
+                          {company.address.zipCode &&
+                            ` ${company.address.zipCode}`}
                         </p>
                       )}
-                      {(!company.address?.street && !company.address?.city && !company.address?.state) && (
-                        <span className="text-[#A6BBD1] text-sm">No address information available</span>
-                      )}
+                      {!company.address?.street &&
+                        !company.address?.city &&
+                        !company.address?.state && (
+                          <span className="text-[#A6BBD1] text-sm">
+                            No address information available
+                          </span>
+                        )}
                     </div>
                   </div>
                   <div>
@@ -355,7 +386,9 @@ export default function CompanyDetailsPage() {
                       {company.contactInfo?.email && (
                         <div className="flex items-center space-x-2">
                           <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#476788] flex-shrink-0" />
-                          <span className="truncate">{company.contactInfo.email}</span>
+                          <span className="truncate">
+                            {company.contactInfo.email}
+                          </span>
                         </div>
                       )}
                       {company.contactInfo?.phone && (
@@ -363,7 +396,9 @@ export default function CompanyDetailsPage() {
                           <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-center text-[#476788] flex-shrink-0">
                             📞
                           </span>
-                          <span className="truncate">{company.contactInfo.phone}</span>
+                          <span className="truncate">
+                            {company.contactInfo.phone}
+                          </span>
                         </div>
                       )}
                       {company.contactInfo?.website && (
@@ -381,9 +416,13 @@ export default function CompanyDetailsPage() {
                           </a>
                         </div>
                       )}
-                      {(!company.contactInfo?.email && !company.contactInfo?.phone && !company.contactInfo?.website) && (
-                        <span className="text-[#A6BBD1] text-sm">No contact information available</span>
-                      )}
+                      {!company.contactInfo?.email &&
+                        !company.contactInfo?.phone &&
+                        !company.contactInfo?.website && (
+                          <span className="text-[#A6BBD1] text-sm">
+                            No contact information available
+                          </span>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -416,7 +455,10 @@ export default function CompanyDetailsPage() {
                     <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
                       Total Amount
                     </p>
-                    <p className="text-lg sm:text-xl font-bold text-[#0B3558] truncate" title={formatCurrency(totalExpenseAmount)}>
+                    <p
+                      className="text-lg sm:text-xl font-bold text-[#0B3558] truncate"
+                      title={formatCurrency(totalExpenseAmount)}
+                    >
                       {formatCurrency(totalExpenseAmount)}
                     </p>
                   </div>
@@ -554,7 +596,9 @@ export default function CompanyDetailsPage() {
                         <h3 className="font-semibold text-[#0B3558] text-sm sm:text-base truncate">
                           {member.name}
                         </h3>
-                        <p className="text-xs sm:text-sm text-[#476788] truncate">{member.role}</p>
+                        <p className="text-xs sm:text-sm text-[#476788] truncate">
+                          {member.role}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 text-xs sm:text-sm text-[#476788]">
@@ -591,6 +635,14 @@ export default function CompanyDetailsPage() {
           onSuccess={handleExpenseCreated}
         />
       )}
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
     </AppLayout>
   );
 }

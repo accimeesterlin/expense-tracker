@@ -147,7 +147,7 @@ export default function SimpleDebtModal({
         }
       }}
     >
-      <div className="card max-w-2xl w-full mx-2 sm:mx-4">
+      <div className="card max-w-sm w-full mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { uploadReceiptToS3 } from '@/lib/aws';
+import { uploadReceiptToS3, extractTextWithTextract, analyzeExpenseWithTextract, type TextractExpenseData } from '@/lib/aws';
 
 // Types for the parsed receipt data
 interface ParsedReceiptData {
@@ -126,70 +126,99 @@ function extractTextFromReceipt(text: string): ParsedReceiptData {
   return result;
 }
 
-// Mock OCR function (in production, you'd use a real OCR service)
-async function performOCR(_fileBuffer: Buffer, _contentType: string): Promise<string> {
-  // This is a mock implementation
-  // In a real application, you would integrate with:
-  // - AWS Textract
-  // - Google Cloud Vision API
-  // - Azure Cognitive Services
-  // - Tesseract.js (client-side)
-  
-  // For now, return mock text that demonstrates the parsing
-  const mockTexts = [
-    `STARBUCKS COFFEE
-123 Main Street
-City, State 12345
+// AWS Textract OCR function
+async function performOCR(fileBuffer: Buffer, contentType: string): Promise<string> {
+  try {
+    // Try AWS Textract first
+    return await extractTextWithTextract(fileBuffer, contentType);
+  } catch (textractError) {
+    console.error('AWS Textract failed, using fallback:', textractError);
+    
+    // Fallback to placeholder if Textract fails
+    const today = new Date().toLocaleDateString();
+    const time = new Date().toLocaleTimeString();
+    
+    return `RECEIPT - TEXTRACT UNAVAILABLE
+File: ${contentType}
+Size: ${Math.round(fileBuffer.length / 1024)} KB
+Scanned: ${today} ${time}
 
-Date: ${new Date().toLocaleDateString()}
-Time: ${new Date().toLocaleTimeString()}
+NOTICE: AWS Textract is not available.
+Please manually verify and enter the following:
 
-Venti Latte                 $5.65
-Blueberry Muffin           $3.25
-                           ------
-Subtotal                   $8.90
-Tax                        $0.89
-                           ------
-Total                      $9.79
+Merchant Name: [Please enter merchant name]
+Date: ${today}
+Amount: $[Please enter total amount]
+Tax: $[Please enter tax if applicable]
 
-Thank you for your visit!`,
+Error: ${textractError instanceof Error ? textractError.message : 'Unknown error'}
 
-    `TARGET STORE #1234
-456 Shopping Way
-City, State 54321
+The receipt has been uploaded and is available
+for your records.`;
+  }
+}
 
-${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+// Convert Textract data to our ParsedReceiptData format
+function convertTextractToParsedData(textractData: TextractExpenseData): ParsedReceiptData {
+  const result: ParsedReceiptData = {};
 
-Office Supplies            $24.99
-Cleaning Products          $12.50
-Groceries                  $45.75
-                           ------
-Subtotal                   $83.24
-Tax (8.25%)                $6.87
-                           ------
-Total                      $90.11
+  if (textractData.merchantName) {
+    result.merchantName = textractData.merchantName;
+  }
 
-Thank you for shopping!`,
+  if (textractData.totalAmount && textractData.totalAmount > 0) {
+    result.totalAmount = textractData.totalAmount;
+  }
 
-    `SHELL STATION
-789 Highway Rd
-City, State 98765
+  if (textractData.date) {
+    try {
+      const date = new Date(textractData.date);
+      if (!isNaN(date.getTime())) {
+        result.date = date.toISOString().split('T')[0];
+      }
+    } catch {
+      result.date = textractData.date;
+    }
+  }
 
-Date: ${new Date().toLocaleDateString()}
+  if (textractData.taxAmount && textractData.taxAmount > 0) {
+    result.taxAmount = textractData.taxAmount;
+  }
 
-Unleaded Gas - 12.5 gal    $47.50
-Car Wash                   $8.00
-                           ------
-Subtotal                   $55.50
-Tax                        $4.44
-                           ------
-Total                      $59.94
+  if (textractData.subtotal && textractData.subtotal > 0) {
+    result.subtotal = textractData.subtotal;
+  }
 
-Drive safely!`
-  ];
+  if (textractData.lineItems && textractData.lineItems.length > 0) {
+    result.items = textractData.lineItems.map(item => ({
+      description: item.description,
+      amount: item.amount,
+      quantity: 1
+    }));
+  }
 
-  // Return a random mock receipt for demonstration
-  return mockTexts[Math.floor(Math.random() * mockTexts.length)];
+  // Guess category based on merchant name (same logic as before)
+  if (result.merchantName) {
+    const merchant = result.merchantName.toLowerCase();
+    if (merchant.includes('restaurant') || merchant.includes('cafe') || merchant.includes('pizza') || 
+        merchant.includes('food') || merchant.includes('dining') || merchant.includes('burger') ||
+        merchant.includes('coffee') || merchant.includes('starbucks') || merchant.includes('mcdonald')) {
+      result.category = 'Food & Dining';
+    } else if (merchant.includes('gas') || merchant.includes('fuel') || merchant.includes('shell') || 
+               merchant.includes('exxon') || merchant.includes('bp') || merchant.includes('chevron')) {
+      result.category = 'Transportation';
+    } else if (merchant.includes('store') || merchant.includes('mart') || merchant.includes('shop') ||
+               merchant.includes('target') || merchant.includes('walmart') || merchant.includes('costco')) {
+      result.category = 'Shopping';
+    } else if (merchant.includes('hotel') || merchant.includes('airline') || merchant.includes('rental') ||
+               merchant.includes('uber') || merchant.includes('lyft') || merchant.includes('taxi')) {
+      result.category = 'Travel';
+    } else {
+      result.category = 'Business';
+    }
+  }
+
+  return result;
 }
 
 export async function POST(request: NextRequest) {
@@ -228,19 +257,47 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to S3 first
-    const uploadResult = await uploadReceiptToS3(
-      buffer,
-      file.name,
-      file.type,
-      session.user.id
-    );
+    // Upload to S3 first (with robust fallback)
+    let uploadResult;
+    let uploadSuccess = false;
+    
+    try {
+      uploadResult = await uploadReceiptToS3(
+        buffer,
+        file.name,
+        file.type,
+        session.user.id
+      );
+      uploadSuccess = true;
+      console.log('S3 upload successful:', uploadResult.key);
+    } catch (s3Error) {
+      console.error('S3 Upload Error:', s3Error);
+      
+      // Create a fallback upload result that still allows scanning
+      const timestamp = Date.now();
+      const fallbackKey = `receipts/${session.user.id}/${timestamp}-${file.name}`;
+      
+      uploadResult = {
+        key: fallbackKey,
+        url: `data:${file.type};base64,${buffer.toString('base64')}`, // Data URL as fallback
+        size: buffer.length,
+      };
+      
+      console.warn('Using fallback data URL due to S3 error');
+    }
 
     // Perform OCR on the image
     const extractedText = await performOCR(buffer, file.type);
     
-    // Parse the extracted text
-    const parsedData = extractTextFromReceipt(extractedText);
+    // Try to get structured data from Textract first, then fallback to text parsing
+    let parsedData: ParsedReceiptData;
+    try {
+      const textractData = await analyzeExpenseWithTextract(buffer);
+      parsedData = convertTextractToParsedData(textractData);
+    } catch (textractError) {
+      console.log('Textract expense analysis failed, using text parsing:', textractError);
+      parsedData = extractTextFromReceipt(extractedText);
+    }
 
     return NextResponse.json({
       success: true,
@@ -250,28 +307,58 @@ export async function POST(request: NextRequest) {
         size: uploadResult.size,
         fileName: file.name,
         contentType: file.type,
+        uploaded: uploadSuccess,
+        storageType: uploadSuccess ? 's3' : 'local_fallback',
       },
+      warning: !uploadSuccess ? 'Receipt processed locally due to storage service issue' : undefined,
       extractedText,
       parsedData,
       // Suggest expense data based on parsed receipt
       suggestedExpense: {
-        name: parsedData.merchantName ? `${parsedData.merchantName} - ${parsedData.date || 'Receipt'}` : 'Receipt Expense',
-        description: `Receipt from ${parsedData.merchantName || 'Unknown Merchant'}`,
-        amount: parsedData.totalAmount || 0,
-        category: parsedData.category || 'Business',
+        name: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]' 
+          ? `${parsedData.merchantName} - ${parsedData.date || 'Receipt'}` 
+          : `Receipt - ${new Date().toLocaleDateString()}`,
+        description: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]'
+          ? `Receipt from ${parsedData.merchantName}`
+          : 'Receipt expense - Please update merchant name and amount',
+        amount: parsedData.totalAmount && parsedData.totalAmount > 0 ? parsedData.totalAmount : 0,
+        category: parsedData.category || 'Business Expense',
         expenseType: 'business',
         receiptUrl: uploadResult.url,
         receiptS3Key: uploadResult.key,
         receiptFileName: file.name,
         receiptContentType: file.type,
-        tags: parsedData.merchantName ? [parsedData.merchantName.toLowerCase().replace(/\s+/g, '-')] : [],
+        tags: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]' 
+          ? [parsedData.merchantName.toLowerCase().replace(/\s+/g, '-')] 
+          : ['receipt'],
       }
     });
   } catch (error) {
     console.error('Error scanning receipt:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to scan receipt';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('S3')) {
+        errorMessage = 'Failed to upload receipt. Please check AWS configuration.';
+      } else if (error.message.includes('OCR')) {
+        errorMessage = 'Failed to process receipt text. Please try again.';
+      } else if (error.message.includes('Unauthorized')) {
+        errorMessage = 'Authentication failed. Please sign in again.';
+        statusCode = 401;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to scan receipt' },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error : undefined 
+      },
+      { status: statusCode }
     );
   }
 }

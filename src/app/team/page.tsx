@@ -7,6 +7,7 @@ import { Plus, Users, Edit, Trash2, Mail, Phone, User } from "lucide-react";
 import Link from "next/link";
 import TeamMemberModal from "@/components/TeamMemberModal";
 import AppLayout from "@/components/AppLayout";
+import ErrorModal from "@/components/ErrorModal";
 
 interface Company {
   _id: string;
@@ -34,6 +35,15 @@ export default function TeamPage() {
   const [editingMember, setEditingMember] = useState<TeamMember | undefined>(
     undefined
   );
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -100,10 +110,18 @@ export default function TeamPage() {
         setTeamMembers((prev) => prev.filter((m) => m._id !== member._id));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete team member");
+        setErrorModal({
+          isOpen: true,
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete team member",
+        });
       }
     } catch (error) {
-      alert("Something went wrong. Please try again.");
+      setErrorModal({
+        isOpen: true,
+        title: "Delete Failed",
+        message: "Something went wrong. Please try again.",
+      });
     }
   };
 
@@ -269,6 +287,14 @@ export default function TeamPage() {
           onSuccess={handleTeamMemberSuccess}
         />
       )}
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
     </AppLayout>
   );
 }

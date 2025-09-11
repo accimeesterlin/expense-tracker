@@ -129,7 +129,7 @@ export default function SettingsModal({
         }
       }}
     >
-      <div className="card max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="card max-w-md w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <h2 className="text-xl font-semibold text-[#0B3558]">Settings</h2>

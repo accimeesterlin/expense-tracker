@@ -34,7 +34,15 @@ import SettingsModal from "@/components/SettingsModal";
 import GlobalSearch from "@/components/GlobalSearch";
 import Sidebar from "@/components/Sidebar";
 import ReceiptScannerModal from "@/components/ReceiptScannerModal";
-import type { Company, Expense, PaymentMethod, Income, Debt, Asset } from "@/types/shared";
+import NotificationModal from "@/components/NotificationModal";
+import type {
+  Company,
+  Expense,
+  PaymentMethod,
+  Income,
+  Debt,
+  Asset,
+} from "@/types/shared";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -67,6 +75,17 @@ export default function DashboardPage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    type: "success" | "error";
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -131,10 +150,6 @@ export default function DashboardPage() {
   };
 
   const handleExpenseDeleted = async (expenseId: string) => {
-    if (!confirm("Are you sure you want to delete this expense?")) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/expenses/${expenseId}`, {
         method: "DELETE",
@@ -142,13 +157,29 @@ export default function DashboardPage() {
 
       if (response.ok) {
         setExpenses((prev) => prev.filter((e) => e._id !== expenseId));
+        setNotification({
+          isOpen: true,
+          type: "success",
+          title: "Success",
+          message: "Expense deleted successfully",
+        });
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete expense");
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "Delete Failed",
+          message: errorData.error || "Failed to delete expense",
+        });
       }
     } catch (error) {
       console.error("Error deleting expense:", error);
-      alert("Failed to delete expense. Please try again.");
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Delete Failed",
+        message: "Failed to delete expense. Please try again.",
+      });
     }
   };
 
@@ -192,7 +223,7 @@ export default function DashboardPage() {
     setSelectedAsset(null);
   };
 
-  const handleReceiptScanned = (expenseData: {
+  const handleReceiptScanned = async (expenseData: {
     name: string;
     description: string;
     amount: number;
@@ -204,35 +235,61 @@ export default function DashboardPage() {
     receiptFileName: string;
     receiptContentType: string;
   }) => {
-    // Pre-fill the expense modal with scanned data
-    setSelectedExpense({
-      _id: '',
-      name: expenseData.name,
-      description: expenseData.description,
-      amount: expenseData.amount,
-      category: expenseData.category,
-      tags: expenseData.tags,
-      expenseType: expenseData.expenseType,
-      frequency: '',
-      startDate: '',
-      nextBillingDate: '',
-      company: companies[0] || {
-        _id: 'temp',
-        name: 'Unknown Company',
-        industry: 'Other',
-        createdAt: new Date().toISOString()
-      },
-      isActive: true,
-      receiptUrl: expenseData.receiptUrl,
-      receiptS3Key: expenseData.receiptS3Key,
-      receiptFileName: expenseData.receiptFileName,
-      receiptContentType: expenseData.receiptContentType,
-      comments: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
-    setShowReceiptScannerModal(false);
-    setShowExpenseModal(true);
+    try {
+      // Create the expense directly
+      const response = await fetch("/api/expenses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          company: companies[0]?._id || "",
+          name: expenseData.name,
+          description: expenseData.description,
+          amount: expenseData.amount,
+          currency: "USD",
+          category: expenseData.category,
+          expenseType: expenseData.expenseType,
+          startDate: new Date().toISOString().split("T")[0],
+          isActive: true,
+          tags: expenseData.tags,
+          receiptUrl: expenseData.receiptUrl,
+          receiptS3Key: expenseData.receiptS3Key,
+          receiptFileName: expenseData.receiptFileName,
+          receiptContentType: expenseData.receiptContentType,
+        }),
+      });
+
+      if (response.ok) {
+        const newExpense = await response.json();
+        // Add the new expense to the list
+        setExpenses((prev) => [newExpense, ...prev]);
+        setShowReceiptScannerModal(false);
+
+        setNotification({
+          isOpen: true,
+          type: "success",
+          title: "Success",
+          message: "Expense created successfully from receipt!",
+        });
+      } else {
+        const errorData = await response.json();
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "Failed to Create Expense",
+          message: errorData.error || "Unknown error",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating expense from receipt:", error);
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to create expense. Please try again.",
+      });
+    }
   };
 
   if (status === "loading" || loading) {
@@ -265,7 +322,7 @@ export default function DashboardPage() {
                 >
                   <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0 hidden sm:flex">
+                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl items-center justify-center lg:hidden flex-shrink-0 hidden sm:flex">
                   <DollarSign className="w-4 h-4 lg:w-6 lg:h-6 text-white" />
                 </div>
                 <h1 className="text-sm sm:text-lg lg:text-2xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
@@ -277,15 +334,17 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                 {/* Global Search */}
-                <GlobalSearch />
+                <div className="hidden sm:block">
+                  <GlobalSearch />
+                </div>
 
                 {/* User Menu */}
                 <div className="flex items-center space-x-1 sm:space-x-2">
-                  <div className="hidden md:flex items-center space-x-1 sm:space-x-2">
+                  <div className="hidden lg:flex items-center space-x-1 sm:space-x-2">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center flex-shrink-0">
                       <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#006BFF]" />
                     </div>
-                    <span className="text-xs sm:text-sm font-medium text-[#0B3558] hidden lg:block truncate max-w-20">
+                    <span className="text-xs sm:text-sm font-medium text-[#0B3558] truncate max-w-20">
                       {session.user?.name}
                     </span>
                   </div>
@@ -297,12 +356,15 @@ export default function DashboardPage() {
                   >
                     <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
+
+                  {/* Make sign out button more prominent and always visible */}
                   <button
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center space-x-1 shadow-sm"
                     title="Sign out"
                   >
-                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <LogOut className="w-4 h-4" />
+                    <span>Exit</span>
                   </button>
                 </div>
               </div>
@@ -346,10 +408,10 @@ export default function DashboardPage() {
               <DashboardStats companies={companies} expenses={expenses} />
 
               {/* Quick Actions - Essential Only */}
-              <div className="mt-3 sm:mt-4 lg:mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 w-full">
+              <div className="mt-3 sm:mt-4 lg:mt-6 flex flex-wrap gap-2 sm:gap-3 lg:gap-4 max-w-4xl">
                 <button
                   onClick={() => setShowSimpleIncomeModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200"
+                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -368,7 +430,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowExpenseModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200"
+                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -387,7 +449,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowReceiptScannerModal(true)}
-                  className="card p-2 sm:p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-purple-50 hover:bg-purple-100 border-purple-200 sm:col-span-2 lg:col-span-1"
+                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-purple-50 hover:bg-purple-100 border-purple-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -399,6 +461,25 @@ export default function DashboardPage() {
                       </h3>
                       <p className="text-xs text-purple-600 truncate hidden sm:block">
                         Auto-extract expense from receipt
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setShowSimpleDebtModal(true)}
+                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-orange-50 hover:bg-orange-100 border-orange-200 w-48 sm:w-56 lg:w-64"
+                >
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-orange-800 truncate">
+                        Add Debt
+                      </h3>
+                      <p className="text-xs text-orange-600 truncate hidden sm:block">
+                        Track and manage debts
                       </p>
                     </div>
                   </div>
@@ -743,6 +824,15 @@ export default function DashboardPage() {
             onExpenseCreated={handleReceiptScanned}
           />
         )}
+
+        {/* Notification Modal */}
+        <NotificationModal
+          isOpen={notification.isOpen}
+          onClose={() => setNotification({ ...notification, isOpen: false })}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+        />
       </div>
     </div>
   );
