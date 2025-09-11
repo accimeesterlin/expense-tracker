@@ -10,6 +10,7 @@ export interface IExpense extends Document {
   expenseType: "subscription" | "one-time" | "recurring";
   frequency?: "monthly" | "quarterly" | "yearly" | "weekly" | "daily";
   startDate: Date;
+  paymentDate?: Date;
   endDate?: Date;
   nextBillingDate?: Date;
   isActive: boolean;
@@ -84,6 +85,10 @@ const ExpenseSchema: Schema = new Schema(
     startDate: {
       type: Date,
       required: [true, "Start date is required"],
+    },
+    paymentDate: {
+      type: Date,
+      required: false,
     },
     endDate: {
       type: Date,

@@ -1,0 +1,58 @@
+{
+  "name": "Expense Tracker",
+  "short_name": "ExpenseApp",
+  "description": "Track and manage your business expenses efficiently",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FB",
+  "theme_color": "#006BFF",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "business", "productivity"],
+  "lang": "en-US",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Expense",
+      "short_name": "Add Expense",
+      "description": "Quickly add a new expense",
+      "url": "/expenses?add=true",
+      "icons": [
+        {
+          "src": "/icons/icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your expense dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icons/icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Scan Receipt",
+      "short_name": "Scan Receipt",
+      "description": "Scan a receipt to create an expense",
+      "url": "/?scan=true",
+      "icons": [
+        {
+          "src": "/icons/icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,7 @@ import {
   XCircle,
   Maximize2,
   Minimize2,
+  RotateCcw,
 } from "lucide-react";
 import ExpenseModal from "@/components/ExpenseModal";
 import AppLayout from "@/components/AppLayout";
@@ -53,6 +54,7 @@ interface Expense {
   expenseType: string;
   frequency?: string;
   startDate?: string;
+  paymentDate?: string;
   nextBillingDate?: string;
   company: Company;
   isActive: boolean;
@@ -88,6 +90,7 @@ export default function ExpenseDetailPage() {
     value: "",
   });
   const [isImageExpanded, setIsImageExpanded] = useState(false);
+  const [imageRotation, setImageRotation] = useState(0);
 
   const fetchExpense = useCallback(async () => {
     try {
@@ -745,6 +748,26 @@ export default function ExpenseDetailPage() {
                       </div>
                     </div>
                   )}
+                  {expense.paymentDate && (
+                    <div>
+                      <label className="block text-sm font-medium text-[#476788] mb-1">
+                        Payment Date
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-green-600" />
+                        <span className="text-[#0B3558]">
+                          {new Date(expense.paymentDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {expense.nextBillingDate && (
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-[#476788] mb-1">
@@ -776,40 +799,48 @@ export default function ExpenseDetailPage() {
                   <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">
                     Receipt
                   </h2>
-                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                  <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => setIsImageExpanded(!isImageExpanded)}
-                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1"
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 min-w-0"
                     >
                       {isImageExpanded ? (
                         <>
-                          <Minimize2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">Collapse</span>
-                          <span className="sm:hidden">Small</span>
+                          <Minimize2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="hidden sm:inline truncate">Collapse</span>
+                          <span className="sm:hidden truncate">Small</span>
                         </>
                       ) : (
                         <>
-                          <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline">Expand</span>
-                          <span className="sm:hidden">Large</span>
+                          <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="hidden sm:inline truncate">Expand</span>
+                          <span className="sm:hidden truncate">Large</span>
                         </>
                       )}
+                    </button>
+                    <button
+                      onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 min-w-0"
+                    >
+                      <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline truncate">Rotate</span>
+                      <span className="sm:hidden truncate">↻</span>
                     </button>
                     <a
                       href={expense.receiptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center"
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center min-w-0"
                     >
-                      <span className="hidden sm:inline">Open Full Size</span>
-                      <span className="sm:hidden">Full Size</span>
+                      <span className="hidden sm:inline truncate">Open Full Size</span>
+                      <span className="sm:hidden truncate">Full Size</span>
                     </a>
                     <button
                       onClick={handleRemoveReceipt}
-                      className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm flex-1 sm:flex-none text-center"
+                      className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center min-w-0"
                     >
-                      <span className="hidden sm:inline">Remove Receipt</span>
-                      <span className="sm:hidden">Remove</span>
+                      <span className="hidden sm:inline truncate">Remove Receipt</span>
+                      <span className="sm:hidden truncate">Remove</span>
                     </button>
                   </div>
                 </div>
@@ -827,6 +858,7 @@ export default function ExpenseDetailPage() {
                         className={`w-full h-auto object-contain transition-all duration-300 ${
                           isImageExpanded ? 'max-h-[600px]' : 'max-h-[250px] sm:max-h-[300px]'
                         }`}
+                        style={{ transform: `rotate(${imageRotation}deg)` }}
                         unoptimized={expense.receiptUrl.startsWith("data:") || expense.receiptUrl.includes("amazonaws.com")}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;

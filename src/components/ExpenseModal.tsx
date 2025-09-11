@@ -34,6 +34,7 @@ interface Expense {
   expenseType: string;
   frequency?: string;
   startDate?: string;
+  paymentDate?: string;
   nextBillingDate?: string;
   isActive: boolean;
   receiptUrl?: string;
@@ -92,6 +93,7 @@ export default function ExpenseModal({
     expenseType: "one-time",
     frequency: "monthly",
     startDate: "",
+    paymentDate: "",
     tags: "" as string,
     isActive: true,
     receipt: null as File | null,
@@ -123,6 +125,7 @@ export default function ExpenseModal({
         expenseType: expense.expenseType,
         frequency: expense.frequency || "monthly",
         startDate: expense.startDate ? expense.startDate.split("T")[0] : "",
+        paymentDate: expense.paymentDate ? expense.paymentDate.split("T")[0] : "",
         tags: expense.tags ? expense.tags.join(", ") : "",
         isActive: expense.isActive,
         receipt: null,
@@ -130,7 +133,13 @@ export default function ExpenseModal({
       });
       setShowAdvanced(true); // Show all fields when editing
     } else if (hasCompanies && companies.length > 0) {
-      setFormData((prev) => ({ ...prev, company: companies[0]._id }));
+      // For new expenses, try to restore the last selected company from localStorage
+      const savedCompanyId = localStorage.getItem("expense-tracker-last-company");
+      const validCompany = savedCompanyId && companies.find(c => c._id === savedCompanyId);
+      setFormData((prev) => ({ 
+        ...prev, 
+        company: validCompany ? savedCompanyId : companies[0]._id 
+      }));
     }
   }, [expense, companies, hasCompanies]);
 
@@ -170,8 +179,14 @@ export default function ExpenseModal({
 
   const resetForm = () => {
     if (!expense) {
+      // For new expenses, try to restore the last selected company from localStorage
+      const savedCompanyId = localStorage.getItem("expense-tracker-last-company");
+      const validCompany = savedCompanyId && companies.find(c => c._id === savedCompanyId);
+      
       setFormData({
-        company: hasCompanies ? companies[0]._id : "",
+        company: hasCompanies 
+          ? (validCompany ? savedCompanyId : companies[0]._id) 
+          : "",
         name: "",
         description: "",
         amount: "",
@@ -179,6 +194,7 @@ export default function ExpenseModal({
         expenseType: "one-time",
         frequency: "monthly",
         startDate: "",
+        paymentDate: "",
         tags: "",
         isActive: true,
         receipt: null,
@@ -228,6 +244,7 @@ export default function ExpenseModal({
         setFormData((prev) => ({
           ...prev,
           startDate: extractedInfo.date || "",
+          paymentDate: extractedInfo.paymentDate || extractedInfo.date || "",
         }));
       }
       if (extractedInfo.category) {
@@ -249,6 +266,7 @@ export default function ExpenseModal({
     amount?: string;
     merchantName?: string;
     date?: string;
+    paymentDate?: string;
     category?: string;
   }> => {
     // Simulate OCR processing delay
@@ -262,29 +280,36 @@ export default function ExpenseModal({
       merchantName?: string;
       category?: string;
       date?: string;
+      paymentDate?: string;
     } = {};
 
     // Simple pattern matching based on common receipt patterns
+    const currentDate = new Date().toISOString().split("T")[0];
+    const paymentDate = new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]; // Random date within last 3 days
+    
     if (fileName.includes("restaurant") || fileName.includes("food")) {
       mockData = {
         amount: (Math.random() * 50 + 15).toFixed(2),
         merchantName: "Restaurant Expense",
         category: "Travel & Entertainment",
-        date: new Date().toISOString().split("T")[0],
+        date: currentDate,
+        paymentDate: paymentDate,
       };
     } else if (fileName.includes("gas") || fileName.includes("fuel")) {
       mockData = {
         amount: (Math.random() * 80 + 30).toFixed(2),
         merchantName: "Fuel Expense",
         category: "Travel & Entertainment",
-        date: new Date().toISOString().split("T")[0],
+        date: currentDate,
+        paymentDate: paymentDate,
       };
     } else if (fileName.includes("office") || fileName.includes("supplies")) {
       mockData = {
         amount: (Math.random() * 100 + 20).toFixed(2),
         merchantName: "Office Supplies",
         category: "Office & Supplies",
-        date: new Date().toISOString().split("T")[0],
+        date: currentDate,
+        paymentDate: paymentDate,
       };
     } else {
       // Generic expense
@@ -292,7 +317,8 @@ export default function ExpenseModal({
         amount: (Math.random() * 150 + 25).toFixed(2),
         merchantName: "Business Expense",
         category: "Other",
-        date: new Date().toISOString().split("T")[0],
+        date: currentDate,
+        paymentDate: paymentDate,
       };
     }
 
@@ -410,6 +436,7 @@ export default function ExpenseModal({
             ? formData.frequency
             : undefined,
         startDate: formData.startDate || new Date().toISOString().split("T")[0],
+        paymentDate: formData.paymentDate || undefined,
         isActive: formData.isActive,
         tags,
         ...receiptData,
@@ -590,12 +617,15 @@ export default function ExpenseModal({
                 </label>
                 <select
                   value={formData.company}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const selectedCompanyId = e.target.value;
                     setFormData((prev) => ({
                       ...prev,
-                      company: e.target.value,
-                    }))
-                  }
+                      company: selectedCompanyId,
+                    }));
+                    // Save the selected company to localStorage for future use
+                    localStorage.setItem("expense-tracker-last-company", selectedCompanyId);
+                  }}
                   className="input-field w-full"
                   required
                 >
@@ -700,6 +730,23 @@ export default function ExpenseModal({
                         setFormData((prev) => ({
                           ...prev,
                           startDate: e.target.value,
+                        }))
+                      }
+                      className="input-field w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#0B3558] mb-2">
+                      Payment Date
+                      <span className="text-xs text-[#476788] font-normal ml-1">(Optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.paymentDate}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          paymentDate: e.target.value,
                         }))
                       }
                       className="input-field w-full"

@@ -46,6 +46,7 @@ export interface Expense {
   expenseType: string;
   frequency?: string;
   startDate?: string;
+  paymentDate?: string;
   nextBillingDate?: string;
   company: Company;
   isActive: boolean;

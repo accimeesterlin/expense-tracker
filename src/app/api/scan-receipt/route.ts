@@ -11,6 +11,7 @@ interface ParsedReceiptData {
   merchantName?: string;
   totalAmount?: number;
   date?: string;
+  paymentDate?: string;
   category?: string;
   items?: Array<{
     description: string;
@@ -78,6 +79,7 @@ function extractTextFromReceipt(text: string, availableCategories: string[] = []
           const date = new Date(match[1]);
           if (!isNaN(date.getTime())) {
             result.date = date.toISOString().split('T')[0];
+            result.paymentDate = result.date; // Payment date is typically the same as transaction date
             break;
           }
         } catch {

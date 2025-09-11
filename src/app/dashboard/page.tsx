@@ -35,6 +35,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import Sidebar from "@/components/Sidebar";
 import ReceiptScannerModal from "@/components/ReceiptScannerModal";
 import NotificationModal from "@/components/NotificationModal";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import type {
   Company,
   Expense,
@@ -833,6 +834,9 @@ export default function DashboardPage() {
           title={notification.title}
           message={notification.message}
         />
+        
+        {/* PWA Install Prompt */}
+        <PWAInstallPrompt />
       </div>
     </div>
   );

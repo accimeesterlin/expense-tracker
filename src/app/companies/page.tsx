@@ -14,6 +14,7 @@ import {
   Mail,
   Users,
   CreditCard,
+  DollarSign,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import CompanyModal from "@/components/CompanyModal";
@@ -37,12 +38,20 @@ interface Company {
   };
   createdAt: string;
   expenseCount?: number;
+  totalAmount?: number;
   teamCount?: number;
 }
 
 export default function CompaniesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
   const [companies, setCompanies] = useState<Company[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,7 +196,7 @@ export default function CompaniesPage() {
 
       <div className="space-y-4 sm:space-y-6 lg:space-y-8 w-full overflow-x-hidden">
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
           <div className="card p-3 sm:p-4 lg:p-6 w-full overflow-hidden">
             <div className="flex items-center w-full">
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
@@ -218,7 +227,22 @@ export default function CompaniesPage() {
               </div>
             </div>
           </div>
-          <div className="card p-3 sm:p-4 lg:p-6 sm:col-span-2 lg:col-span-1">
+          <div className="card p-3 sm:p-4 lg:p-6">
+            <div className="flex items-center">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-orange-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-[#476788] truncate">
+                  Total Amount
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#0B3558] truncate" title={formatCurrency(companies.reduce((sum, c) => sum + (c.totalAmount || 0), 0))}>
+                  {formatCurrency(companies.reduce((sum, c) => sum + (c.totalAmount || 0), 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="card p-3 sm:p-4 lg:p-6">
             <div className="flex items-center">
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-2 sm:mr-3 lg:mr-4 flex-shrink-0">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />

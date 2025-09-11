@@ -129,21 +129,52 @@ export default function SettingsModal({
         }
       }}
     >
-      <div className="card max-w-md w-full max-h-[90vh] overflow-hidden">
+      <div className="card max-w-xs sm:max-w-md lg:max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden mx-2 sm:mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
-          <h2 className="text-xl font-semibold text-[#0B3558]">Settings</h2>
+        <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6 border-b border-[#E5E7EB]">
+          <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">Settings</h2>
           <button
             onClick={onClose}
-            className="text-[#A6BBD1] hover:text-[#0B3558] transition-colors"
+            className="text-[#A6BBD1] hover:text-[#0B3558] transition-colors p-1"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <div className="flex h-[600px]">
-          {/* Sidebar */}
-          <div className="w-64 bg-gray-50 border-r border-[#E5E7EB] p-4">
+        <div className="flex flex-col lg:flex-row h-auto lg:h-[600px]">
+          {/* Mobile Tab Bar */}
+          <div className="lg:hidden bg-gray-50 border-b border-[#E5E7EB] p-2 overflow-x-auto">
+            <nav className="flex space-x-1 min-w-max">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() =>
+                      setActiveTab(
+                        tab.id as
+                          | "profile"
+                          | "preferences"
+                          | "security"
+                          | "notifications"
+                      )
+                    }
+                    className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors min-w-[80px] ${
+                      activeTab === tab.id
+                        ? "bg-[#006BFF] text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="truncate">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+          
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block w-64 bg-gray-50 border-r border-[#E5E7EB] p-4">
             <nav className="space-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -174,10 +205,10 @@ export default function SettingsModal({
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex-1 p-3 sm:p-4 lg:p-6 overflow-y-auto max-h-[60vh] lg:max-h-none">
             {activeTab === "profile" && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="space-y-4 sm:space-y-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Profile Settings
                 </h3>
                 <div className="space-y-4">
@@ -249,8 +280,8 @@ export default function SettingsModal({
             )}
 
             {activeTab === "notifications" && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="space-y-4 sm:space-y-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Notification Settings
                 </h3>
                 <div className="space-y-4">
@@ -258,15 +289,15 @@ export default function SettingsModal({
                     ([key, value]) => (
                       <div
                         key={key}
-                        className="flex items-center justify-between"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-white rounded-lg border border-gray-200"
                       >
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">
                             {key
                               .replace(/([A-Z])/g, " $1")
                               .replace(/^./, (str) => str.toUpperCase())}
                           </h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs sm:text-sm text-gray-500 mt-1">
                             {key === "emailNotifications" &&
                               "Receive notifications via email"}
                             {key === "pushNotifications" &&
@@ -304,23 +335,23 @@ export default function SettingsModal({
             )}
 
             {activeTab === "privacy" && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="space-y-4 sm:space-y-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Privacy Settings
                 </h3>
                 <div className="space-y-4">
                   {Object.entries(settings.privacy).map(([key, value]) => (
                     <div
                       key={key}
-                      className="flex items-center justify-between"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-white rounded-lg border border-gray-200"
                     >
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-900 truncate">
                           {key
                             .replace(/([A-Z])/g, " $1")
                             .replace(/^./, (str) => str.toUpperCase())}
                         </h4>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
                           {key === "dataSharing" &&
                             "Allow sharing of anonymized data for research"}
                           {key === "analytics" &&
@@ -353,8 +384,8 @@ export default function SettingsModal({
             )}
 
             {activeTab === "appearance" && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="space-y-4 sm:space-y-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Appearance Settings
                 </h3>
                 <div className="space-y-4">
@@ -430,8 +461,8 @@ export default function SettingsModal({
             )}
 
             {activeTab === "data" && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="space-y-4 sm:space-y-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                   Data Management
                 </h3>
                 <div className="space-y-4">
@@ -457,12 +488,12 @@ export default function SettingsModal({
                       <option value="xlsx">Excel</option>
                     </select>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-white rounded-lg border border-gray-200">
+                    <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-medium text-gray-900">
                         Auto Backup
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
                         Automatically backup your data weekly
                       </p>
                     </div>
@@ -500,11 +531,11 @@ export default function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-[#E5E7EB]">
-          <button onClick={onClose} className="btn-secondary">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 p-3 sm:p-4 lg:p-6 border-t border-[#E5E7EB]">
+          <button onClick={onClose} className="btn-secondary w-full sm:w-auto order-2 sm:order-1">
             Cancel
           </button>
-          <button onClick={handleSave} className="btn-primary">
+          <button onClick={handleSave} className="btn-primary w-full sm:w-auto order-1 sm:order-2">
             Save Changes
           </button>
         </div>

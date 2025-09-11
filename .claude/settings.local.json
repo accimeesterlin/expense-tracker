@@ -16,7 +16,9 @@
       "Bash(rm:*)",
       "Bash(yarn install)",
       "Bash(find:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": [],

@@ -262,23 +262,24 @@ export default function ReceiptScannerModal({
                 />
               </div>
 
-              {/* Camera Option */}
+              {/* Camera Option - Primary */}
               <div className="text-center">
-                <div className="flex items-center justify-center mb-3">
-                  <hr className="flex-1 border-gray-300" />
-                  <span className="px-3 text-xs text-gray-500 font-medium">OR</span>
-                  <hr className="flex-1 border-gray-300" />
-                </div>
                 <button
                   onClick={openCamera}
-                  className="inline-flex items-center space-x-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors"
+                  className="w-full inline-flex items-center justify-center space-x-2 px-6 py-4 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-base transition-colors mb-4"
                 >
-                  <Camera className="w-4 h-4" />
-                  <span>Take Photo</span>
+                  <Camera className="w-5 h-5" />
+                  <span>Take Photo with Camera</span>
                 </button>
-                <p className="text-xs text-[#A6BBD1] mt-2">
-                  Use your device's camera to capture a receipt
+                <p className="text-sm text-[#476788] mb-4">
+                  Recommended: Use your device's camera for best results
                 </p>
+                
+                <div className="flex items-center justify-center mb-3">
+                  <hr className="flex-1 border-gray-300" />
+                  <span className="px-3 text-xs text-gray-500 font-medium">OR UPLOAD FILE</span>
+                  <hr className="flex-1 border-gray-300" />
+                </div>
                 
                 <input
                   ref={cameraInputRef}

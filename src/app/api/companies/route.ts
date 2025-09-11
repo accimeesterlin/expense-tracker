@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Company from "@/models/Company";
+import Expense from "@/models/Expense";
 
 export async function GET() {
   try {
@@ -15,7 +16,28 @@ export async function GET() {
     const companies = await Company.find({ userId: session.user.id }).sort({
       createdAt: -1,
     });
-    return NextResponse.json(companies);
+
+    // Get expense stats for each company
+    const companiesWithStats = await Promise.all(
+      companies.map(async (company) => {
+        const expenses = await Expense.find({ 
+          userId: session.user.id, 
+          company: company._id,
+          isActive: true 
+        });
+        
+        const expenseCount = expenses.length;
+        const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+        
+        return {
+          ...company.toObject(),
+          expenseCount,
+          totalAmount
+        };
+      })
+    );
+
+    return NextResponse.json(companiesWithStats);
   } catch (error) {
     console.error("Error fetching companies:", error);
     return NextResponse.json(
