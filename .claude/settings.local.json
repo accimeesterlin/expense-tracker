@@ -12,7 +12,11 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm show:*)",
       "Bash(curl:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(rm:*)",
+      "Bash(yarn install)",
+      "Bash(find:*)",
+      "Bash(true)"
     ],
     "deny": [],
     "ask": [],

@@ -206,7 +206,7 @@ export default function DebtModal({
         }
       }}
     >
-      <div className="card max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="card max-w-xs w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">

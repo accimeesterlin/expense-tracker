@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { uploadReceiptToS3, extractTextWithTextract, analyzeExpenseWithTextract, type TextractExpenseData } from '@/lib/aws';
+import { connectToDatabase } from '@/lib/mongodb';
+import Category from '@/models/Category';
+import Tag from '@/models/Tag';
 
 // Types for the parsed receipt data
 interface ParsedReceiptData {
@@ -19,7 +22,7 @@ interface ParsedReceiptData {
 }
 
 // Simple OCR-like text extraction (in a real app, you'd use AWS Textract, Google Vision, etc.)
-function extractTextFromReceipt(text: string): ParsedReceiptData {
+function extractTextFromReceipt(text: string, availableCategories: string[] = []): ParsedReceiptData {
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const result: ParsedReceiptData = {};
 
@@ -102,25 +105,51 @@ function extractTextFromReceipt(text: string): ParsedReceiptData {
     if (result.taxAmount) break;
   }
 
-  // Guess category based on merchant name
-  if (result.merchantName) {
+  // Guess category based on merchant name using available categories
+  if (result.merchantName && availableCategories.length > 0) {
     const merchant = result.merchantName.toLowerCase();
+    
+    // Try to match with existing categories based on keywords
+    let matchedCategory: string | undefined;
+    
     if (merchant.includes('restaurant') || merchant.includes('cafe') || merchant.includes('pizza') || 
         merchant.includes('food') || merchant.includes('dining') || merchant.includes('burger') ||
         merchant.includes('coffee') || merchant.includes('starbucks') || merchant.includes('mcdonald')) {
-      result.category = 'Food & Dining';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('travel') || 
+        cat.toLowerCase().includes('entertainment') || 
+        cat.toLowerCase().includes('food') || 
+        cat.toLowerCase().includes('dining')
+      );
     } else if (merchant.includes('gas') || merchant.includes('fuel') || merchant.includes('shell') || 
                merchant.includes('exxon') || merchant.includes('bp') || merchant.includes('chevron')) {
-      result.category = 'Transportation';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('travel') || 
+        cat.toLowerCase().includes('transportation') || 
+        cat.toLowerCase().includes('fuel')
+      );
     } else if (merchant.includes('store') || merchant.includes('mart') || merchant.includes('shop') ||
                merchant.includes('target') || merchant.includes('walmart') || merchant.includes('costco')) {
-      result.category = 'Shopping';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('office') || 
+        cat.toLowerCase().includes('supplies') || 
+        cat.toLowerCase().includes('shopping')
+      );
     } else if (merchant.includes('hotel') || merchant.includes('airline') || merchant.includes('rental') ||
                merchant.includes('uber') || merchant.includes('lyft') || merchant.includes('taxi')) {
-      result.category = 'Travel';
-    } else {
-      result.category = 'Business';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('travel') || 
+        cat.toLowerCase().includes('entertainment')
+      );
     }
+    
+    // Use matched category or default to first available category or "Other"
+    result.category = matchedCategory || 
+                     availableCategories.find(cat => cat.toLowerCase() === 'other') || 
+                     availableCategories[0] || 
+                     'Other';
+  } else {
+    result.category = 'Other';
   }
 
   return result;
@@ -159,7 +188,7 @@ for your records.`;
 }
 
 // Convert Textract data to our ParsedReceiptData format
-function convertTextractToParsedData(textractData: TextractExpenseData): ParsedReceiptData {
+function convertTextractToParsedData(textractData: TextractExpenseData, availableCategories: string[] = []): ParsedReceiptData {
   const result: ParsedReceiptData = {};
 
   if (textractData.merchantName) {
@@ -197,25 +226,51 @@ function convertTextractToParsedData(textractData: TextractExpenseData): ParsedR
     }));
   }
 
-  // Guess category based on merchant name (same logic as before)
-  if (result.merchantName) {
+  // Guess category based on merchant name using available categories (same logic as extractTextFromReceipt)
+  if (result.merchantName && availableCategories.length > 0) {
     const merchant = result.merchantName.toLowerCase();
+    
+    // Try to match with existing categories based on keywords
+    let matchedCategory: string | undefined;
+    
     if (merchant.includes('restaurant') || merchant.includes('cafe') || merchant.includes('pizza') || 
         merchant.includes('food') || merchant.includes('dining') || merchant.includes('burger') ||
         merchant.includes('coffee') || merchant.includes('starbucks') || merchant.includes('mcdonald')) {
-      result.category = 'Food & Dining';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('travel') || 
+        cat.toLowerCase().includes('entertainment') || 
+        cat.toLowerCase().includes('food') || 
+        cat.toLowerCase().includes('dining')
+      );
     } else if (merchant.includes('gas') || merchant.includes('fuel') || merchant.includes('shell') || 
                merchant.includes('exxon') || merchant.includes('bp') || merchant.includes('chevron')) {
-      result.category = 'Transportation';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('travel') || 
+        cat.toLowerCase().includes('transportation') || 
+        cat.toLowerCase().includes('fuel')
+      );
     } else if (merchant.includes('store') || merchant.includes('mart') || merchant.includes('shop') ||
                merchant.includes('target') || merchant.includes('walmart') || merchant.includes('costco')) {
-      result.category = 'Shopping';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('office') || 
+        cat.toLowerCase().includes('supplies') || 
+        cat.toLowerCase().includes('shopping')
+      );
     } else if (merchant.includes('hotel') || merchant.includes('airline') || merchant.includes('rental') ||
                merchant.includes('uber') || merchant.includes('lyft') || merchant.includes('taxi')) {
-      result.category = 'Travel';
-    } else {
-      result.category = 'Business';
+      matchedCategory = availableCategories.find(cat => 
+        cat.toLowerCase().includes('travel') || 
+        cat.toLowerCase().includes('entertainment')
+      );
     }
+    
+    // Use matched category or default to first available category or "Other"
+    result.category = matchedCategory || 
+                     availableCategories.find(cat => cat.toLowerCase() === 'other') || 
+                     availableCategories[0] || 
+                     'Other';
+  } else {
+    result.category = 'Other';
   }
 
   return result;
@@ -257,6 +312,16 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Fetch available categories and tags from database
+    await connectToDatabase();
+    const [categoriesData, tagsData] = await Promise.all([
+      Category.find({ userId: session.user.id }).select('name'),
+      Tag.find({ userId: session.user.id }).select('name')
+    ]);
+    
+    const availableCategories = categoriesData.map(cat => cat.name);
+    const availableTags = tagsData.map(tag => tag.name);
+
     // Upload to S3 first (with robust fallback)
     let uploadResult;
     let uploadSuccess = false;
@@ -293,10 +358,10 @@ export async function POST(request: NextRequest) {
     let parsedData: ParsedReceiptData;
     try {
       const textractData = await analyzeExpenseWithTextract(buffer);
-      parsedData = convertTextractToParsedData(textractData);
+      parsedData = convertTextractToParsedData(textractData, availableCategories);
     } catch (textractError) {
       console.log('Textract expense analysis failed, using text parsing:', textractError);
-      parsedData = extractTextFromReceipt(extractedText);
+      parsedData = extractTextFromReceipt(extractedText, availableCategories);
     }
 
     return NextResponse.json({
@@ -322,15 +387,46 @@ export async function POST(request: NextRequest) {
           ? `Receipt from ${parsedData.merchantName}`
           : 'Receipt expense - Please update merchant name and amount',
         amount: parsedData.totalAmount && parsedData.totalAmount > 0 ? parsedData.totalAmount : 0,
-        category: parsedData.category || 'Business Expense',
-        expenseType: 'business',
+        category: parsedData.category || 'Other',
+        expenseType: 'one-time',
         receiptUrl: uploadResult.url,
         receiptS3Key: uploadResult.key,
         receiptFileName: file.name,
         receiptContentType: file.type,
-        tags: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]' 
-          ? [parsedData.merchantName.toLowerCase().replace(/\s+/g, '-')] 
-          : ['receipt'],
+        tags: (() => {
+          const suggestedTags: string[] = [];
+          
+          // Try to match existing tags with merchant name or category
+          if (availableTags.length > 0) {
+            const merchantName = parsedData.merchantName?.toLowerCase() || '';
+            const category = parsedData.category?.toLowerCase() || '';
+            
+            // Find tags that match merchant name or category keywords
+            const matchingTags = availableTags.filter(tag => {
+              const tagLower = tag.toLowerCase();
+              return merchantName.includes(tagLower) || 
+                     tagLower.includes(merchantName.split(' ')[0]) ||
+                     category.includes(tagLower) ||
+                     tagLower.includes(category.split(' ')[0]);
+            });
+            
+            if (matchingTags.length > 0) {
+              suggestedTags.push(...matchingTags.slice(0, 3)); // Limit to 3 tags
+            }
+          }
+          
+          // Fallback to generic tag if no matches found
+          if (suggestedTags.length === 0) {
+            if (availableTags.includes('receipt')) {
+              suggestedTags.push('receipt');
+            } else if (availableTags.length > 0) {
+              // Use the first available tag as fallback
+              suggestedTags.push(availableTags[0]);
+            }
+          }
+          
+          return suggestedTags;
+        })(),
       }
     });
   } catch (error) {

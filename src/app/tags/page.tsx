@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Hash, Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Hash, Edit, Trash2, CreditCard, ArrowRight } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import ErrorModal from "@/components/ErrorModal";
 
@@ -30,6 +31,7 @@ export default function TagsPage() {
   const { status } = useSession();
   const router = useRouter();
   const [tags, setTags] = useState<Tag[]>([]);
+  const [expenseCounts, setExpenseCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showForm] = useState(true); // Always show form
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
@@ -60,10 +62,27 @@ export default function TagsPage() {
 
   const fetchTags = async () => {
     try {
-      const response = await fetch("/api/tags");
-      if (response.ok) {
-        const data = await response.json();
+      const [tagsRes, expensesRes] = await Promise.all([
+        fetch("/api/tags"),
+        fetch("/api/expenses")
+      ]);
+
+      if (tagsRes.ok) {
+        const data = await tagsRes.json();
         setTags(data);
+      }
+
+      if (expensesRes.ok) {
+        const expenses = await expensesRes.json();
+        const counts: Record<string, number> = {};
+        expenses.forEach((expense: any) => {
+          if (expense.tags && Array.isArray(expense.tags)) {
+            expense.tags.forEach((tag: string) => {
+              counts[tag] = (counts[tag] || 0) + 1;
+            });
+          }
+        });
+        setExpenseCounts(counts);
       }
     } catch (error) {
       console.error("Error fetching tags:", error);
@@ -295,13 +314,25 @@ export default function TagsPage() {
                     key={tag._id}
                     className="inline-flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full border border-[#E5E7EB] bg-white group hover:shadow-sm transition-shadow"
                   >
-                    <div
-                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="text-xs sm:text-sm font-medium text-[#0B3558] truncate">
-                      {tag.name}
-                    </span>
+                    <Link 
+                      href={`/expenses?tag=${encodeURIComponent(tag.name)}`}
+                      className="flex items-center space-x-1.5 sm:space-x-2 cursor-pointer"
+                    >
+                      <div
+                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      <span className="text-xs sm:text-sm font-medium text-[#0B3558] truncate group-hover:text-[#006BFF] transition-colors">
+                        {tag.name}
+                      </span>
+                      <div className="flex items-center space-x-1 text-[#476788]">
+                        <CreditCard className="w-2.5 h-2.5" />
+                        <span className="text-xs font-medium">
+                          {expenseCounts[tag.name] || 0}
+                        </span>
+                      </div>
+                      <ArrowRight className="w-2.5 h-2.5 text-[#A6BBD1] group-hover:text-[#006BFF] transition-colors" />
+                    </Link>
                     <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEdit(tag)}

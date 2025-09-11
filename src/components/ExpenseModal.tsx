@@ -519,7 +519,7 @@ export default function ExpenseModal({
         }
       }}
     >
-      <div className="card max-w-md w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
+      <div className="card max-w-xs w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">

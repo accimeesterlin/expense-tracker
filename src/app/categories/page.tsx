@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Tag, Edit, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Tag, Edit, Trash2, CreditCard, ArrowRight } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import ErrorModal from "@/components/ErrorModal";
 
@@ -12,12 +13,14 @@ interface Category {
   name: string;
   description?: string;
   color: string;
+  expenseCount?: number;
 }
 
 export default function CategoriesPage() {
   const { status } = useSession();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [expenseCounts, setExpenseCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showForm] = useState(true); // Always show form
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -49,17 +52,29 @@ export default function CategoriesPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/categories");
-      if (response.ok) {
-        const data = await response.json();
-        // Ensure data is an array
+      const [categoriesRes, expensesRes] = await Promise.all([
+        fetch("/api/categories"),
+        fetch("/api/expenses")
+      ]);
+
+      if (categoriesRes.ok) {
+        const data = await categoriesRes.json();
         setCategories(Array.isArray(data) ? data : []);
       } else {
-        console.error("Failed to fetch categories:", response.statusText);
+        console.error("Failed to fetch categories:", categoriesRes.statusText);
         setCategories([]);
       }
+
+      if (expensesRes.ok) {
+        const expenses = await expensesRes.json();
+        const counts: Record<string, number> = {};
+        expenses.forEach((expense: any) => {
+          counts[expense.category] = (counts[expense.category] || 0) + 1;
+        });
+        setExpenseCounts(counts);
+      }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error fetching data:", error);
       setCategories([]);
     } finally {
       setLoading(false);
@@ -286,26 +301,38 @@ export default function CategoriesPage() {
               {categories.map((category) => (
                 <div
                   key={category._id}
-                  className="p-4 sm:p-6 flex items-center justify-between w-full overflow-hidden"
+                  className="p-4 sm:p-6 flex items-center justify-between w-full overflow-hidden hover:bg-[#F8F9FB] transition-colors group"
                 >
-                  <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                  <Link 
+                    href={`/expenses?category=${encodeURIComponent(category.name)}`}
+                    className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1 cursor-pointer"
+                  >
                     <div
                       className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0"
                       style={{ backgroundColor: category.color }}
                     />
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-medium text-[#0B3558] text-sm sm:text-base truncate">
-                        {category.name}
-                      </h4>
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium text-[#0B3558] text-sm sm:text-base truncate group-hover:text-[#006BFF] transition-colors">
+                          {category.name}
+                        </h4>
+                        <div className="flex items-center space-x-1 text-[#476788]">
+                          <CreditCard className="w-3 h-3" />
+                          <span className="text-xs font-medium">
+                            {expenseCounts[category.name] || 0}
+                          </span>
+                        </div>
+                        <ArrowRight className="w-3 h-3 text-[#A6BBD1] group-hover:text-[#006BFF] transition-colors" />
+                      </div>
                       {category.description && (
                         <p className="text-xs sm:text-sm text-[#476788] mt-1 truncate">
                           {category.description}
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
 
-                  <div className="flex items-center space-x-1 sm:space-x-2">
+                  <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
                     <button
                       onClick={() => handleEdit(category)}
                       className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"

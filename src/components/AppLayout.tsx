@@ -48,17 +48,19 @@ export default function AppLayout({
                   {title}
                 </h1>
               </div>
-              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 {/* Global Search */}
-                <GlobalSearch />
+                <div className="flex-shrink-0">
+                  <GlobalSearch />
+                </div>
 
                 {/* User Menu */}
-                <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3">
-                  <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <div className="hidden sm:flex items-center gap-2">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#006BFF]/10 rounded-full flex items-center justify-center flex-shrink-0">
                       <User className="w-3 h-3 sm:w-4 sm:h-4 text-[#006BFF]" />
                     </div>
-                    <span className="text-xs sm:text-sm font-medium text-[#0B3558] hidden lg:block truncate max-w-24">
+                    <span className="text-xs sm:text-sm font-medium text-[#0B3558] hidden lg:block truncate max-w-20">
                       {session?.user?.name}
                     </span>
                   </div>
@@ -72,11 +74,11 @@ export default function AppLayout({
                   </button>
                   <button
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center space-x-1 shadow-sm"
+                    className="bg-red-500 hover:bg-red-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center gap-1"
                     title="Sign out"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>Exit</span>
+                    <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Exit</span>
                   </button>
                 </div>
               </div>

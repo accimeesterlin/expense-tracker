@@ -13,7 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import SimpleDebtModal from "@/components/SimpleDebtModal";
-import Sidebar from "@/components/Sidebar";
+import AppLayout from "@/components/AppLayout";
 import ErrorModal from "@/components/ErrorModal";
 
 interface Debt {
@@ -59,7 +59,6 @@ export default function DebtsPage() {
   const [sortBy, setSortBy] = useState<string>("date");
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<Debt | undefined>(undefined);
-  const [showSidebar, setShowSidebar] = useState(false);
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -219,39 +218,36 @@ export default function DebtsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] flex">
-      <Sidebar isOpen={showSidebar} onClose={() => setShowSidebar(false)} />
-      <div className="flex-1 lg:ml-0">
-        {/* Header */}
-        <header className="bg-white border-b border-[#E5E7EB]">
-          <div className="w-full px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 py-4 sm:py-0 sm:h-16">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558]">
-                    Debt Management
-                  </h1>
-                  <p className="text-xs sm:text-sm text-[#476788]">
-                    Track and manage your debts
-                  </p>
-                </div>
+    <AppLayout title="Debt Management">
+      {/* Page Header */}
+      <div className="bg-white border-b border-[#E5E7EB] -m-4 sm:-m-6 mb-4 sm:mb-6">
+        <div className="w-full px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
-              <button
-                onClick={() => setShowDebtModal(true)}
-                className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Debt</span>
-              </button>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-semibold text-[#0B3558]">
+                  Debt Management
+                </h1>
+                <p className="text-xs sm:text-sm text-[#476788]">
+                  Track and manage your debts
+                </p>
+              </div>
             </div>
+            <button
+              onClick={() => setShowDebtModal(true)}
+              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-auto justify-center"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Debt</span>
+            </button>
           </div>
-        </header>
+        </div>
+      </div>
 
-        {/* Main Content */}
-        <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="space-y-6 sm:space-y-8">
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
             <div className="card p-4 sm:p-6">
@@ -446,7 +442,6 @@ export default function DebtsPage() {
               ))}
             </div>
           )}
-        </main>
 
         {/* Modal */}
         {showDebtModal && (
@@ -469,6 +464,6 @@ export default function DebtsPage() {
           message={errorModal.message}
         />
       </div>
-    </div>
+    </AppLayout>
   );
 }

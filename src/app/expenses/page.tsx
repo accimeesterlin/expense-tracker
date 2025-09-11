@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CreditCard,
   Plus,
@@ -17,17 +17,21 @@ import ExpenseCard from "@/components/ExpenseCard";
 import NotificationModal from "@/components/NotificationModal";
 import type { Company, Expense } from "@/types/shared";
 
-export default function ExpensesPage() {
+function ExpensesPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedType, setSelectedType] = useState<string>("all");
-  const [selectedCompany, setSelectedCompany] = useState<string>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("date");
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | undefined>(
@@ -54,11 +58,26 @@ export default function ExpensesPage() {
     fetchData();
   }, [session, status, router]);
 
+  useEffect(() => {
+    // Set initial filters from URL parameters
+    const categoryParam = searchParams.get("category");
+    const tagParam = searchParams.get("tag");
+    
+    if (categoryParam) {
+      setSelectedCategories([categoryParam]);
+    }
+    if (tagParam) {
+      setSelectedTags([tagParam]);
+    }
+  }, [searchParams]);
+
   const fetchData = async () => {
     try {
-      const [expensesRes, companiesRes] = await Promise.all([
+      const [expensesRes, companiesRes, categoriesRes, tagsRes] = await Promise.all([
         fetch("/api/expenses"),
         fetch("/api/companies"),
+        fetch("/api/categories"),
+        fetch("/api/tags"),
       ]);
 
       if (expensesRes.ok) {
@@ -69,6 +88,16 @@ export default function ExpensesPage() {
       if (companiesRes.ok) {
         const companiesData = await companiesRes.json();
         setCompanies(companiesData);
+      }
+
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json();
+        setCategories(Array.isArray(categoriesData) ? categoriesData.map((cat: any) => cat.name) : []);
+      }
+
+      if (tagsRes.ok) {
+        const tagsData = await tagsRes.json();
+        setTags(Array.isArray(tagsData) ? tagsData.map((tag: any) => tag.name) : []);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -85,13 +114,16 @@ export default function ExpensesPage() {
         expense.company.name.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory =
-        selectedCategory === "all" || expense.category === selectedCategory;
+        selectedCategories.length === 0 || selectedCategories.includes(expense.category);
       const matchesType =
-        selectedType === "all" || expense.expenseType === selectedType;
+        selectedTypes.length === 0 || selectedTypes.includes(expense.expenseType);
       const matchesCompany =
-        selectedCompany === "all" || expense.company._id === selectedCompany;
+        selectedCompanies.length === 0 || selectedCompanies.includes(expense.company._id);
+      const matchesTag =
+        selectedTags.length === 0 || 
+        (expense.tags && expense.tags.some(tag => selectedTags.includes(tag)));
 
-      return matchesSearch && matchesCategory && matchesType && matchesCompany;
+      return matchesSearch && matchesCategory && matchesType && matchesCompany && matchesTag;
     });
 
     // Sort expenses
@@ -114,7 +146,7 @@ export default function ExpensesPage() {
     });
 
     setFilteredExpenses(filtered);
-  }, [expenses, searchTerm, selectedCategory, selectedType, selectedCompany, sortBy]);
+  }, [expenses, searchTerm, selectedCategories, selectedTypes, selectedCompanies, selectedTags, sortBy]);
 
   useEffect(() => {
     filterAndSortExpenses();
@@ -168,6 +200,47 @@ export default function ExpensesPage() {
     }
   };
 
+  const handleQuickUpdate = async (expenseId: string, field: string, value: string) => {
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (response.ok) {
+        const updatedExpense = await response.json();
+        setExpenses((prev) =>
+          prev.map((e) => (e._id === expenseId ? updatedExpense : e))
+        );
+        setNotification({
+          isOpen: true,
+          type: "success",
+          title: "Success",
+          message: "Expense updated successfully",
+        });
+      } else {
+        const errorData = await response.json();
+        setNotification({
+          isOpen: true,
+          type: "error",
+          title: "Update Failed",
+          message: errorData.error || "Failed to update expense",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating expense:", error);
+      setNotification({
+        isOpen: true,
+        type: "error",
+        title: "Update Failed",
+        message: "Failed to update expense. Please try again.",
+      });
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -176,7 +249,18 @@ export default function ExpensesPage() {
   };
 
   const getUniqueCategories = () => {
-    // Default categories to always show
+    // Use database categories if available
+    if (categories.length > 0) {
+      // Combine database categories with categories from existing expenses
+      const expenseCategories = expenses
+        .map((expense) => expense.category)
+        .filter((category) => category && category.trim() !== "");
+      
+      const allCategories = [...new Set([...categories, ...expenseCategories])];
+      return allCategories.sort();
+    }
+    
+    // Fallback to default categories if no database categories exist
     const defaultCategories = [
       "Software & Subscriptions",
       "Office & Supplies", 
@@ -196,8 +280,8 @@ export default function ExpensesPage() {
       .filter((category) => category && category.trim() !== "");
     
     // Combine and deduplicate
-    const categories = [...new Set([...defaultCategories, ...expenseCategories])];
-    return categories.sort();
+    const allCategories = [...new Set([...defaultCategories, ...expenseCategories])];
+    return allCategories.sort();
   };
 
   const getUniqueTypes = () => {
@@ -205,10 +289,69 @@ export default function ExpensesPage() {
     return types.sort();
   };
 
+  const getUniqueTags = () => {
+    // Use database tags if available
+    if (tags.length > 0) {
+      // Combine database tags with tags from existing expenses
+      const expenseTags = expenses
+        .flatMap((expense) => expense.tags || [])
+        .filter((tag) => tag && tag.trim() !== "");
+      
+      const allTags = [...new Set([...tags, ...expenseTags])];
+      return allTags.sort();
+    }
+    
+    // Fallback to expense tags only
+    const expenseTags = expenses
+      .flatMap((expense) => expense.tags || [])
+      .filter((tag) => tag && tag.trim() !== "");
+    return [...new Set(expenseTags)].sort();
+  };
+
   const totalExpenseAmount = expenses.reduce(
     (sum, expense) => sum + expense.amount,
     0
   );
+
+  // Helper functions for multi-select
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  const toggleType = (type: string) => {
+    setSelectedTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const toggleCompany = (companyId: string) => {
+    setSelectedCompanies(prev =>
+      prev.includes(companyId)
+        ? prev.filter(c => c !== companyId)
+        : [...prev, companyId]
+    );
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedTypes([]);
+    setSelectedCompanies([]);
+    setSelectedTags([]);
+  };
   const activeExpenses = expenses.filter((e) => e.isActive).length;
   const monthlySubscriptions = expenses.filter(
     (e) => e.expenseType === "subscription" && e.isActive
@@ -338,54 +481,122 @@ export default function ExpensesPage() {
                 className="input-field w-full text-sm sm:text-base"
               />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input-field text-sm sm:text-base"
-              >
-                <option value="all">All Categories</option>
-                {getUniqueCategories().map((category) => (
-                  <option key={category} value={category}>
+            {/* Active Filters */}
+            {(selectedCategories.length > 0 || selectedTypes.length > 0 || selectedCompanies.length > 0 || selectedTags.length > 0) && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className="text-sm font-medium text-[#476788]">Active filters:</span>
+                {selectedCategories.map(category => (
+                  <span key={category} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                     {category}
-                  </option>
+                    <button onClick={() => toggleCategory(category)} className="ml-1 hover:text-blue-900">×</button>
+                  </span>
                 ))}
-              </select>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="input-field text-sm sm:text-base"
-              >
-                <option value="all">All Types</option>
-                {getUniqueTypes().map((type) => (
-                  <option key={type} value={type}>
-                    {type.replace("-", " ").toUpperCase()}
-                  </option>
+                {selectedTypes.map(type => (
+                  <span key={type} className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    {type}
+                    <button onClick={() => toggleType(type)} className="ml-1 hover:text-green-900">×</button>
+                  </span>
                 ))}
-              </select>
-              <select
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                className="input-field text-sm sm:text-base col-span-2 sm:col-span-1"
-              >
-                <option value="all">All Companies</option>
-                {companies.map((company) => (
-                  <option key={company._id} value={company._id}>
-                    {company.name}
-                  </option>
+                {selectedCompanies.map(companyId => {
+                  const company = companies.find(c => c._id === companyId);
+                  return company ? (
+                    <span key={companyId} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                      {company.name}
+                      <button onClick={() => toggleCompany(companyId)} className="ml-1 hover:text-purple-900">×</button>
+                    </span>
+                  ) : null;
+                })}
+                {selectedTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
+                    {tag}
+                    <button onClick={() => toggleTag(tag)} className="ml-1 hover:text-orange-900">×</button>
+                  </span>
                 ))}
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="input-field text-sm sm:text-base col-span-2 sm:col-span-3 lg:col-span-1"
-              >
-                <option value="date">Sort by Date</option>
-                <option value="amount">Sort by Amount</option>
-                <option value="name">Sort by Name</option>
-                <option value="company">Sort by Company</option>
-                <option value="category">Sort by Category</option>
-              </select>
+                <button onClick={clearAllFilters} className="text-xs text-red-600 hover:text-red-800 font-medium">
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[#476788] mb-1">Categories</label>
+                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                  {getUniqueCategories().map((category) => (
+                    <label key={category} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(category)}
+                        onChange={() => toggleCategory(category)}
+                        className="mr-2 text-blue-600"
+                      />
+                      {category}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#476788] mb-1">Types</label>
+                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                  {getUniqueTypes().map((type) => (
+                    <label key={type} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedTypes.includes(type)}
+                        onChange={() => toggleType(type)}
+                        className="mr-2 text-blue-600"
+                      />
+                      {type.replace("-", " ").toUpperCase()}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#476788] mb-1">Companies</label>
+                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                  {companies.map((company) => (
+                    <label key={company._id} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedCompanies.includes(company._id)}
+                        onChange={() => toggleCompany(company._id)}
+                        className="mr-2 text-blue-600"
+                      />
+                      {company.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#476788] mb-1">Tags</label>
+                <div className="max-h-24 overflow-y-auto border border-[#E5E7EB] rounded-lg p-2 bg-white">
+                  {getUniqueTags().map((tag) => (
+                    <label key={tag} className="flex items-center text-xs py-1 hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedTags.includes(tag)}
+                        onChange={() => toggleTag(tag)}
+                        className="mr-2 text-blue-600"
+                      />
+                      {tag}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#476788] mb-1">Sort</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="input-field text-sm sm:text-base w-full"
+                >
+                  <option value="date">Sort by Date</option>
+                  <option value="amount">Sort by Amount</option>
+                  <option value="name">Sort by Name</option>
+                  <option value="company">Sort by Company</option>
+                  <option value="category">Sort by Category</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -423,6 +634,8 @@ export default function ExpensesPage() {
                   setShowExpenseModal(true);
                 }}
                 onDelete={() => handleExpenseDeleted(expense._id)}
+                onQuickUpdate={handleQuickUpdate}
+                availableCategories={categories.length > 0 ? categories : getUniqueCategories()}
               />
             ))}
           </div>
@@ -452,5 +665,15 @@ export default function ExpensesPage() {
         message={notification.message}
       />
     </AppLayout>
+  );
+}
+
+export default function ExpensesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006BFF]"></div>
+    </div>}>
+      <ExpensesPageContent />
+    </Suspense>
   );
 }

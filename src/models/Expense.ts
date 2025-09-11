@@ -63,18 +63,8 @@ const ExpenseSchema: Schema = new Schema(
       type: String,
       required: false, // Category is optional
       default: "Other",
-      enum: [
-        "Software & Subscriptions",
-        "Office & Supplies",
-        "Travel & Entertainment",
-        "Marketing & Advertising",
-        "Professional Services",
-        "Insurance",
-        "Utilities",
-        "Rent & Leasing",
-        "Equipment",
-        "Other",
-      ],
+      trim: true,
+      maxlength: [100, "Category name cannot exceed 100 characters"],
     },
     expenseType: {
       type: String,

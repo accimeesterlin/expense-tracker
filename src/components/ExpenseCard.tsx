@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
-import { CreditCard, Building2, Calendar, Edit, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { CreditCard, Building2, Calendar, Edit, Trash2, FileText } from "lucide-react";
 
 interface Company {
   _id: string;
@@ -10,6 +11,7 @@ interface Company {
 interface Expense {
   _id: string;
   name: string;
+  description?: string;
   amount: number;
   category: string;
   expenseType: string;
@@ -22,14 +24,22 @@ interface ExpenseCardProps {
   expense: Expense;
   onEdit: () => void;
   onDelete: () => void;
+  onQuickUpdate?: (expenseId: string, field: string, value: string) => void;
+  availableCategories?: string[];
 }
 
 export default function ExpenseCard({
   expense,
   onEdit,
   onDelete,
+  onQuickUpdate,
+  availableCategories = [],
 }: ExpenseCardProps) {
   const router = useRouter();
+  const [quickEdit, setQuickEdit] = useState<{
+    field: string | null;
+    value: string;
+  }>({ field: null, value: "" });
   const getExpenseTypeColor = (type: string) => {
     switch (type) {
       case "subscription":
@@ -60,9 +70,24 @@ export default function ExpenseCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on buttons
-    if ((e.target as HTMLElement).closest('button')) return;
+    // Don't navigate if clicking on buttons or in edit mode
+    if ((e.target as HTMLElement).closest('button') || quickEdit.field) return;
     router.push(`/expenses/${expense._id}`);
+  };
+
+  const handleQuickEdit = async (field: string, value: string) => {
+    if (onQuickUpdate) {
+      await onQuickUpdate(expense._id, field, value);
+      setQuickEdit({ field: null, value: "" });
+    }
+  };
+
+  const startQuickEdit = (field: string, currentValue: string) => {
+    setQuickEdit({ field, value: currentValue });
+  };
+
+  const cancelQuickEdit = () => {
+    setQuickEdit({ field: null, value: "" });
   };
 
   return (
@@ -88,13 +113,35 @@ export default function ExpenseCard({
                 >
                   {expense.expenseType}
                 </span>
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
-                    expense.category
-                  )}`}
-                >
-                  {expense.category}
-                </span>
+                {quickEdit.field === "category" ? (
+                  <select
+                    value={quickEdit.value}
+                    onChange={(e) =>
+                      setQuickEdit((prev) => ({ ...prev, value: e.target.value }))
+                    }
+                    onBlur={() => handleQuickEdit("category", quickEdit.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleQuickEdit("category", quickEdit.value);
+                      if (e.key === "Escape") cancelQuickEdit();
+                    }}
+                    className="text-xs px-2 py-1 border border-blue-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  >
+                    {availableCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getCategoryColor(
+                      expense.category
+                    )}`}
+                    onClick={() => onQuickUpdate && availableCategories.length > 0 && startQuickEdit("category", expense.category)}
+                    title={onQuickUpdate && availableCategories.length > 0 ? "Click to change category" : undefined}
+                  >
+                    {expense.category}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -118,6 +165,56 @@ export default function ExpenseCard({
                     }
                   )}
                 </span>
+              </div>
+            )}
+
+            {/* Description quick edit */}
+            {quickEdit.field === "description" ? (
+              <div className="mt-3 space-y-2">
+                <textarea
+                  value={quickEdit.value}
+                  onChange={(e) =>
+                    setQuickEdit((prev) => ({ ...prev, value: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-none"
+                  rows={2}
+                  placeholder="Enter description..."
+                  autoFocus
+                />
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleQuickEdit("description", quickEdit.value)}
+                    className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelQuickEdit}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3">
+                {expense.description ? (
+                  <div className="flex items-start space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
+                    onClick={() => onQuickUpdate && startQuickEdit("description", expense.description || "")}
+                    title={onQuickUpdate ? "Click to edit description" : undefined}
+                  >
+                    <FileText className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-gray-600">{expense.description}</p>
+                  </div>
+                ) : onQuickUpdate && (
+                  <div className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors text-gray-400"
+                    onClick={() => startQuickEdit("description", "")}
+                    title="Click to add description"
+                  >
+                    <FileText className="w-3 h-3" />
+                    <p className="text-xs italic">Add description...</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
