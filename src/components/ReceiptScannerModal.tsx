@@ -158,12 +158,23 @@ export default function ReceiptScannerModal({
     if (file) {
       setShowingCamera(false);
       handleFileSelect(file);
+    } else {
+      // Reset camera state if no file was selected (user cancelled)
+      setShowingCamera(false);
+      setError("");
     }
   };
 
   const openCamera = () => {
     setShowingCamera(true);
-    cameraInputRef.current?.click();
+    setError(""); // Clear any previous errors
+    
+    // For iOS Chrome, we need to trigger the camera with a delay to ensure proper handling
+    if (cameraInputRef.current) {
+      setTimeout(() => {
+        cameraInputRef.current?.click();
+      }, 100);
+    }
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -238,13 +249,33 @@ export default function ReceiptScannerModal({
         } else if (result.error?.includes("Invalid file type")) {
           errorMessage =
             "Invalid file type. Please use JPG, PNG, GIF, WebP, or PDF files.";
+        } else if (result.error?.includes("Network")) {
+          errorMessage =
+            "Network error. Please check your connection and try again.";
+        } else if (result.error?.includes("timeout")) {
+          errorMessage =
+            "Request timed out. Your file may be too large or your connection is slow. Please try again.";
         }
 
         setError(errorMessage);
       }
     } catch (error) {
       console.error("Error scanning receipt:", error);
-      setError("Failed to scan receipt. Please try again.");
+      
+      // Provide more specific error messages for mobile/network issues
+      let errorMessage = "Failed to scan receipt. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("NetworkError") || error.message.includes("fetch")) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else if (error.message.includes("abort")) {
+          errorMessage = "Request was cancelled. Please try again.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setScanning(false);
     }
@@ -379,6 +410,11 @@ export default function ReceiptScannerModal({
                   capture="environment"
                   onChange={handleCameraCapture}
                   className="hidden"
+                  multiple={false}
+                  onClick={(e) => {
+                    // Reset the input value to allow re-selecting the same file
+                    e.currentTarget.value = '';
+                  }}
                 />
               </div>
             </div>

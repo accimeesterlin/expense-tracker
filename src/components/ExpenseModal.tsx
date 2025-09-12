@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { X, CreditCard, FileText, Camera } from "lucide-react";
 import NextImage from "next/image";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import ErrorModal from "./ErrorModal";
 
 interface Company {
   _id: string;
@@ -78,6 +80,7 @@ export default function ExpenseModal({
   onSuccess,
 }: ExpenseModalProps) {
   const isEditing = !!expense;
+  const { error: globalError, isErrorVisible, showError, clearError } = useErrorHandler();
   const [categories, setCategories] = useState<
     { _id: string; name: string; color: string }[]
   >([]);
@@ -529,7 +532,7 @@ export default function ExpenseModal({
       }
     } catch (error) {
       console.error("Expense submission error:", error);
-      setError("Something went wrong. Please try again.");
+      showError(error, `Failed to ${isEditing ? "update" : "create"} expense`);
     } finally {
       setLoading(false);
     }
@@ -1158,6 +1161,16 @@ export default function ExpenseModal({
           </div>
         </form>
       </div>
+      
+      {/* Error Modal */}
+      {globalError && (
+        <ErrorModal
+          isOpen={isErrorVisible}
+          onClose={clearError}
+          title={globalError.title}
+          message={globalError.message}
+        />
+      )}
     </div>
   );
 }

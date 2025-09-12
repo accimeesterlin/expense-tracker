@@ -8,8 +8,7 @@ import {
   type TextractExpenseData,
 } from "@/lib/aws";
 import { connectToDatabase } from "@/lib/mongodb";
-import Category from "@/models/Category";
-import Tag from "@/models/Tag";
+import { ensureModelsRegistered, Category, Tag } from "@/lib/models";
 
 // Types for the parsed receipt data
 interface ParsedReceiptData {
@@ -364,6 +363,9 @@ function convertTextractToParsedData(
 
 export async function POST(request: NextRequest) {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

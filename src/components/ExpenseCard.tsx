@@ -16,6 +16,7 @@ interface Expense {
   category: string;
   expenseType: string;
   nextBillingDate?: string;
+  paymentDate?: string;
   company: Company;
   isActive: boolean;
 }
@@ -102,9 +103,30 @@ export default function ExpenseCard({
               <CreditCard className="w-5 h-5 text-green-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 text-lg">
-                {expense.name}
-              </h3>
+              {quickEdit.field === "name" ? (
+                <input
+                  type="text"
+                  value={quickEdit.value}
+                  onChange={(e) =>
+                    setQuickEdit((prev) => ({ ...prev, value: e.target.value }))
+                  }
+                  onBlur={() => handleQuickEdit("name", quickEdit.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleQuickEdit("name", quickEdit.value);
+                    if (e.key === "Escape") cancelQuickEdit();
+                  }}
+                  className="font-semibold text-gray-900 text-lg bg-transparent border-b-2 border-blue-300 focus:outline-none focus:border-blue-500 w-full"
+                  autoFocus
+                />
+              ) : (
+                <h3 
+                  className="font-semibold text-gray-900 text-lg cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => onQuickUpdate && startQuickEdit("name", expense.name)}
+                  title={onQuickUpdate ? "Click to edit title" : undefined}
+                >
+                  {expense.name}
+                </h3>
+              )}
               <div className="flex items-center space-x-2 mt-1">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getExpenseTypeColor(
@@ -151,6 +173,22 @@ export default function ExpenseCard({
               <Building2 className="w-4 h-4" />
               <span>{expense.company.name}</span>
             </div>
+            {expense.paymentDate && (
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Calendar className="w-4 h-4" />
+                <span>
+                  Paid:{" "}
+                  {new Date(expense.paymentDate).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }
+                  )}
+                </span>
+              </div>
+            )}
             {expense.nextBillingDate && (
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />

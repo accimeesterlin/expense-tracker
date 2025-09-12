@@ -4,6 +4,35 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Expense from "@/models/Expense";
 
+// Function to delete receipt from S3
+async function deleteReceiptFromS3(s3Key: string): Promise<boolean> {
+  try {
+    // Dynamic import to avoid issues in environments without AWS SDK
+    const { S3Client, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+    
+    if (!process.env.AWS_S3_REGION || !process.env.AWS_S3_BUCKET_NAME) {
+      console.warn("AWS S3 not configured, skipping receipt deletion from S3");
+      return false;
+    }
+
+    const s3Client = new S3Client({
+      region: process.env.AWS_S3_REGION,
+    });
+
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: s3Key,
+    });
+
+    await s3Client.send(command);
+    console.log(`Successfully deleted receipt from S3: ${s3Key}`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to delete receipt from S3 (${s3Key}):`, error);
+    return false;
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -138,7 +167,9 @@ export async function DELETE(
 
     await dbConnect();
     const { id } = await params;
-    const expense = await Expense.findOneAndDelete({
+    
+    // First, find the expense to get receipt information before deletion
+    const expense = await Expense.findOne({
       _id: id,
       userId: session.user.id,
     });
@@ -147,7 +178,30 @@ export async function DELETE(
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Expense deleted successfully" });
+    // Delete associated receipt from S3 if it exists
+    let s3DeletionResults = [];
+    if (expense.receiptS3Key) {
+      console.log(`Attempting to delete receipt from S3: ${expense.receiptS3Key}`);
+      const s3DeleteSuccess = await deleteReceiptFromS3(expense.receiptS3Key);
+      s3DeletionResults.push({
+        key: expense.receiptS3Key,
+        success: s3DeleteSuccess,
+        type: 'receipt'
+      });
+    }
+
+    // Now delete the expense from the database
+    await Expense.findOneAndDelete({
+      _id: id,
+      userId: session.user.id,
+    });
+
+    console.log(`Expense deleted successfully: ${id}`);
+
+    return NextResponse.json({ 
+      message: "Expense deleted successfully",
+      s3Deletions: s3DeletionResults
+    });
   } catch (error) {
     console.error("Error deleting expense:", error);
     return NextResponse.json(
