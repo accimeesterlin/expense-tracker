@@ -1,8 +1,22 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, Camera, Upload, Scan, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  X,
+  Camera,
+  Upload,
+  Scan,
+  CheckCircle,
+  AlertCircle,
+  Shrink,
+} from "lucide-react";
 import Image from "next/image";
+import {
+  compressImage,
+  canCompressImage,
+  formatFileSize,
+  getCompressionSuggestions,
+} from "@/lib/imageCompression";
 
 interface ParsedReceiptData {
   merchantName?: string;
@@ -53,6 +67,14 @@ export default function ReceiptScannerModal({
   } | null>(null);
   const [error, setError] = useState("");
   const [showingCamera, setShowingCamera] = useState(false);
+  const [compressing, setCompressing] = useState(false);
+  const [compressionResult, setCompressionResult] = useState<{
+    originalSize: number;
+    compressedSize: number;
+    compressionRatio: number;
+    success: boolean;
+    error?: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,15 +82,66 @@ export default function ReceiptScannerModal({
     setSelectedFile(file);
     setError("");
     setScanResult(null);
+    setCompressionResult(null);
+
+    // Check if file needs compression
+    const maxSize = 4 * 1024 * 1024; // 4MB
+    let fileToUse = file;
+
+    if (file.size > maxSize && canCompressImage(file)) {
+      setCompressing(true);
+      try {
+        const result = await compressImage(file, {
+          maxWidth: 1920,
+          maxHeight: 1080,
+          quality: 0.8,
+          maxSizeKB: 4000,
+        });
+
+        setCompressionResult({
+          originalSize: result.originalSize,
+          compressedSize: result.compressedSize,
+          compressionRatio: result.compressionRatio,
+          success: result.success,
+          error: result.error,
+        });
+
+        if (result.success) {
+          fileToUse = result.file;
+          setSelectedFile(result.file);
+        } else {
+          setError(`Compression failed: ${result.error || "Unknown error"}`);
+          setCompressing(false);
+          return;
+        }
+      } catch (error) {
+        setError(
+          `Compression failed: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+        setCompressing(false);
+        return;
+      } finally {
+        setCompressing(false);
+      }
+    } else if (file.size > maxSize) {
+      setError(
+        `File too large (${formatFileSize(
+          file.size
+        )}). Maximum size is 4MB. Please use a smaller file.`
+      );
+      return;
+    }
 
     // Create preview URL
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(fileToUse);
     setPreviewUrl(url);
 
     // Auto-start scanning for images immediately after selection
-    if (file.type.startsWith('image/')) {
+    if (fileToUse.type.startsWith("image/")) {
       setTimeout(() => {
-        scanReceipt(file);
+        scanReceipt(fileToUse);
       }, 500); // Small delay to allow UI to update
     }
   };
@@ -97,11 +170,17 @@ export default function ReceiptScannerModal({
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/pdf",
+      ];
       if (allowedTypes.includes(file.type)) {
         handleFileSelect(file);
       } else {
-        setError('Invalid file type. Only images and PDFs are allowed.');
+        setError("Invalid file type. Only images and PDFs are allowed.");
       }
     }
   };
@@ -119,10 +198,10 @@ export default function ReceiptScannerModal({
 
     try {
       const formData = new FormData();
-      formData.append('receipt', file);
+      formData.append("receipt", file);
 
-      const response = await fetch('/api/scan-receipt', {
-        method: 'POST',
+      const response = await fetch("/api/scan-receipt", {
+        method: "POST",
         body: formData,
       });
 
@@ -134,31 +213,38 @@ export default function ReceiptScannerModal({
           parsedData: result.parsedData,
           suggestedExpense: result.suggestedExpense,
         });
-        
+
         // Show warning if upload failed but processing succeeded
         if (result.warning) {
-          console.warn('Receipt processing warning:', result.warning);
+          console.warn("Receipt processing warning:", result.warning);
         }
       } else {
-        console.error('Receipt scan error:', result);
-        let errorMessage = result.error || 'Failed to scan receipt';
-        
+        console.error("Receipt scan error:", result);
+        let errorMessage = result.error || "Failed to scan receipt";
+
         // Provide helpful error messages
-        if (result.error?.includes('AWS') || result.error?.includes('S3')) {
-          errorMessage = 'Upload service temporarily unavailable. Your receipt has been processed locally.';
-        } else if (result.error?.includes('Unauthorized')) {
-          errorMessage = 'Session expired. Please sign in again.';
-        } else if (result.error?.includes('File too large')) {
-          errorMessage = 'File is too large. Please use a file smaller than 10MB.';
-        } else if (result.error?.includes('Invalid file type')) {
-          errorMessage = 'Invalid file type. Please use JPG, PNG, GIF, WebP, or PDF files.';
+        if (result.error?.includes("AWS") || result.error?.includes("S3")) {
+          errorMessage =
+            "Upload service temporarily unavailable. Your receipt has been processed locally.";
+        } else if (result.error?.includes("Unauthorized")) {
+          errorMessage = "Session expired. Please sign in again.";
+        } else if (
+          result.error?.includes("File too large") ||
+          response.status === 413
+        ) {
+          errorMessage =
+            result.error ||
+            "File is too large. Please use a file smaller than 4MB.";
+        } else if (result.error?.includes("Invalid file type")) {
+          errorMessage =
+            "Invalid file type. Please use JPG, PNG, GIF, WebP, or PDF files.";
         }
-        
+
         setError(errorMessage);
       }
     } catch (error) {
-      console.error('Error scanning receipt:', error);
-      setError('Failed to scan receipt. Please try again.');
+      console.error("Error scanning receipt:", error);
+      setError("Failed to scan receipt. Please try again.");
     } finally {
       setScanning(false);
     }
@@ -177,6 +263,8 @@ export default function ReceiptScannerModal({
     setScanResult(null);
     setError("");
     setShowingCamera(false);
+    setCompressing(false);
+    setCompressionResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -253,7 +341,7 @@ export default function ReceiptScannerModal({
                 <p className="text-xs text-[#A6BBD1] mb-4">
                   Supported formats: JPG, PNG, GIF, WebP, PDF (max 10MB)
                 </p>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -275,13 +363,15 @@ export default function ReceiptScannerModal({
                 <p className="text-sm text-[#476788] mb-4">
                   Recommended: Use your device's camera for best results
                 </p>
-                
+
                 <div className="flex items-center justify-center mb-3">
                   <hr className="flex-1 border-gray-300" />
-                  <span className="px-3 text-xs text-gray-500 font-medium">OR UPLOAD FILE</span>
+                  <span className="px-3 text-xs text-gray-500 font-medium">
+                    OR UPLOAD FILE
+                  </span>
                   <hr className="flex-1 border-gray-300" />
                 </div>
-                
+
                 <input
                   ref={cameraInputRef}
                   type="file"
@@ -298,9 +388,11 @@ export default function ReceiptScannerModal({
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 {/* Preview */}
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium text-[#0B3558] mb-2">Preview</h3>
+                  <h3 className="text-sm font-medium text-[#0B3558] mb-2">
+                    Preview
+                  </h3>
                   <div className="border border-[#E5E7EB] rounded-lg p-4 bg-gray-50">
-                    {selectedFile.type.startsWith('image/') ? (
+                    {selectedFile.type.startsWith("image/") ? (
                       <Image
                         src={previewUrl!}
                         alt="Receipt preview"
@@ -312,8 +404,12 @@ export default function ReceiptScannerModal({
                       <div className="w-full h-48 sm:h-64 flex items-center justify-center bg-gray-100 rounded">
                         <div className="text-center">
                           <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">{selectedFile.name}</p>
-                          <p className="text-xs text-gray-500">PDF - {Math.round(selectedFile.size / 1024)} KB</p>
+                          <p className="text-sm text-gray-600">
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            PDF - {Math.round(selectedFile.size / 1024)} KB
+                          </p>
                         </div>
                       </div>
                     )}
@@ -322,20 +418,71 @@ export default function ReceiptScannerModal({
 
                 {/* File Info */}
                 <div className="w-full sm:w-80">
-                  <h3 className="text-sm font-medium text-[#0B3558] mb-2">File Details</h3>
+                  <h3 className="text-sm font-medium text-[#0B3558] mb-2">
+                    File Details
+                  </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-[#476788]">Name:</span>
-                      <span className="text-[#0B3558] truncate ml-2">{selectedFile.name}</span>
+                      <span className="text-[#0B3558] truncate ml-2">
+                        {selectedFile.name}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#476788]">Size:</span>
-                      <span className="text-[#0B3558]">{Math.round(selectedFile.size / 1024)} KB</span>
+                      <span className="text-[#0B3558]">
+                        {Math.round(selectedFile.size / 1024)} KB
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#476788]">Type:</span>
-                      <span className="text-[#0B3558]">{selectedFile.type}</span>
+                      <span className="text-[#0B3558]">
+                        {selectedFile.type}
+                      </span>
                     </div>
+
+                    {/* Compression Status */}
+                    {compressing && (
+                      <div className="flex items-center space-x-2 text-blue-600">
+                        <Shrink className="w-4 h-4 animate-pulse" />
+                        <span className="text-sm">Compressing image...</span>
+                      </div>
+                    )}
+
+                    {compressionResult && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Shrink className="w-4 h-4 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-800">
+                            Image Compressed
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-blue-700">Original:</span>
+                            <span className="text-blue-800">
+                              {formatFileSize(compressionResult.originalSize)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-700">Compressed:</span>
+                            <span className="text-blue-800">
+                              {formatFileSize(compressionResult.compressedSize)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-blue-700">Reduction:</span>
+                            <span className="text-blue-800">
+                              {(
+                                (1 - compressionResult.compressionRatio) *
+                                100
+                              ).toFixed(1)}
+                              %
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -355,7 +502,7 @@ export default function ReceiptScannerModal({
                   className="btn-primary w-full sm:w-auto inline-flex items-center justify-center space-x-2"
                 >
                   <Scan className="w-4 h-4" />
-                  <span>{scanning ? 'Scanning...' : 'Scan Receipt'}</span>
+                  <span>{scanning ? "Scanning..." : "Scan Receipt"}</span>
                 </button>
               </div>
             </div>
@@ -364,42 +511,56 @@ export default function ReceiptScannerModal({
             <div className="space-y-4 sm:space-y-6">
               <div className="flex items-center space-x-2 text-green-600">
                 <CheckCircle className="w-5 h-5" />
-                <h3 className="text-base font-medium">Receipt Scanned Successfully!</h3>
+                <h3 className="text-base font-medium">
+                  Receipt Scanned Successfully!
+                </h3>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Extracted Data */}
                 <div>
-                  <h4 className="text-sm font-medium text-[#0B3558] mb-3">Extracted Information</h4>
+                  <h4 className="text-sm font-medium text-[#0B3558] mb-3">
+                    Extracted Information
+                  </h4>
                   <div className="space-y-2 text-sm">
                     {scanResult.parsedData.merchantName && (
                       <div className="flex justify-between">
                         <span className="text-[#476788]">Merchant:</span>
-                        <span className="text-[#0B3558] font-medium">{scanResult.parsedData.merchantName}</span>
+                        <span className="text-[#0B3558] font-medium">
+                          {scanResult.parsedData.merchantName}
+                        </span>
                       </div>
                     )}
                     {scanResult.parsedData.totalAmount && (
                       <div className="flex justify-between">
                         <span className="text-[#476788]">Total:</span>
-                        <span className="text-[#0B3558] font-medium">${scanResult.parsedData.totalAmount.toFixed(2)}</span>
+                        <span className="text-[#0B3558] font-medium">
+                          ${scanResult.parsedData.totalAmount.toFixed(2)}
+                        </span>
                       </div>
                     )}
                     {scanResult.parsedData.date && (
                       <div className="flex justify-between">
                         <span className="text-[#476788]">Date:</span>
-                        <span className="text-[#0B3558]">{scanResult.parsedData.date}</span>
+                        <span className="text-[#0B3558]">
+                          {scanResult.parsedData.date}
+                        </span>
                       </div>
                     )}
                     {scanResult.parsedData.category && (
                       <div className="flex justify-between">
                         <span className="text-[#476788]">Category:</span>
-                        <span className="text-[#0B3558]">{scanResult.parsedData.category}</span>
+                        <span className="text-[#0B3558]">
+                          {scanResult.parsedData.category}
+                        </span>
                       </div>
                     )}
                     {scanResult.parsedData.taxAmount && (
                       <div className="flex justify-between">
                         <span className="text-[#476788]">Tax:</span>
-                        <span className="text-[#0B3558]">${scanResult.parsedData.taxAmount.toFixed(2)}</span>
+                        <span className="text-[#0B3558]">
+                          ${scanResult.parsedData.taxAmount.toFixed(2)}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -407,23 +568,37 @@ export default function ReceiptScannerModal({
 
                 {/* Suggested Expense */}
                 <div>
-                  <h4 className="text-sm font-medium text-[#0B3558] mb-3">Suggested Expense</h4>
+                  <h4 className="text-sm font-medium text-[#0B3558] mb-3">
+                    Suggested Expense
+                  </h4>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2 text-sm">
                     <div>
                       <span className="text-blue-700 font-medium">Name:</span>
-                      <p className="text-blue-800">{scanResult.suggestedExpense.name}</p>
+                      <p className="text-blue-800">
+                        {scanResult.suggestedExpense.name}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-blue-700 font-medium">Description:</span>
-                      <p className="text-blue-800">{scanResult.suggestedExpense.description}</p>
+                      <span className="text-blue-700 font-medium">
+                        Description:
+                      </span>
+                      <p className="text-blue-800">
+                        {scanResult.suggestedExpense.description}
+                      </p>
                     </div>
                     <div>
                       <span className="text-blue-700 font-medium">Amount:</span>
-                      <p className="text-blue-800 font-semibold">${scanResult.suggestedExpense.amount.toFixed(2)}</p>
+                      <p className="text-blue-800 font-semibold">
+                        ${scanResult.suggestedExpense.amount.toFixed(2)}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-blue-700 font-medium">Category:</span>
-                      <p className="text-blue-800">{scanResult.suggestedExpense.category}</p>
+                      <span className="text-blue-700 font-medium">
+                        Category:
+                      </span>
+                      <p className="text-blue-800">
+                        {scanResult.suggestedExpense.category}
+                      </p>
                     </div>
                   </div>
                 </div>

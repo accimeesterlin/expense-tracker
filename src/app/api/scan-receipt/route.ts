@@ -1,10 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { uploadReceiptToS3, extractTextWithTextract, analyzeExpenseWithTextract, type TextractExpenseData } from '@/lib/aws';
-import { connectToDatabase } from '@/lib/mongodb';
-import Category from '@/models/Category';
-import Tag from '@/models/Tag';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import {
+  uploadReceiptToS3,
+  extractTextWithTextract,
+  analyzeExpenseWithTextract,
+  type TextractExpenseData,
+} from "@/lib/aws";
+import { connectToDatabase } from "@/lib/mongodb";
+import Category from "@/models/Category";
+import Tag from "@/models/Tag";
 
 // Types for the parsed receipt data
 interface ParsedReceiptData {
@@ -23,16 +28,22 @@ interface ParsedReceiptData {
 }
 
 // Simple OCR-like text extraction (in a real app, you'd use AWS Textract, Google Vision, etc.)
-function extractTextFromReceipt(text: string, availableCategories: string[] = []): ParsedReceiptData {
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+function extractTextFromReceipt(
+  text: string,
+  availableCategories: string[] = []
+): ParsedReceiptData {
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
   const result: ParsedReceiptData = {};
 
   // Extract merchant name (usually at the top)
   const merchantPatterns = [
     /^([A-Z][A-Z\s&-]{3,30})$/,
-    /^([A-Z][a-zA-Z\s&-]{3,30})$/
+    /^([A-Z][a-zA-Z\s&-]{3,30})$/,
   ];
-  
+
   for (let i = 0; i < Math.min(5, lines.length); i++) {
     for (const pattern of merchantPatterns) {
       const match = lines[i].match(pattern);
@@ -48,15 +59,18 @@ function extractTextFromReceipt(text: string, availableCategories: string[] = []
   const totalPatterns = [
     /(?:total|amount due|balance due|grand total)[:\s]*\$?(\d+\.?\d{0,2})/i,
     /\$(\d+\.\d{2})\s*(?:total|due|balance)/i,
-    /(?:^|\s)\$(\d+\.\d{2})(?:\s*total|\s*$)/i
+    /(?:^|\s)\$(\d+\.\d{2})(?:\s*total|\s*$)/i,
   ];
-  
+
   for (const line of lines) {
     for (const pattern of totalPatterns) {
       const match = line.match(pattern);
       if (match) {
         const amount = parseFloat(match[1]);
-        if (amount > 0 && (!result.totalAmount || amount > result.totalAmount)) {
+        if (
+          amount > 0 &&
+          (!result.totalAmount || amount > result.totalAmount)
+        ) {
           result.totalAmount = amount;
         }
       }
@@ -68,7 +82,7 @@ function extractTextFromReceipt(text: string, availableCategories: string[] = []
     /(\d{1,2}\/\d{1,2}\/\d{2,4})/,
     /(\d{1,2}-\d{1,2}-\d{2,4})/,
     /(\d{4}-\d{1,2}-\d{1,2})/,
-    /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i
+    /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4})/i,
   ];
 
   for (const line of lines) {
@@ -78,7 +92,7 @@ function extractTextFromReceipt(text: string, availableCategories: string[] = []
         try {
           const date = new Date(match[1]);
           if (!isNaN(date.getTime())) {
-            result.date = date.toISOString().split('T')[0];
+            result.date = date.toISOString().split("T")[0];
             result.paymentDate = result.date; // Payment date is typically the same as transaction date
             break;
           }
@@ -93,7 +107,7 @@ function extractTextFromReceipt(text: string, availableCategories: string[] = []
   // Extract tax amount
   const taxPatterns = [
     /(?:tax|hst|gst|pst)[:\s]*\$?(\d+\.?\d{0,2})/i,
-    /\$(\d+\.\d{2})\s*(?:tax|hst|gst|pst)/i
+    /\$(\d+\.\d{2})\s*(?:tax|hst|gst|pst)/i,
   ];
 
   for (const line of lines) {
@@ -110,65 +124,99 @@ function extractTextFromReceipt(text: string, availableCategories: string[] = []
   // Guess category based on merchant name using available categories
   if (result.merchantName && availableCategories.length > 0) {
     const merchant = result.merchantName.toLowerCase();
-    
+
     // Try to match with existing categories based on keywords
     let matchedCategory: string | undefined;
-    
-    if (merchant.includes('restaurant') || merchant.includes('cafe') || merchant.includes('pizza') || 
-        merchant.includes('food') || merchant.includes('dining') || merchant.includes('burger') ||
-        merchant.includes('coffee') || merchant.includes('starbucks') || merchant.includes('mcdonald')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('travel') || 
-        cat.toLowerCase().includes('entertainment') || 
-        cat.toLowerCase().includes('food') || 
-        cat.toLowerCase().includes('dining')
+
+    if (
+      merchant.includes("restaurant") ||
+      merchant.includes("cafe") ||
+      merchant.includes("pizza") ||
+      merchant.includes("food") ||
+      merchant.includes("dining") ||
+      merchant.includes("burger") ||
+      merchant.includes("coffee") ||
+      merchant.includes("starbucks") ||
+      merchant.includes("mcdonald")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("travel") ||
+          cat.toLowerCase().includes("entertainment") ||
+          cat.toLowerCase().includes("food") ||
+          cat.toLowerCase().includes("dining")
       );
-    } else if (merchant.includes('gas') || merchant.includes('fuel') || merchant.includes('shell') || 
-               merchant.includes('exxon') || merchant.includes('bp') || merchant.includes('chevron')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('travel') || 
-        cat.toLowerCase().includes('transportation') || 
-        cat.toLowerCase().includes('fuel')
+    } else if (
+      merchant.includes("gas") ||
+      merchant.includes("fuel") ||
+      merchant.includes("shell") ||
+      merchant.includes("exxon") ||
+      merchant.includes("bp") ||
+      merchant.includes("chevron")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("travel") ||
+          cat.toLowerCase().includes("transportation") ||
+          cat.toLowerCase().includes("fuel")
       );
-    } else if (merchant.includes('store') || merchant.includes('mart') || merchant.includes('shop') ||
-               merchant.includes('target') || merchant.includes('walmart') || merchant.includes('costco')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('office') || 
-        cat.toLowerCase().includes('supplies') || 
-        cat.toLowerCase().includes('shopping')
+    } else if (
+      merchant.includes("store") ||
+      merchant.includes("mart") ||
+      merchant.includes("shop") ||
+      merchant.includes("target") ||
+      merchant.includes("walmart") ||
+      merchant.includes("costco")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("office") ||
+          cat.toLowerCase().includes("supplies") ||
+          cat.toLowerCase().includes("shopping")
       );
-    } else if (merchant.includes('hotel') || merchant.includes('airline') || merchant.includes('rental') ||
-               merchant.includes('uber') || merchant.includes('lyft') || merchant.includes('taxi')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('travel') || 
-        cat.toLowerCase().includes('entertainment')
+    } else if (
+      merchant.includes("hotel") ||
+      merchant.includes("airline") ||
+      merchant.includes("rental") ||
+      merchant.includes("uber") ||
+      merchant.includes("lyft") ||
+      merchant.includes("taxi")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("travel") ||
+          cat.toLowerCase().includes("entertainment")
       );
     }
-    
+
     // Use matched category or default to first available category or "Other"
-    result.category = matchedCategory || 
-                     availableCategories.find(cat => cat.toLowerCase() === 'other') || 
-                     availableCategories[0] || 
-                     'Other';
+    result.category =
+      matchedCategory ||
+      availableCategories.find((cat) => cat.toLowerCase() === "other") ||
+      availableCategories[0] ||
+      "Other";
   } else {
-    result.category = 'Other';
+    result.category = "Other";
   }
 
   return result;
 }
 
 // AWS Textract OCR function
-async function performOCR(fileBuffer: Buffer, contentType: string): Promise<string> {
+async function performOCR(
+  fileBuffer: Buffer,
+  contentType: string
+): Promise<string> {
   try {
     // Try AWS Textract first
     return await extractTextWithTextract(fileBuffer, contentType);
   } catch (textractError) {
-    console.error('AWS Textract failed, using fallback:', textractError);
-    
+    console.error("AWS Textract failed, using fallback:", textractError);
+
     // Fallback to placeholder if Textract fails
     const today = new Date().toLocaleDateString();
     const time = new Date().toLocaleTimeString();
-    
+
     return `RECEIPT - TEXTRACT UNAVAILABLE
 File: ${contentType}
 Size: ${Math.round(fileBuffer.length / 1024)} KB
@@ -182,7 +230,9 @@ Date: ${today}
 Amount: $[Please enter total amount]
 Tax: $[Please enter tax if applicable]
 
-Error: ${textractError instanceof Error ? textractError.message : 'Unknown error'}
+Error: ${
+      textractError instanceof Error ? textractError.message : "Unknown error"
+    }
 
 The receipt has been uploaded and is available
 for your records.`;
@@ -190,7 +240,10 @@ for your records.`;
 }
 
 // Convert Textract data to our ParsedReceiptData format
-function convertTextractToParsedData(textractData: TextractExpenseData, availableCategories: string[] = []): ParsedReceiptData {
+function convertTextractToParsedData(
+  textractData: TextractExpenseData,
+  availableCategories: string[] = []
+): ParsedReceiptData {
   const result: ParsedReceiptData = {};
 
   if (textractData.merchantName) {
@@ -205,7 +258,7 @@ function convertTextractToParsedData(textractData: TextractExpenseData, availabl
     try {
       const date = new Date(textractData.date);
       if (!isNaN(date.getTime())) {
-        result.date = date.toISOString().split('T')[0];
+        result.date = date.toISOString().split("T")[0];
       }
     } catch {
       result.date = textractData.date;
@@ -221,58 +274,89 @@ function convertTextractToParsedData(textractData: TextractExpenseData, availabl
   }
 
   if (textractData.lineItems && textractData.lineItems.length > 0) {
-    result.items = textractData.lineItems.map(item => ({
+    result.items = textractData.lineItems.map((item) => ({
       description: item.description,
       amount: item.amount,
-      quantity: 1
+      quantity: 1,
     }));
   }
 
   // Guess category based on merchant name using available categories (same logic as extractTextFromReceipt)
   if (result.merchantName && availableCategories.length > 0) {
     const merchant = result.merchantName.toLowerCase();
-    
+
     // Try to match with existing categories based on keywords
     let matchedCategory: string | undefined;
-    
-    if (merchant.includes('restaurant') || merchant.includes('cafe') || merchant.includes('pizza') || 
-        merchant.includes('food') || merchant.includes('dining') || merchant.includes('burger') ||
-        merchant.includes('coffee') || merchant.includes('starbucks') || merchant.includes('mcdonald')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('travel') || 
-        cat.toLowerCase().includes('entertainment') || 
-        cat.toLowerCase().includes('food') || 
-        cat.toLowerCase().includes('dining')
+
+    if (
+      merchant.includes("restaurant") ||
+      merchant.includes("cafe") ||
+      merchant.includes("pizza") ||
+      merchant.includes("food") ||
+      merchant.includes("dining") ||
+      merchant.includes("burger") ||
+      merchant.includes("coffee") ||
+      merchant.includes("starbucks") ||
+      merchant.includes("mcdonald")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("travel") ||
+          cat.toLowerCase().includes("entertainment") ||
+          cat.toLowerCase().includes("food") ||
+          cat.toLowerCase().includes("dining")
       );
-    } else if (merchant.includes('gas') || merchant.includes('fuel') || merchant.includes('shell') || 
-               merchant.includes('exxon') || merchant.includes('bp') || merchant.includes('chevron')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('travel') || 
-        cat.toLowerCase().includes('transportation') || 
-        cat.toLowerCase().includes('fuel')
+    } else if (
+      merchant.includes("gas") ||
+      merchant.includes("fuel") ||
+      merchant.includes("shell") ||
+      merchant.includes("exxon") ||
+      merchant.includes("bp") ||
+      merchant.includes("chevron")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("travel") ||
+          cat.toLowerCase().includes("transportation") ||
+          cat.toLowerCase().includes("fuel")
       );
-    } else if (merchant.includes('store') || merchant.includes('mart') || merchant.includes('shop') ||
-               merchant.includes('target') || merchant.includes('walmart') || merchant.includes('costco')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('office') || 
-        cat.toLowerCase().includes('supplies') || 
-        cat.toLowerCase().includes('shopping')
+    } else if (
+      merchant.includes("store") ||
+      merchant.includes("mart") ||
+      merchant.includes("shop") ||
+      merchant.includes("target") ||
+      merchant.includes("walmart") ||
+      merchant.includes("costco")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("office") ||
+          cat.toLowerCase().includes("supplies") ||
+          cat.toLowerCase().includes("shopping")
       );
-    } else if (merchant.includes('hotel') || merchant.includes('airline') || merchant.includes('rental') ||
-               merchant.includes('uber') || merchant.includes('lyft') || merchant.includes('taxi')) {
-      matchedCategory = availableCategories.find(cat => 
-        cat.toLowerCase().includes('travel') || 
-        cat.toLowerCase().includes('entertainment')
+    } else if (
+      merchant.includes("hotel") ||
+      merchant.includes("airline") ||
+      merchant.includes("rental") ||
+      merchant.includes("uber") ||
+      merchant.includes("lyft") ||
+      merchant.includes("taxi")
+    ) {
+      matchedCategory = availableCategories.find(
+        (cat) =>
+          cat.toLowerCase().includes("travel") ||
+          cat.toLowerCase().includes("entertainment")
       );
     }
-    
+
     // Use matched category or default to first available category or "Other"
-    result.category = matchedCategory || 
-                     availableCategories.find(cat => cat.toLowerCase() === 'other') || 
-                     availableCategories[0] || 
-                     'Other';
+    result.category =
+      matchedCategory ||
+      availableCategories.find((cat) => cat.toLowerCase() === "other") ||
+      availableCategories[0] ||
+      "Other";
   } else {
-    result.category = 'Other';
+    result.category = "Other";
   }
 
   return result;
@@ -282,31 +366,42 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const formData = await request.formData();
-    const file = formData.get('receipt') as File;
+    const file = formData.get("receipt") as File;
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Validate file type (images and PDFs)
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "application/pdf",
+    ];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only images and PDFs are allowed.' },
+        { error: "Invalid file type. Only images and PDFs are allowed." },
         { status: 400 }
       );
     }
 
-    // Validate file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (4MB limit for Vercel compatibility)
+    const maxSize = 4 * 1024 * 1024; // 4MB (under Vercel's 4.5MB limit)
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 10MB.' },
-        { status: 400 }
+        {
+          error:
+            "File too large. Maximum size is 4MB. Please compress your image or use a smaller file.",
+          maxSize: "4MB",
+          currentSize: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+        },
+        { status: 413 } // Payload Too Large
       );
     }
 
@@ -317,17 +412,17 @@ export async function POST(request: NextRequest) {
     // Fetch available categories and tags from database
     await connectToDatabase();
     const [categoriesData, tagsData] = await Promise.all([
-      Category.find({ userId: session.user.id }).select('name'),
-      Tag.find({ userId: session.user.id }).select('name')
+      Category.find({ userId: session.user.id }).select("name"),
+      Tag.find({ userId: session.user.id }).select("name"),
     ]);
-    
-    const availableCategories = categoriesData.map(cat => cat.name);
-    const availableTags = tagsData.map(tag => tag.name);
+
+    const availableCategories = categoriesData.map((cat) => cat.name);
+    const availableTags = tagsData.map((tag) => tag.name);
 
     // Upload to S3 first (with robust fallback)
     let uploadResult;
     let uploadSuccess = false;
-    
+
     try {
       uploadResult = await uploadReceiptToS3(
         buffer,
@@ -336,33 +431,39 @@ export async function POST(request: NextRequest) {
         session.user.id
       );
       uploadSuccess = true;
-      console.log('S3 upload successful:', uploadResult.key);
+      console.log("S3 upload successful:", uploadResult.key);
     } catch (s3Error) {
-      console.error('S3 Upload Error:', s3Error);
-      
+      console.error("S3 Upload Error:", s3Error);
+
       // Create a fallback upload result that still allows scanning
       const timestamp = Date.now();
       const fallbackKey = `receipts/${session.user.id}/${timestamp}-${file.name}`;
-      
+
       uploadResult = {
         key: fallbackKey,
-        url: `data:${file.type};base64,${buffer.toString('base64')}`, // Data URL as fallback
+        url: `data:${file.type};base64,${buffer.toString("base64")}`, // Data URL as fallback
         size: buffer.length,
       };
-      
-      console.warn('Using fallback data URL due to S3 error');
+
+      console.warn("Using fallback data URL due to S3 error");
     }
 
     // Perform OCR on the image
     const extractedText = await performOCR(buffer, file.type);
-    
+
     // Try to get structured data from Textract first, then fallback to text parsing
     let parsedData: ParsedReceiptData;
     try {
       const textractData = await analyzeExpenseWithTextract(buffer);
-      parsedData = convertTextractToParsedData(textractData, availableCategories);
+      parsedData = convertTextractToParsedData(
+        textractData,
+        availableCategories
+      );
     } catch (textractError) {
-      console.log('Textract expense analysis failed, using text parsing:', textractError);
+      console.log(
+        "Textract expense analysis failed, using text parsing:",
+        textractError
+      );
       parsedData = extractTextFromReceipt(extractedText, availableCategories);
     }
 
@@ -375,125 +476,159 @@ export async function POST(request: NextRequest) {
         fileName: file.name,
         contentType: file.type,
         uploaded: uploadSuccess,
-        storageType: uploadSuccess ? 's3' : 'local_fallback',
+        storageType: uploadSuccess ? "s3" : "local_fallback",
       },
-      warning: !uploadSuccess ? 'Receipt processed locally due to storage service issue' : undefined,
+      warning: !uploadSuccess
+        ? "Receipt processed locally due to storage service issue"
+        : undefined,
       extractedText,
       parsedData,
       // Suggest expense data based on parsed receipt
       suggestedExpense: {
-        name: parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]' 
-          ? `${parsedData.merchantName} - ${parsedData.date || 'Receipt'}` 
-          : `Receipt - ${new Date().toLocaleDateString()}`,
+        name:
+          parsedData.merchantName &&
+          parsedData.merchantName !== "[Please enter merchant name]"
+            ? `${parsedData.merchantName} - ${parsedData.date || "Receipt"}`
+            : `Receipt - ${new Date().toLocaleDateString()}`,
         description: (() => {
           const descriptionParts: string[] = [];
-          
+
           // Add merchant name if available
-          if (parsedData.merchantName && parsedData.merchantName !== '[Please enter merchant name]') {
+          if (
+            parsedData.merchantName &&
+            parsedData.merchantName !== "[Please enter merchant name]"
+          ) {
             descriptionParts.push(`Receipt from ${parsedData.merchantName}`);
           } else {
-            descriptionParts.push('Receipt expense');
+            descriptionParts.push("Receipt expense");
           }
-          
+
           // Add date if available
           if (parsedData.date) {
             descriptionParts.push(`Date: ${parsedData.date}`);
           }
-          
+
           // Add tax amount if available
           if (parsedData.taxAmount && parsedData.taxAmount > 0) {
             descriptionParts.push(`Tax: $${parsedData.taxAmount.toFixed(2)}`);
           }
-          
+
           // Add subtotal if available and different from total
-          if (parsedData.subtotal && parsedData.subtotal > 0 && 
-              parsedData.totalAmount && Math.abs(parsedData.subtotal - parsedData.totalAmount) > 0.01) {
-            descriptionParts.push(`Subtotal: $${parsedData.subtotal.toFixed(2)}`);
+          if (
+            parsedData.subtotal &&
+            parsedData.subtotal > 0 &&
+            parsedData.totalAmount &&
+            Math.abs(parsedData.subtotal - parsedData.totalAmount) > 0.01
+          ) {
+            descriptionParts.push(
+              `Subtotal: $${parsedData.subtotal.toFixed(2)}`
+            );
           }
-          
+
           // Add line items if available (up to 5 items)
           if (parsedData.items && parsedData.items.length > 0) {
             const itemsToShow = parsedData.items.slice(0, 5);
-            const itemsText = itemsToShow.map(item => 
-              `• ${item.description}: $${item.amount.toFixed(2)}`
-            ).join('\n');
+            const itemsText = itemsToShow
+              .map(
+                (item) => `• ${item.description}: $${item.amount.toFixed(2)}`
+              )
+              .join("\n");
             descriptionParts.push(`Items:\n${itemsText}`);
-            
+
             if (parsedData.items.length > 5) {
-              descriptionParts.push(`... and ${parsedData.items.length - 5} more items`);
+              descriptionParts.push(
+                `... and ${parsedData.items.length - 5} more items`
+              );
             }
           }
-          
-          return descriptionParts.join('\n');
+
+          return descriptionParts.join("\n");
         })(),
-        amount: parsedData.totalAmount && parsedData.totalAmount > 0 ? parsedData.totalAmount : 0,
-        category: parsedData.category || 'Other',
-        expenseType: 'one-time',
+        amount:
+          parsedData.totalAmount && parsedData.totalAmount > 0
+            ? parsedData.totalAmount
+            : 0,
+        category: parsedData.category || "Other",
+        expenseType: "one-time",
         receiptUrl: uploadResult.url,
         receiptS3Key: uploadResult.key,
         receiptFileName: file.name,
         receiptContentType: file.type,
-        paymentDate: parsedData.paymentDate || parsedData.date || new Date().toISOString().split('T')[0],
+        paymentDate:
+          parsedData.paymentDate ||
+          parsedData.date ||
+          new Date().toISOString().split("T")[0],
         tags: (() => {
           const suggestedTags: string[] = [];
-          
+
           // Try to match existing tags with merchant name or category
           if (availableTags.length > 0) {
-            const merchantName = parsedData.merchantName?.toLowerCase() || '';
-            const category = parsedData.category?.toLowerCase() || '';
-            
+            const merchantName = parsedData.merchantName?.toLowerCase() || "";
+            const category = parsedData.category?.toLowerCase() || "";
+
             // Find tags that match merchant name or category keywords
-            const matchingTags = availableTags.filter(tag => {
+            const matchingTags = availableTags.filter((tag) => {
               const tagLower = tag.toLowerCase();
-              return merchantName.includes(tagLower) || 
-                     tagLower.includes(merchantName.split(' ')[0]) ||
-                     category.includes(tagLower) ||
-                     tagLower.includes(category.split(' ')[0]);
+              return (
+                merchantName.includes(tagLower) ||
+                tagLower.includes(merchantName.split(" ")[0]) ||
+                category.includes(tagLower) ||
+                tagLower.includes(category.split(" ")[0])
+              );
             });
-            
+
             if (matchingTags.length > 0) {
               suggestedTags.push(...matchingTags.slice(0, 3)); // Limit to 3 tags
             }
           }
-          
+
           // Fallback to generic tag if no matches found
           if (suggestedTags.length === 0) {
-            if (availableTags.includes('receipt')) {
-              suggestedTags.push('receipt');
+            if (availableTags.includes("receipt")) {
+              suggestedTags.push("receipt");
             } else if (availableTags.length > 0) {
               // Use the first available tag as fallback
               suggestedTags.push(availableTags[0]);
             }
           }
-          
+
           return suggestedTags;
         })(),
-      }
+      },
     });
   } catch (error) {
-    console.error('Error scanning receipt:', error);
-    
+    console.error("Error scanning receipt:", error);
+
     // Provide more specific error messages
-    let errorMessage = 'Failed to scan receipt';
+    let errorMessage = "Failed to scan receipt";
     let statusCode = 500;
-    
+
     if (error instanceof Error) {
-      if (error.message.includes('S3')) {
-        errorMessage = 'Failed to upload receipt. Please check AWS configuration.';
-      } else if (error.message.includes('OCR')) {
-        errorMessage = 'Failed to process receipt text. Please try again.';
-      } else if (error.message.includes('Unauthorized')) {
-        errorMessage = 'Authentication failed. Please sign in again.';
+      if (error.message.includes("S3")) {
+        errorMessage =
+          "Failed to upload receipt. Please check AWS configuration.";
+      } else if (error.message.includes("OCR")) {
+        errorMessage = "Failed to process receipt text. Please try again.";
+      } else if (error.message.includes("Unauthorized")) {
+        errorMessage = "Authentication failed. Please sign in again.";
         statusCode = 401;
+      } else if (
+        error.message.includes("payload") ||
+        error.message.includes("too large") ||
+        error.message.includes("413")
+      ) {
+        errorMessage =
+          "File too large for processing. Please compress your image to under 4MB and try again.";
+        statusCode = 413;
       } else {
         errorMessage = error.message;
       }
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error : undefined 
+        details: process.env.NODE_ENV === "development" ? error : undefined,
       },
       { status: statusCode }
     );
