@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
-import { Menu, Settings, User, DollarSign } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
+import { Menu, Settings, User, DollarSign, LogOut } from "lucide-react";
 import Sidebar from "./Sidebar";
 import GlobalSearch from "./GlobalSearch";
 import SettingsModal from "./SettingsModal";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,7 +18,11 @@ export default function AppLayout({
   title = "Dashboard",
 }: AppLayoutProps) {
   const { data: session } = useSession();
-  const [showSidebar, setShowSidebar] = useState(false);
+  const {
+    isOpen: showSidebar,
+    setIsOpen: setShowSidebar,
+    toggleSidebar,
+  } = useSidebar();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   return (
@@ -33,7 +38,7 @@ export default function AppLayout({
             <div className="flex justify-between items-center h-16 gap-2">
               <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
                 <button
-                  onClick={() => setShowSidebar(true)}
+                  onClick={toggleSidebar}
                   className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden flex-shrink-0"
                 >
                   <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -71,6 +76,14 @@ export default function AppLayout({
                     title="Settings"
                   >
                     <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                    className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    title="Sign out"
+                  >
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               </div>

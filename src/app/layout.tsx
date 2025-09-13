@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
-import PWARegister from "@/components/PWARegister";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -12,18 +12,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Expense Tracker",
   description: "Track and manage your business expenses efficiently",
-  manifest: "/manifest.json",
-  themeColor: "#006BFF",
   viewport: {
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Expense Tracker",
   },
   formatDetection: {
     telephone: false,
@@ -39,15 +32,6 @@ export const metadata: Metadata = {
     title: "Expense Tracker",
     description: "Track and manage your business expenses efficiently",
   },
-  other: {
-    "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "Expense Tracker",
-    "application-name": "Expense Tracker",
-    "msapplication-TileColor": "#006BFF",
-    "msapplication-config": "none",
-  },
 };
 
 export default function RootLayout({
@@ -57,12 +41,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} font-sans antialiased`}
-      >
+      <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
-          <PWARegister />
-          {children}
+          <SidebarProvider>{children}</SidebarProvider>
         </AuthProvider>
       </body>
     </html>

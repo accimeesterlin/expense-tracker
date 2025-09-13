@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, DollarSign, Edit, Trash2 } from "lucide-react";
+import { Plus, DollarSign, Edit, Trash2, BarChart3 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import BudgetModal from "@/components/BudgetModal";
 import ErrorModal from "@/components/ErrorModal";
@@ -209,14 +209,23 @@ export default function BudgetPage() {
                   </div>
                   <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
                     <button
+                      onClick={() => router.push(`/budget/${budget._id}`)}
+                      className="p-1 text-[#476788] hover:text-blue-600 rounded"
+                      title="View Analytics"
+                    >
+                      <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
+                    </button>
+                    <button
                       onClick={() => handleEdit(budget)}
                       className="p-1 text-[#476788] hover:text-[#0B3558] rounded"
+                      title="Edit Budget"
                     >
                       <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(budget)}
                       className="p-1 text-[#476788] hover:text-red-600 rounded"
+                      title="Delete Budget"
                     >
                       <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     </button>

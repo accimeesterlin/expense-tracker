@@ -155,7 +155,16 @@ export default function ExpenseDetailPage() {
     fetchCompanies();
     fetchCategories();
     fetchTags();
-  }, [session, status, router, params.id, fetchExpense, fetchCompanies, fetchCategories, fetchTags]);
+  }, [
+    session,
+    status,
+    router,
+    params.id,
+    fetchExpense,
+    fetchCompanies,
+    fetchCategories,
+    fetchTags,
+  ]);
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this expense?")) return;
@@ -213,13 +222,16 @@ export default function ExpenseDetailPage() {
     if (!editingComment || !editingComment.text.trim()) return;
 
     try {
-      const response = await fetch(`/api/expenses/${params.id}/comments/${commentIndex}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: editingComment.text.trim() }),
-      });
+      const response = await fetch(
+        `/api/expenses/${params.id}/comments/${commentIndex}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: editingComment.text.trim() }),
+        }
+      );
 
       if (response.ok) {
         const updatedExpense = await response.json();
@@ -238,9 +250,12 @@ export default function ExpenseDetailPage() {
     if (!confirm("Are you sure you want to delete this comment?")) return;
 
     try {
-      const response = await fetch(`/api/expenses/${params.id}/comments/${commentIndex}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/expenses/${params.id}/comments/${commentIndex}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         const updatedExpense = await response.json();
@@ -258,7 +273,9 @@ export default function ExpenseDetailPage() {
     try {
       let processedValue: any = value;
       if (field === "tags") {
-        processedValue = value ? value.split(",").filter(tag => tag.trim()) : [];
+        processedValue = value
+          ? value.split(",").filter((tag) => tag.trim())
+          : [];
       }
 
       const response = await fetch(`/api/expenses/${params.id}`, {
@@ -541,9 +558,14 @@ export default function ExpenseDetailPage() {
                           expense.category
                         )}`}
                         onClick={() =>
-                          categories.length > 0 && startQuickEdit("category", expense.category)
+                          categories.length > 0 &&
+                          startQuickEdit("category", expense.category)
                         }
-                        title={categories.length > 0 ? "Click to change category" : undefined}
+                        title={
+                          categories.length > 0
+                            ? "Click to change category"
+                            : undefined
+                        }
                       >
                         {expense.category}
                       </span>
@@ -578,11 +600,14 @@ export default function ExpenseDetailPage() {
                       size={5}
                       value={quickEdit.value.split(",")}
                       onChange={(e) => {
-                        const selectedTags = Array.from(e.target.selectedOptions, option => option.value);
+                        const selectedTags = Array.from(
+                          e.target.selectedOptions,
+                          (option) => option.value
+                        );
                         setQuickEdit((prev) => ({
                           ...prev,
                           value: selectedTags.join(","),
-                        }))
+                        }));
                       }}
                       className="input-field text-sm"
                       autoFocus
@@ -595,9 +620,7 @@ export default function ExpenseDetailPage() {
                     </select>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() =>
-                          handleQuickEdit("tags", quickEdit.value)
-                        }
+                        onClick={() => handleQuickEdit("tags", quickEdit.value)}
                         className="btn-primary text-sm px-3 py-1"
                       >
                         Save
@@ -629,7 +652,7 @@ export default function ExpenseDetailPage() {
                     )}
                     {tags.length > 0 && (
                       <button
-                        onClick={() => 
+                        onClick={() =>
                           startQuickEdit("tags", (expense.tags || []).join(","))
                         }
                         className="mt-2 text-sm text-[#006BFF] hover:text-[#0052CC] font-medium"
@@ -681,21 +704,22 @@ export default function ExpenseDetailPage() {
                     <FileText className="w-4 h-4 text-[#476788] mt-1" />
                     <div className="flex-1">
                       {expense.description ? (
-                        <p 
+                        <p
                           className="text-[#0B3558] cursor-pointer hover:text-[#006BFF] transition-colors"
                           onClick={() =>
-                            startQuickEdit("description", expense.description || "")
+                            startQuickEdit(
+                              "description",
+                              expense.description || ""
+                            )
                           }
                           title="Click to edit description"
                         >
                           {expense.description}
                         </p>
                       ) : (
-                        <p 
+                        <p
                           className="text-[#A6BBD1] italic cursor-pointer hover:text-[#006BFF] transition-colors"
-                          onClick={() =>
-                            startQuickEdit("description", "")
-                          }
+                          onClick={() => startQuickEdit("description", "")}
                           title="Click to add description"
                         >
                           Click to add description...
@@ -807,19 +831,25 @@ export default function ExpenseDetailPage() {
                       {isImageExpanded ? (
                         <>
                           <Minimize2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                          <span className="hidden sm:inline truncate">Collapse</span>
+                          <span className="hidden sm:inline truncate">
+                            Collapse
+                          </span>
                           <span className="sm:hidden truncate">Small</span>
                         </>
                       ) : (
                         <>
                           <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                          <span className="hidden sm:inline truncate">Expand</span>
+                          <span className="hidden sm:inline truncate">
+                            Expand
+                          </span>
                           <span className="sm:hidden truncate">Large</span>
                         </>
                       )}
                     </button>
                     <button
-                      onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
+                      onClick={() =>
+                        setImageRotation((prev) => (prev + 90) % 360)
+                      }
                       className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 min-w-0"
                     >
                       <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -832,23 +862,30 @@ export default function ExpenseDetailPage() {
                       rel="noopener noreferrer"
                       className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center min-w-0"
                     >
-                      <span className="hidden sm:inline truncate">Open Full Size</span>
+                      <span className="hidden sm:inline truncate">
+                        Open Full Size
+                      </span>
                       <span className="sm:hidden truncate">Full Size</span>
                     </a>
                     <button
                       onClick={handleRemoveReceipt}
                       className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center min-w-0"
                     >
-                      <span className="hidden sm:inline truncate">Remove Receipt</span>
+                      <span className="hidden sm:inline truncate">
+                        Remove Receipt
+                      </span>
                       <span className="sm:hidden truncate">Remove</span>
                     </button>
                   </div>
                 </div>
 
-                {(expense.receiptUrl.startsWith("data:image") || 
-                  expense.receiptContentType?.startsWith("image/") ||
-                  expense.receiptUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i)) ? (
-                  <div className="border border-[#E5E7EB] rounded-lg overflow-hidden bg-gray-50 cursor-pointer" onClick={() => setIsImageExpanded(!isImageExpanded)}>
+                {expense.receiptUrl.startsWith("data:image") ||
+                expense.receiptContentType?.startsWith("image/") ||
+                expense.receiptUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i) ? (
+                  <div
+                    className="border border-[#E5E7EB] rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                    onClick={() => setIsImageExpanded(!isImageExpanded)}
+                  >
                     <div className="relative">
                       <Image
                         src={expense.receiptUrl}
@@ -856,10 +893,15 @@ export default function ExpenseDetailPage() {
                         width={isImageExpanded ? 800 : 400}
                         height={isImageExpanded ? 600 : 300}
                         className={`w-full h-auto object-contain transition-all duration-300 ${
-                          isImageExpanded ? 'max-h-[600px]' : 'max-h-[250px] sm:max-h-[300px]'
+                          isImageExpanded
+                            ? "max-h-[600px]"
+                            : "max-h-[250px] sm:max-h-[300px]"
                         }`}
                         style={{ transform: `rotate(${imageRotation}deg)` }}
-                        unoptimized={expense.receiptUrl.startsWith("data:") || expense.receiptUrl.includes("amazonaws.com")}
+                        unoptimized={
+                          expense.receiptUrl.startsWith("data:") ||
+                          expense.receiptUrl.includes("amazonaws.com")
+                        }
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           const parent = target.parentElement;
@@ -888,13 +930,17 @@ export default function ExpenseDetailPage() {
                       )}
                     </div>
                   </div>
-                ) : (expense.receiptUrl.startsWith("data:application/pdf") || 
-                       expense.receiptContentType === "application/pdf" ||
-                       expense.receiptUrl.match(/\.pdf(\?|$)/i)) ? (
+                ) : expense.receiptUrl.startsWith("data:application/pdf") ||
+                  expense.receiptContentType === "application/pdf" ||
+                  expense.receiptUrl.match(/\.pdf(\?|$)/i) ? (
                   <div className="border border-[#E5E7EB] rounded-lg p-8 text-center bg-gray-50">
                     <FileText className="w-16 h-16 text-[#006BFF] mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-[#0B3558] mb-2">PDF Receipt</h3>
-                    <p className="text-[#476788] mb-4">Click below to view the PDF receipt</p>
+                    <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+                      PDF Receipt
+                    </h3>
+                    <p className="text-[#476788] mb-4">
+                      Click below to view the PDF receipt
+                    </p>
                     <a
                       href={expense.receiptUrl}
                       target="_blank"
@@ -908,8 +954,12 @@ export default function ExpenseDetailPage() {
                 ) : (
                   <div className="border border-[#E5E7EB] rounded-lg p-8 text-center bg-gray-50">
                     <FileText className="w-16 h-16 text-[#476788] mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-[#0B3558] mb-2">Receipt File</h3>
-                    <p className="text-[#476788] mb-4">Receipt file is attached to this expense</p>
+                    <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+                      Receipt File
+                    </h3>
+                    <p className="text-[#476788] mb-4">
+                      Receipt file is attached to this expense
+                    </p>
                     <a
                       href={expense.receiptUrl}
                       target="_blank"
@@ -994,11 +1044,16 @@ export default function ExpenseDetailPage() {
                       ) : (
                         <div>
                           <div className="flex items-start justify-between group">
-                            <p className="text-[#0B3558] mb-2 flex-1">{comment.text}</p>
+                            <p className="text-[#0B3558] mb-2 flex-1">
+                              {comment.text}
+                            </p>
                             <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={() =>
-                                  setEditingComment({ index, text: comment.text })
+                                  setEditingComment({
+                                    index,
+                                    text: comment.text,
+                                  })
                                 }
                                 className="p-1 text-[#476788] hover:text-[#006BFF] rounded transition-colors"
                                 title="Edit comment"
@@ -1080,6 +1135,25 @@ export default function ExpenseDetailPage() {
                 Timeline
               </h2>
               <div className="space-y-4">
+                {expense.paymentDate && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#476788] mb-1">
+                      Purchase Date
+                    </label>
+                    <p className="text-sm text-[#0B3558]">
+                      {new Date(expense.paymentDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-[#476788] mb-1">
                     Created

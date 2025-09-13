@@ -80,7 +80,12 @@ export default function ExpenseModal({
   onSuccess,
 }: ExpenseModalProps) {
   const isEditing = !!expense;
-  const { error: globalError, isErrorVisible, showError, clearError } = useErrorHandler();
+  const {
+    error: globalError,
+    isErrorVisible,
+    showError,
+    clearError,
+  } = useErrorHandler();
   const [categories, setCategories] = useState<
     { _id: string; name: string; color: string }[]
   >([]);
@@ -128,7 +133,9 @@ export default function ExpenseModal({
         expenseType: expense.expenseType,
         frequency: expense.frequency || "monthly",
         startDate: expense.startDate ? expense.startDate.split("T")[0] : "",
-        paymentDate: expense.paymentDate ? expense.paymentDate.split("T")[0] : "",
+        paymentDate: expense.paymentDate
+          ? expense.paymentDate.split("T")[0]
+          : "",
         tags: expense.tags ? expense.tags.join(", ") : "",
         isActive: expense.isActive,
         receipt: null,
@@ -137,11 +144,14 @@ export default function ExpenseModal({
       setShowAdvanced(true); // Show all fields when editing
     } else if (hasCompanies && companies.length > 0) {
       // For new expenses, try to restore the last selected company from localStorage
-      const savedCompanyId = localStorage.getItem("expense-tracker-last-company");
-      const validCompany = savedCompanyId && companies.find(c => c._id === savedCompanyId);
-      setFormData((prev) => ({ 
-        ...prev, 
-        company: validCompany ? savedCompanyId : companies[0]._id 
+      const savedCompanyId = localStorage.getItem(
+        "expense-tracker-last-company"
+      );
+      const validCompany =
+        savedCompanyId && companies.find((c) => c._id === savedCompanyId);
+      setFormData((prev) => ({
+        ...prev,
+        company: validCompany ? savedCompanyId : companies[0]._id,
       }));
     }
   }, [expense, companies, hasCompanies]);
@@ -183,12 +193,17 @@ export default function ExpenseModal({
   const resetForm = () => {
     if (!expense) {
       // For new expenses, try to restore the last selected company from localStorage
-      const savedCompanyId = localStorage.getItem("expense-tracker-last-company");
-      const validCompany = savedCompanyId && companies.find(c => c._id === savedCompanyId);
-      
+      const savedCompanyId = localStorage.getItem(
+        "expense-tracker-last-company"
+      );
+      const validCompany =
+        savedCompanyId && companies.find((c) => c._id === savedCompanyId);
+
       setFormData({
-        company: hasCompanies 
-          ? (validCompany ? savedCompanyId : companies[0]._id) 
+        company: hasCompanies
+          ? validCompany
+            ? savedCompanyId
+            : companies[0]._id
           : "",
         name: "",
         description: "",
@@ -288,8 +303,12 @@ export default function ExpenseModal({
 
     // Simple pattern matching based on common receipt patterns
     const currentDate = new Date().toISOString().split("T")[0];
-    const paymentDate = new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]; // Random date within last 3 days
-    
+    const paymentDate = new Date(
+      Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000
+    )
+      .toISOString()
+      .split("T")[0]; // Random date within last 3 days
+
     if (fileName.includes("restaurant") || fileName.includes("food")) {
       mockData = {
         amount: (Math.random() * 50 + 15).toFixed(2),
@@ -549,7 +568,7 @@ export default function ExpenseModal({
         }
       }}
     >
-      <div className="card max-w-md w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
+      <div className="card max-w-xs sm:max-w-[280px] md:max-w-[320px] lg:max-w-[360px] w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">
@@ -627,7 +646,10 @@ export default function ExpenseModal({
                       company: selectedCompanyId,
                     }));
                     // Save the selected company to localStorage for future use
-                    localStorage.setItem("expense-tracker-last-company", selectedCompanyId);
+                    localStorage.setItem(
+                      "expense-tracker-last-company",
+                      selectedCompanyId
+                    );
                   }}
                   className="input-field w-full"
                   required
@@ -741,7 +763,9 @@ export default function ExpenseModal({
                   <div>
                     <label className="block text-sm font-medium text-[#0B3558] mb-2">
                       Payment Date
-                      <span className="text-xs text-[#476788] font-normal ml-1">(Optional)</span>
+                      <span className="text-xs text-[#476788] font-normal ml-1">
+                        (Optional)
+                      </span>
                     </label>
                     <input
                       type="date"
@@ -1161,7 +1185,7 @@ export default function ExpenseModal({
           </div>
         </form>
       </div>
-      
+
       {/* Error Modal */}
       {globalError && (
         <ErrorModal

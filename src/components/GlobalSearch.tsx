@@ -26,7 +26,11 @@ export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,7 +57,7 @@ export default function GlobalSearch() {
     document.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("resize", updateDropdownPosition);
     window.addEventListener("scroll", updateDropdownPosition);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("resize", updateDropdownPosition);
@@ -112,10 +116,27 @@ export default function GlobalSearch() {
                 amount: expense.amount,
                 category: expense.category,
                 date:
-                  (expense as { nextBillingDate?: string; createdAt?: string })
-                    .nextBillingDate ||
-                  (expense as { nextBillingDate?: string; createdAt?: string })
-                    .createdAt,
+                  (
+                    expense as {
+                      paymentDate?: string;
+                      nextBillingDate?: string;
+                      createdAt?: string;
+                    }
+                  ).paymentDate ||
+                  (
+                    expense as {
+                      paymentDate?: string;
+                      nextBillingDate?: string;
+                      createdAt?: string;
+                    }
+                  ).nextBillingDate ||
+                  (
+                    expense as {
+                      paymentDate?: string;
+                      nextBillingDate?: string;
+                      createdAt?: string;
+                    }
+                  ).createdAt,
               });
             }
           }
@@ -292,7 +313,10 @@ export default function GlobalSearch() {
   };
 
   return (
-    <div className="relative w-full max-w-48 sm:max-w-56 lg:max-w-64" ref={searchRef}>
+    <div
+      className="relative w-full max-w-48 sm:max-w-56 lg:max-w-64"
+      ref={searchRef}
+    >
       <div className="input-field-with-icon">
         <Search className="icon w-3 h-3 sm:w-4 sm:h-4" />
         <input
@@ -328,7 +352,7 @@ export default function GlobalSearch() {
       </div>
 
       {isOpen && query.length > 2 && (
-        <div 
+        <div
           className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-64 sm:max-h-96 overflow-y-auto min-w-64"
           style={{
             top: dropdownPosition.top,
@@ -372,7 +396,9 @@ export default function GlobalSearch() {
                       {result.date && (
                         <>
                           <span>•</span>
-                          <span className="flex-shrink-0">{formatDate(result.date)}</span>
+                          <span className="flex-shrink-0">
+                            {formatDate(result.date)}
+                          </span>
                         </>
                       )}
                     </div>

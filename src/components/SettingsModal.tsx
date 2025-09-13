@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 import {
   X,
   User,
@@ -9,6 +10,7 @@ import {
   Palette,
   Database,
   Download,
+  LogOut,
 } from "lucide-react";
 
 interface SettingsModalProps {
@@ -132,7 +134,9 @@ export default function SettingsModal({
       <div className="card max-w-xs sm:max-w-md lg:max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6 border-b border-[#E5E7EB]">
-          <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">Settings</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">
+            Settings
+          </h2>
           <button
             onClick={onClose}
             className="text-[#A6BBD1] hover:text-[#0B3558] transition-colors p-1"
@@ -172,7 +176,7 @@ export default function SettingsModal({
               })}
             </nav>
           </div>
-          
+
           {/* Desktop Sidebar */}
           <div className="hidden lg:block w-64 bg-gray-50 border-r border-[#E5E7EB] p-4">
             <nav className="space-y-2">
@@ -531,13 +535,31 @@ export default function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-3 p-3 sm:p-4 lg:p-6 border-t border-[#E5E7EB]">
-          <button onClick={onClose} className="btn-secondary w-full sm:w-auto order-2 sm:order-1">
-            Cancel
+        <div className="flex flex-col sm:flex-row justify-between gap-3 sm:space-x-3 p-3 sm:p-4 lg:p-6 border-t border-[#E5E7EB]">
+          <button
+            onClick={() => {
+              signOut({ callbackUrl: "/auth/signin" });
+              onClose();
+            }}
+            className="btn-secondary w-full sm:w-auto inline-flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 order-3 sm:order-1"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign out</span>
           </button>
-          <button onClick={handleSave} className="btn-primary w-full sm:w-auto order-1 sm:order-2">
-            Save Changes
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3 order-1 sm:order-2">
+            <button
+              onClick={onClose}
+              className="btn-secondary w-full sm:w-auto"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="btn-primary w-full sm:w-auto"
+            >
+              Save Changes
+            </button>
+          </div>
         </div>
       </div>
     </div>

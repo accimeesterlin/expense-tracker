@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Edit,
   Trash2,
+  BarChart3,
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import GoalModal from "@/components/GoalModal";
@@ -276,14 +277,23 @@ export default function GoalsPage() {
                   </div>
                   <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
                     <button
+                      onClick={() => router.push(`/goals/${goal._id}`)}
+                      className="p-1 text-[#476788] hover:text-blue-600 rounded"
+                      title="View Analytics"
+                    >
+                      <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
+                    </button>
+                    <button
                       onClick={() => handleEdit(goal)}
                       className="p-1 text-[#476788] hover:text-[#0B3558] rounded"
+                      title="Edit Goal"
                     >
                       <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(goal)}
                       className="p-1 text-[#476788] hover:text-red-600 rounded"
+                      title="Delete Goal"
                     >
                       <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     </button>

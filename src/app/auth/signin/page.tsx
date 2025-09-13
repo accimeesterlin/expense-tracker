@@ -12,66 +12,7 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [autoSignInEnabled, setAutoSignInEnabled] = useState(false);
-  const [autoSignInCompleted, setAutoSignInCompleted] = useState(false);
   const router = useRouter();
-
-  const handleDemoSignIn = async () => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      // First, try to sign in with demo credentials
-      let result = await signIn("credentials", {
-        email: "demo@example.com",
-        password: "demo123",
-        redirect: false,
-      });
-
-      // If login fails, try to create demo user
-      if (result?.error) {
-        try {
-          const setupResponse = await fetch('/api/setup-demo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          
-          if (setupResponse.ok) {
-            // Try signing in again after creating demo user
-            result = await signIn("credentials", {
-              email: "demo@example.com",
-              password: "demo123",
-              redirect: false,
-            });
-          }
-        } catch (setupError) {
-          console.error('Demo setup failed:', setupError);
-        }
-      }
-
-      if (result?.error) {
-        setError("Demo login failed. Please try again or contact support.");
-      } else {
-        const session = await getSession();
-        if (session) {
-          router.push("/");
-          router.refresh();
-        }
-      }
-    } catch (error) {
-      setError("Demo login failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Auto sign-in effect
-  useEffect(() => {
-    if (autoSignInEnabled && !autoSignInCompleted && !isLoading) {
-      handleDemoSignIn();
-      setAutoSignInCompleted(true);
-    }
-  }, [autoSignInEnabled, autoSignInCompleted, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +55,7 @@ function SignInForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-xs w-full">
+      <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -130,24 +71,6 @@ function SignInForm() {
               {error}
             </div>
           )}
-
-          {/* Auto Sign-in Toggle */}
-          <div className="flex items-center justify-between mb-6">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoSignInEnabled}
-                onChange={(e) => setAutoSignInEnabled(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-600 border-gray-300 rounded"
-              />
-              <span className="ml-2 text-sm text-gray-700">Auto sign-in with demo</span>
-            </label>
-            {autoSignInEnabled && (
-              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                Auto-signing in...
-              </span>
-            )}
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -224,16 +147,7 @@ function SignInForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 mt-4">
-              <button
-                onClick={handleDemoSignIn}
-                disabled={isLoading}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                <ArrowRight className="w-4 h-4" />
-                <span>Quick Demo Sign-In</span>
-              </button>
-              
+            <div className="mt-4">
               <button
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
