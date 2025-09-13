@@ -320,7 +320,7 @@ export default function ReceiptScannerModal({
         }
       }}
     >
-      <div className="bg-white rounded-2xl max-w-xs w-full mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-md w-full mx-2 sm:mx-4 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-3 sm:p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">

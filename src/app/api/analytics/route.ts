@@ -19,51 +19,106 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    // Calculate date ranges based on period
+    // Calculate date ranges based on period, using paymentDate if available, otherwise createdAt
     const now = new Date();
-    let dateFilter: { createdAt?: { $gte: Date; $lte: Date } } = {};
+    let dateFilter: any = {};
 
     switch (period) {
       case "week":
         dateFilter = {
-          createdAt: {
-            $gte: startOfWeek(now),
-            $lte: endOfWeek(now)
-          }
+          $or: [
+            {
+              paymentDate: {
+                $gte: startOfWeek(now),
+                $lte: endOfWeek(now)
+              }
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: startOfWeek(now),
+                $lte: endOfWeek(now)
+              }
+            }
+          ]
         };
         break;
       case "month":
         dateFilter = {
-          createdAt: {
-            $gte: startOfMonth(now),
-            $lte: endOfMonth(now)
-          }
+          $or: [
+            {
+              paymentDate: {
+                $gte: startOfMonth(now),
+                $lte: endOfMonth(now)
+              }
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: startOfMonth(now),
+                $lte: endOfMonth(now)
+              }
+            }
+          ]
         };
         break;
       case "year":
         dateFilter = {
-          createdAt: {
-            $gte: startOfYear(now),
-            $lte: endOfYear(now)
-          }
+          $or: [
+            {
+              paymentDate: {
+                $gte: startOfYear(now),
+                $lte: endOfYear(now)
+              }
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: startOfYear(now),
+                $lte: endOfYear(now)
+              }
+            }
+          ]
         };
         break;
       case "custom":
         if (startDate && endDate) {
           dateFilter = {
-            createdAt: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
+            $or: [
+              {
+                paymentDate: {
+                  $gte: new Date(startDate),
+                  $lte: new Date(endDate)
+                }
+              },
+              {
+                paymentDate: { $exists: false },
+                createdAt: {
+                  $gte: new Date(startDate),
+                  $lte: new Date(endDate)
+                }
+              }
+            ]
           };
         }
         break;
       default:
         dateFilter = {
-          createdAt: {
-            $gte: startOfMonth(now),
-            $lte: endOfMonth(now)
-          }
+          $or: [
+            {
+              paymentDate: {
+                $gte: startOfMonth(now),
+                $lte: endOfMonth(now)
+              }
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: startOfMonth(now),
+                $lte: endOfMonth(now)
+              }
+            }
+          ]
         };
     }
 
@@ -110,15 +165,22 @@ export async function GET(request: NextRequest) {
       { $sort: { total: -1 } }
     ]);
 
-    // Get daily expenses for the period
+    // Get daily expenses for the period using paymentDate when available
     const dailyExpenses = await Expense.aggregate([
       { $match: baseFilter },
       {
+        $addFields: {
+          effectiveDate: {
+            $ifNull: ["$paymentDate", "$createdAt"]
+          }
+        }
+      },
+      {
         $group: {
           _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
-            day: { $dayOfMonth: "$createdAt" }
+            year: { $year: "$effectiveDate" },
+            month: { $month: "$effectiveDate" },
+            day: { $dayOfMonth: "$effectiveDate" }
           },
           total: { $sum: "$amount" },
           count: { $sum: 1 }
@@ -127,22 +189,40 @@ export async function GET(request: NextRequest) {
       { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
     ]);
 
-    // Get monthly trend (last 12 months)
+    // Get monthly trend (last 12 months) using paymentDate when available
     const monthlyTrend = await Expense.aggregate([
       {
         $match: {
           userId: session.user.id,
-          createdAt: {
-            $gte: subMonths(now, 12),
-            $lte: now
+          $or: [
+            {
+              paymentDate: {
+                $gte: subMonths(now, 12),
+                $lte: now
+              }
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: subMonths(now, 12),
+                $lte: now
+              }
+            }
+          ]
+        }
+      },
+      {
+        $addFields: {
+          effectiveDate: {
+            $ifNull: ["$paymentDate", "$createdAt"]
           }
         }
       },
       {
         $group: {
           _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" }
+            year: { $year: "$effectiveDate" },
+            month: { $month: "$effectiveDate" }
           },
           total: { $sum: "$amount" },
           count: { $sum: 1 }

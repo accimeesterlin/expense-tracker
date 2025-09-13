@@ -62,6 +62,30 @@ function ExpensesPageContent() {
     fetchData();
   }, [session, status, router]);
 
+  // Add focus/visibility event listeners for iPhone Chrome
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && session) {
+        // Page became visible, refetch data
+        fetchData();
+      }
+    };
+
+    const handleFocus = () => {
+      if (session) {
+        fetchData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [session]);
+
   useEffect(() => {
     // Set initial filters from URL parameters
     const categoryParam = searchParams.get("category");
@@ -77,12 +101,31 @@ function ExpensesPageContent() {
 
   const fetchData = async () => {
     try {
+      // Add cache-busting for iPhone Chrome and aggressive caching prevention
+      const cacheHeaders = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+      
       const [expensesRes, companiesRes, categoriesRes, tagsRes] =
         await Promise.all([
-          fetch("/api/expenses"),
-          fetch("/api/companies"),
-          fetch("/api/categories"),
-          fetch("/api/tags"),
+          fetch("/api/expenses", { 
+            headers: cacheHeaders,
+            cache: 'no-store' 
+          }),
+          fetch("/api/companies", { 
+            headers: cacheHeaders,
+            cache: 'no-store' 
+          }),
+          fetch("/api/categories", { 
+            headers: cacheHeaders,
+            cache: 'no-store' 
+          }),
+          fetch("/api/tags", { 
+            headers: cacheHeaders,
+            cache: 'no-store' 
+          }),
         ]);
 
       if (expensesRes.ok) {
@@ -250,12 +293,15 @@ function ExpensesPageContent() {
         setExpenses((prev) =>
           prev.map((e) => (e._id === expenseId ? updatedExpense : e))
         );
-        setNotification({
-          isOpen: true,
-          type: "success",
-          title: "Success",
-          message: "Expense updated successfully",
-        });
+        // Only show notification for non-title updates to reduce noise
+        if (field !== "name") {
+          setNotification({
+            isOpen: true,
+            type: "success",
+            title: "Success",
+            message: "Expense updated successfully",
+          });
+        }
       } else {
         const errorData = await response.json();
         setNotification({

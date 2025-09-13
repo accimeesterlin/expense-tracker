@@ -32,10 +32,10 @@ interface ModalFooterProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-xs",
-  md: "max-w-sm",
-  lg: "max-w-md",
-  xl: "max-w-lg",
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
 };
 
 export function Modal({

@@ -121,7 +121,12 @@ export default function ExpenseCard({
               ) : (
                 <h3 
                   className="font-semibold text-gray-900 text-lg cursor-pointer hover:text-blue-600 transition-colors"
-                  onClick={() => onQuickUpdate && startQuickEdit("name", expense.name)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onQuickUpdate) {
+                      startQuickEdit("name", expense.name);
+                    }
+                  }}
                   title={onQuickUpdate ? "Click to edit title" : undefined}
                 >
                   {expense.name}
@@ -242,7 +247,7 @@ export default function ExpenseCard({
                     title={onQuickUpdate ? "Click to edit description" : undefined}
                   >
                     <FileText className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-gray-600">{expense.description}</p>
+                    <p className="text-xs text-gray-600 line-clamp-2">{expense.description}</p>
                   </div>
                 ) : onQuickUpdate && (
                   <div className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors text-gray-400"

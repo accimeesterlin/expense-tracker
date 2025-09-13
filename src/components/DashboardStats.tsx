@@ -1,4 +1,5 @@
 import { Building2, CreditCard, TrendingUp, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Company {
   _id: string;
@@ -21,6 +22,7 @@ export default function DashboardStats({
   companies,
   expenses,
 }: DashboardStatsProps) {
+  const router = useRouter();
   const totalExpenses = expenses.reduce(
     (sum, expense) => sum + expense.amount,
     0
@@ -44,6 +46,7 @@ export default function DashboardStats({
       icon: Building2,
       color: "bg-blue-500",
       textColor: "text-blue-600",
+      href: "/companies",
     },
     {
       name: "Total Expenses",
@@ -51,6 +54,7 @@ export default function DashboardStats({
       icon: CreditCard,
       color: "bg-green-500",
       textColor: "text-green-600",
+      href: "/expenses",
     },
     {
       name: "Active Subscriptions",
@@ -58,6 +62,7 @@ export default function DashboardStats({
       icon: TrendingUp,
       color: "bg-purple-500",
       textColor: "text-purple-600",
+      href: "/expenses?type=subscription",
     },
     {
       name: "Upcoming Bills",
@@ -65,6 +70,7 @@ export default function DashboardStats({
       icon: Calendar,
       color: "bg-orange-500",
       textColor: "text-orange-600",
+      href: "/expenses?type=upcoming",
     },
   ];
 
@@ -73,7 +79,8 @@ export default function DashboardStats({
       {stats.map((stat) => (
         <div
           key={stat.name}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => router.push(stat.href)}
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center">
             <div className={`${stat.color} rounded-lg p-2 sm:p-3 mb-2 sm:mb-0 sm:mr-3 lg:mr-4 flex-shrink-0`}>

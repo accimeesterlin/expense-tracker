@@ -357,28 +357,28 @@ export default function GlobalSearch() {
                   >
                     {getTypeIcon(result.type)}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-3">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {result.name}
                     </p>
-                    <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <div className="flex items-center space-x-2 text-xs text-gray-500 truncate">
                       <span className="capitalize">{result.type}</span>
                       {result.category && (
                         <>
                           <span>•</span>
-                          <span>{result.category}</span>
+                          <span className="truncate">{result.category}</span>
                         </>
                       )}
                       {result.date && (
                         <>
                           <span>•</span>
-                          <span>{formatDate(result.date)}</span>
+                          <span className="flex-shrink-0">{formatDate(result.date)}</span>
                         </>
                       )}
                     </div>
                   </div>
                   {result.amount && (
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 flex-shrink-0">
                       {formatCurrency(result.amount)}
                     </div>
                   )}
