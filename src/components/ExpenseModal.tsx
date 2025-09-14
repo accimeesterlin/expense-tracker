@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, CreditCard, FileText, Camera } from "lucide-react";
 import NextImage from "next/image";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useApiClient } from "@/hooks/useApiClient";
 import ErrorModal from "./ErrorModal";
 
 interface Company {
@@ -100,6 +101,10 @@ export default function ExpenseModal({
     showError,
     clearError,
   } = useErrorHandler();
+  
+  const api = useApiClient({
+    onError: (error) => showError(error, "API Error")
+  });
   const [categories, setCategories] = useState<
     { _id: string; name: string; color: string }[]
   >([]);
@@ -510,19 +515,15 @@ export default function ExpenseModal({
         expenseData.nextBillingDate = nextBillingDate.toISOString();
       }
 
-      const url = expense ? `/api/expenses/${expense._id}` : "/api/expenses";
-      const method = expense ? "PUT" : "POST";
+      // Use versioned API client
+      let result;
+      if (isEditing) {
+        result = await api.updateExpense(expense._id, expenseData);
+      } else {
+        result = await api.createExpense(expenseData);
+      }
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(expenseData),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
+      if (result) {
         onSuccess(result);
         resetForm();
         if (previewUrl) {
@@ -530,39 +531,6 @@ export default function ExpenseModal({
           setPreviewUrl(null);
         }
         onClose();
-      } else {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
-
-        // Provide user-friendly error messages
-        let friendlyError =
-          errorData.error ||
-          `Failed to ${isEditing ? "update" : "create"} expense`;
-
-        // Handle specific validation errors
-        if (errorData.error && errorData.error.includes("validation failed")) {
-          if (errorData.error.includes("nextBillingDate")) {
-            friendlyError =
-              "Start date is required for subscription and recurring expenses.";
-          } else if (
-            errorData.error.includes("Company reference is required")
-          ) {
-            friendlyError = "Please select a company for this expense.";
-          } else if (errorData.error.includes("Expense name is required")) {
-            friendlyError = "Please enter an expense name.";
-          } else if (errorData.error.includes("Description is required")) {
-            friendlyError = "Please enter a description for this expense.";
-          } else if (errorData.error.includes("Amount is required")) {
-            friendlyError = "Please enter a valid amount.";
-          } else if (errorData.error.includes("frequency")) {
-            friendlyError =
-              "Frequency is required for subscription and recurring expenses.";
-          } else {
-            friendlyError = "Please check all required fields and try again.";
-          }
-        }
-
-        setError(friendlyError);
       }
     } catch (error) {
       console.error("Expense submission error:", error);
@@ -583,7 +551,7 @@ export default function ExpenseModal({
         }
       }}
     >
-      <div className="card max-w-xs sm:max-w-[280px] md:max-w-[320px] lg:max-w-[360px] w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
+      <div className="card max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">

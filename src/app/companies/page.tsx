@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useApiClient } from "@/hooks/useApiClient";
 import Link from "next/link";
 import {
   Building2,
@@ -45,6 +46,7 @@ interface Company {
 export default function CompaniesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const api = useApiClient();
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -68,19 +70,18 @@ export default function CompaniesPage() {
     message: "",
   });
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
-      const response = await fetch("/api/companies");
-      if (response.ok) {
-        const data = await response.json();
-        setCompanies(data);
+      const result = await api.getCompanies();
+      if (result) {
+        setCompanies(result);
       }
     } catch (error) {
       console.error("Error fetching companies:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [api]);
 
   const filterCompanies = useCallback(() => {
     const filtered = companies.filter(
@@ -128,18 +129,14 @@ export default function CompaniesPage() {
     }
 
     try {
-      const response = await fetch(`/api/companies/${companyId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
+      const result = await api.deleteCompany(companyId);
+      if (result !== null) {
         setCompanies((prev) => prev.filter((c) => c._id !== companyId));
       } else {
-        const errorData = await response.json();
         setErrorModal({
           isOpen: true,
           title: "Delete Failed",
-          message: errorData.error || "Failed to delete company",
+          message: "Failed to delete company",
         });
       }
     } catch (error) {

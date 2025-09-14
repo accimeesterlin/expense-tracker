@@ -21,6 +21,7 @@ import {
   Maximize2,
   Minimize2,
   RotateCcw,
+  PiggyBank,
 } from "lucide-react";
 import ExpenseModal from "@/components/ExpenseModal";
 import AppLayout from "@/components/AppLayout";
@@ -58,6 +59,7 @@ interface Expense {
   nextBillingDate?: string;
   company: Company;
   isActive: boolean;
+  budget?: string;
   receiptUrl?: string;
   receiptContentType?: string;
   comments: Array<{
@@ -76,6 +78,7 @@ export default function ExpenseDetailPage() {
   const [companies, setCompanies] = useState([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState("");
@@ -145,6 +148,18 @@ export default function ExpenseDetailPage() {
     }
   }, []);
 
+  const fetchBudgets = useCallback(async () => {
+    try {
+      const response = await fetch("/api/v1/budgets");
+      if (response.ok) {
+        const data = await response.json();
+        setBudgets(data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching budgets:", error);
+    }
+  }, []);
+
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
@@ -155,6 +170,7 @@ export default function ExpenseDetailPage() {
     fetchCompanies();
     fetchCategories();
     fetchTags();
+    fetchBudgets();
   }, [
     session,
     status,
@@ -164,6 +180,7 @@ export default function ExpenseDetailPage() {
     fetchCompanies,
     fetchCategories,
     fetchTags,
+    fetchBudgets,
   ]);
 
   const handleDelete = async () => {
@@ -276,6 +293,12 @@ export default function ExpenseDetailPage() {
         processedValue = value
           ? value.split(",").filter((tag) => tag.trim())
           : [];
+      } else if (field === "isActive") {
+        processedValue = value === "true";
+      } else if (field === "amount") {
+        processedValue = parseFloat(value);
+      } else if (field === "budget") {
+        processedValue = value || null;
       }
 
       const response = await fetch(`/api/expenses/${params.id}`, {
@@ -409,9 +432,42 @@ export default function ExpenseDetailPage() {
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center flex-shrink-0">
                 <CreditCard className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#0B3558] truncate">
-                {expense.name}
-              </h1>
+              {quickEdit.field === "name" ? (
+                <div className="flex items-center space-x-2 flex-1">
+                  <input
+                    type="text"
+                    value={quickEdit.value}
+                    onChange={(e) =>
+                      setQuickEdit((prev) => ({
+                        ...prev,
+                        value: e.target.value,
+                      }))
+                    }
+                    className="input-field text-lg sm:text-xl lg:text-2xl font-semibold min-w-0 flex-1"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => handleQuickEdit("name", quickEdit.value)}
+                    className="btn-primary text-sm px-3 py-1"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={cancelQuickEdit}
+                    className="btn-secondary text-sm px-3 py-1"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <h1
+                  className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#0B3558] truncate cursor-pointer hover:text-[#006BFF] transition-colors"
+                  onClick={() => startQuickEdit("name", expense.name)}
+                  title="Click to edit title"
+                >
+                  {expense.name}
+                </h1>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-shrink-0">
@@ -494,7 +550,11 @@ export default function ExpenseDetailPage() {
                   <label className="block text-sm font-medium text-[#476788] mb-1">
                     Status
                   </label>
-                  <div className="flex items-center space-x-2">
+                  <div
+                    className="flex items-center space-x-2 cursor-pointer hover:bg-[#F8F9FB] p-2 rounded-lg transition-colors"
+                    onClick={() => handleQuickEdit("isActive", (!expense.isActive).toString())}
+                    title="Click to toggle status"
+                  >
                     {expense.isActive ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
@@ -729,6 +789,73 @@ export default function ExpenseDetailPage() {
                   </div>
                 )}
               </div>
+
+              {/* Budget Assignment */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-[#476788] mb-2">
+                  Budget Assignment
+                </label>
+                {quickEdit.field === "budget" ? (
+                  <div className="flex flex-col space-y-2">
+                    <select
+                      value={quickEdit.value}
+                      onChange={(e) =>
+                        setQuickEdit((prev) => ({
+                          ...prev,
+                          value: e.target.value,
+                        }))
+                      }
+                      className="input-field text-sm"
+                      autoFocus
+                    >
+                      <option value="">No budget assigned</option>
+                      {budgets.map((budget) => (
+                        <option key={budget._id} value={budget._id}>
+                          {budget.name} (${budget.totalAmount.toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleQuickEdit("budget", quickEdit.value)}
+                        className="btn-primary text-sm px-3 py-1"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelQuickEdit}
+                        className="btn-secondary text-sm px-3 py-1"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <PiggyBank className="w-4 h-4 text-[#476788]" />
+                    {expense.budget ? (
+                      <span
+                        className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-[#006BFF]/10 text-[#006BFF] cursor-pointer hover:bg-[#006BFF]/20 transition-colors"
+                        onClick={() =>
+                          budgets.length > 0 &&
+                          startQuickEdit("budget", expense.budget || "")
+                        }
+                        title={budgets.length > 0 ? "Click to change budget" : undefined}
+                      >
+                        {budgets.find(b => b._id === expense.budget)?.name || "Unknown Budget"}
+                      </span>
+                    ) : (
+                      <span
+                        className="text-[#A6BBD1] italic cursor-pointer hover:text-[#006BFF] transition-colors"
+                        onClick={() => budgets.length > 0 && startQuickEdit("budget", "")}
+                        title={budgets.length > 0 ? "Click to assign to budget" : undefined}
+                      >
+                        {budgets.length > 0 ? "Click to assign to budget..." : "No budgets available"}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Billing Information */}
@@ -823,26 +950,26 @@ export default function ExpenseDetailPage() {
                   <h2 className="text-lg sm:text-xl font-semibold text-[#0B3558]">
                     Receipt
                   </h2>
-                  <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto">
+                  <div className="flex items-center flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
                       onClick={() => setIsImageExpanded(!isImageExpanded)}
-                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 min-w-0"
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 sm:space-x-2 min-w-0 py-2 sm:py-2.5 px-3 sm:px-4 min-h-[40px] sm:min-h-auto"
                     >
                       {isImageExpanded ? (
                         <>
-                          <Minimize2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <Minimize2 className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
                           <span className="hidden sm:inline truncate">
                             Collapse
                           </span>
-                          <span className="sm:hidden truncate">Small</span>
+                          <span className="sm:hidden text-xs truncate">Small</span>
                         </>
                       ) : (
                         <>
-                          <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <Maximize2 className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
                           <span className="hidden sm:inline truncate">
                             Expand
                           </span>
-                          <span className="sm:hidden truncate">Large</span>
+                          <span className="sm:hidden text-xs truncate">Large</span>
                         </>
                       )}
                     </button>
@@ -850,31 +977,33 @@ export default function ExpenseDetailPage() {
                       onClick={() =>
                         setImageRotation((prev) => (prev + 90) % 360)
                       }
-                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 min-w-0"
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 sm:space-x-2 min-w-0 py-2 sm:py-2.5 px-3 sm:px-4 min-h-[40px] sm:min-h-auto"
                     >
-                      <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <RotateCcw className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0" />
                       <span className="hidden sm:inline truncate">Rotate</span>
-                      <span className="sm:hidden truncate">↻</span>
+                      <span className="sm:hidden text-xs truncate">↻</span>
                     </button>
                     <a
                       href={expense.receiptUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center min-w-0"
+                      className="btn-secondary text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 sm:space-x-2 min-w-0 py-2 sm:py-2.5 px-3 sm:px-4 min-h-[40px] sm:min-h-auto"
                     >
+                      <Maximize2 className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0 sm:hidden" />
                       <span className="hidden sm:inline truncate">
                         Open Full Size
                       </span>
-                      <span className="sm:hidden truncate">Full Size</span>
+                      <span className="sm:hidden text-xs truncate">Full</span>
                     </a>
                     <button
                       onClick={handleRemoveReceipt}
-                      className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center min-w-0"
+                      className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm flex-1 sm:flex-none text-center inline-flex items-center justify-center space-x-1 sm:space-x-2 min-w-0 py-2 sm:py-2.5 px-3 sm:px-4 min-h-[40px] sm:min-h-auto"
                     >
+                      <Trash2 className="w-4 h-4 sm:w-4 sm:h-4 flex-shrink-0 sm:hidden" />
                       <span className="hidden sm:inline truncate">
                         Remove Receipt
                       </span>
-                      <span className="sm:hidden truncate">Remove</span>
+                      <span className="sm:hidden text-xs truncate">Remove</span>
                     </button>
                   </div>
                 </div>

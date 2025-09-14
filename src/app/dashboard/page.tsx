@@ -21,6 +21,7 @@ import CompanyModal from "@/components/CompanyModal";
 import ExpenseModal from "@/components/ExpenseModal";
 import CompanyCard from "@/components/CompanyCard";
 import ExpenseCard from "@/components/ExpenseCard";
+import DashboardExpenseCard from "@/components/DashboardExpenseCard";
 import DashboardStats from "@/components/DashboardStats";
 import UpcomingSubscriptions from "@/components/UpcomingSubscriptions";
 import FinancialDashboard from "@/components/FinancialDashboard";
@@ -621,14 +622,9 @@ export default function DashboardPage() {
                   ) : (
                     <div className="space-y-2 sm:space-y-3">
                       {expenses.slice(0, 5).map((expense) => (
-                        <ExpenseCard
+                        <DashboardExpenseCard
                           key={expense._id}
                           expense={expense}
-                          onEdit={() => {
-                            setSelectedExpense(expense);
-                            setShowExpenseModal(true);
-                          }}
-                          onDelete={() => handleExpenseDeleted(expense._id)}
                         />
                       ))}
                       {expenses.length > 5 && (
