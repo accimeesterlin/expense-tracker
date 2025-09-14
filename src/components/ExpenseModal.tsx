@@ -25,6 +25,19 @@ interface Company {
   createdAt: string;
 }
 
+interface Budget {
+  _id: string;
+  name: string;
+  description?: string;
+  totalAmount: number;
+  spentAmount: number;
+  category?: string;
+  period: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
 interface Expense {
   _id: string;
   name: string;
@@ -43,6 +56,7 @@ interface Expense {
   receiptS3Key?: string;
   receiptFileName?: string;
   receiptContentType?: string;
+  budget?: string;
   comments: Array<{
     text: string;
     createdAt: string;
@@ -92,6 +106,7 @@ export default function ExpenseModal({
   const [tags, setTags] = useState<
     { _id: string; name: string; color: string }[]
   >([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [formData, setFormData] = useState({
     company: "",
     name: "",

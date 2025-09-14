@@ -3,9 +3,13 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Tag from "@/models/Tag";
+import { ensureModelsRegistered } from "@/lib/models";
 
 export async function GET() {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,6 +31,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

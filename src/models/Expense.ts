@@ -19,6 +19,7 @@ export interface IExpense extends Document {
   receiptFileName?: string;
   receiptContentType?: string;
   paymentMethod?: Types.ObjectId;
+  budget?: Types.ObjectId;
   tags: string[];
   notes?: string;
   comments: Array<{
@@ -128,6 +129,10 @@ const ExpenseSchema: Schema = new Schema(
         trim: true,
       },
     ],
+    budget: {
+      type: Schema.Types.ObjectId,
+      ref: "Budget",
+    },
     notes: {
       type: String,
       trim: true,
@@ -162,6 +167,7 @@ ExpenseSchema.index({ company: 1, category: 1 });
 ExpenseSchema.index({ company: 1, expenseType: 1 });
 ExpenseSchema.index({ company: 1, nextBillingDate: 1 });
 ExpenseSchema.index({ company: 1, isActive: 1 });
+ExpenseSchema.index({ budget: 1 });
 
 // Virtual for annual cost calculation
 ExpenseSchema.virtual("annualCost").get(function (this: any) {

@@ -40,6 +40,7 @@ interface AnalyticsData {
   charts: {
     expensesByCategory: Array<{ _id: string; total: number; count: number }>;
     expensesByType: Array<{ _id: string; total: number; count: number }>;
+    expensesByTags: Array<{ _id: string; total: number; count: number }>;
     dailyExpenses: Array<{
       _id: { year: number; month: number; day: number };
       total: number;
@@ -64,6 +65,14 @@ interface AnalyticsData {
       amount: number;
       category: string;
       company: { name: string };
+    }>;
+    categoryInsights: Array<{
+      _id: string;
+      total: number;
+      count: number;
+      avgAmount: number;
+      maxAmount: number;
+      minAmount: number;
     }>;
   };
 }
@@ -193,9 +202,13 @@ export default function AnalyticsPage() {
             onChange={(e) => setSelectedPeriod(e.target.value)}
             className="input-field text-sm sm:text-base"
           >
+            <option value="today">Today</option>
             <option value="week">This Week</option>
             <option value="month">This Month</option>
             <option value="year">This Year</option>
+            <option value="lastWeek">Last Week</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="lastYear">Last Year</option>
           </select>
         </div>
         {/* Summary Cards */}
@@ -404,7 +417,29 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Expenses by Tags */}
+        {charts.expensesByTags && charts.expensesByTags.length > 0 && (
+          <div className="card p-3 sm:p-4 lg:p-6 mb-6 sm:mb-8">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
+              Expenses by Tags
+            </h3>
+            <div className="h-64 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={charts.expensesByTags}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="_id" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Bar dataKey="total" fill="#4ECDC4" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Top Companies */}
           <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
@@ -474,6 +509,59 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </div>
+
+        {/* Category Insights */}
+        {insights.categoryInsights && insights.categoryInsights.length > 0 && (
+          <div className="card p-3 sm:p-4 lg:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
+              Category Insights
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {insights.categoryInsights.map((category) => (
+                <div
+                  key={category._id}
+                  className="p-3 sm:p-4 bg-[#F8F9FB] rounded-lg"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-[#0B3558] text-sm sm:text-base truncate">
+                      {category._id}
+                    </h4>
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#00C7BE]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 text-[#00C7BE]" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-[#476788]">Total:</span>
+                      <span className="font-medium text-[#0B3558]">
+                        {formatCurrency(category.total)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-[#476788]">Count:</span>
+                      <span className="font-medium text-[#0B3558]">
+                        {category.count} expenses
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-[#476788]">Average:</span>
+                      <span className="font-medium text-[#0B3558]">
+                        {formatCurrency(category.avgAmount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-[#476788]">Range:</span>
+                      <span className="font-medium text-[#0B3558]">
+                        {formatCurrency(category.minAmount)} -{" "}
+                        {formatCurrency(category.maxAmount)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

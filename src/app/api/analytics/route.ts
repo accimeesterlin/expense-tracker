@@ -3,10 +3,26 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Expense from "@/models/Expense";
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear, subDays, subMonths } from "date-fns";
+import { ensureModelsRegistered } from "@/lib/models";
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  startOfYear,
+  endOfYear,
+  startOfDay,
+  endOfDay,
+  subDays,
+  subMonths,
+  subYears,
+} from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,23 +40,42 @@ export async function GET(request: NextRequest) {
     let dateFilter: any = {};
 
     switch (period) {
+      case "today":
+        dateFilter = {
+          $or: [
+            {
+              paymentDate: {
+                $gte: startOfDay(now),
+                $lte: endOfDay(now),
+              },
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: startOfDay(now),
+                $lte: endOfDay(now),
+              },
+            },
+          ],
+        };
+        break;
       case "week":
         dateFilter = {
           $or: [
             {
               paymentDate: {
                 $gte: startOfWeek(now),
-                $lte: endOfWeek(now)
-              }
+                $lte: endOfWeek(now),
+              },
             },
             {
               paymentDate: { $exists: false },
               createdAt: {
                 $gte: startOfWeek(now),
-                $lte: endOfWeek(now)
-              }
-            }
-          ]
+                $lte: endOfWeek(now),
+              },
+            },
+          ],
         };
         break;
       case "month":
@@ -49,17 +84,17 @@ export async function GET(request: NextRequest) {
             {
               paymentDate: {
                 $gte: startOfMonth(now),
-                $lte: endOfMonth(now)
-              }
+                $lte: endOfMonth(now),
+              },
             },
             {
               paymentDate: { $exists: false },
               createdAt: {
                 $gte: startOfMonth(now),
-                $lte: endOfMonth(now)
-              }
-            }
-          ]
+                $lte: endOfMonth(now),
+              },
+            },
+          ],
         };
         break;
       case "year":
@@ -68,17 +103,80 @@ export async function GET(request: NextRequest) {
             {
               paymentDate: {
                 $gte: startOfYear(now),
-                $lte: endOfYear(now)
-              }
+                $lte: endOfYear(now),
+              },
             },
             {
               paymentDate: { $exists: false },
               createdAt: {
                 $gte: startOfYear(now),
-                $lte: endOfYear(now)
-              }
-            }
-          ]
+                $lte: endOfYear(now),
+              },
+            },
+          ],
+        };
+        break;
+      case "lastYear":
+        const lastYearStart = startOfYear(subYears(now, 1));
+        const lastYearEnd = endOfYear(subYears(now, 1));
+        dateFilter = {
+          $or: [
+            {
+              paymentDate: {
+                $gte: lastYearStart,
+                $lte: lastYearEnd,
+              },
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: lastYearStart,
+                $lte: lastYearEnd,
+              },
+            },
+          ],
+        };
+        break;
+      case "lastMonth":
+        const lastMonthStart = startOfMonth(subMonths(now, 1));
+        const lastMonthEnd = endOfMonth(subMonths(now, 1));
+        dateFilter = {
+          $or: [
+            {
+              paymentDate: {
+                $gte: lastMonthStart,
+                $lte: lastMonthEnd,
+              },
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: lastMonthStart,
+                $lte: lastMonthEnd,
+              },
+            },
+          ],
+        };
+        break;
+      case "lastWeek":
+        const lastWeekStart = startOfWeek(subDays(now, 7));
+        const lastWeekEnd = endOfWeek(subDays(now, 7));
+        dateFilter = {
+          $or: [
+            {
+              paymentDate: {
+                $gte: lastWeekStart,
+                $lte: lastWeekEnd,
+              },
+            },
+            {
+              paymentDate: { $exists: false },
+              createdAt: {
+                $gte: lastWeekStart,
+                $lte: lastWeekEnd,
+              },
+            },
+          ],
         };
         break;
       case "custom":
@@ -88,17 +186,17 @@ export async function GET(request: NextRequest) {
               {
                 paymentDate: {
                   $gte: new Date(startDate),
-                  $lte: new Date(endDate)
-                }
+                  $lte: new Date(endDate),
+                },
               },
               {
                 paymentDate: { $exists: false },
                 createdAt: {
                   $gte: new Date(startDate),
-                  $lte: new Date(endDate)
-                }
-              }
-            ]
+                  $lte: new Date(endDate),
+                },
+              },
+            ],
           };
         }
         break;
@@ -108,17 +206,17 @@ export async function GET(request: NextRequest) {
             {
               paymentDate: {
                 $gte: startOfMonth(now),
-                $lte: endOfMonth(now)
-              }
+                $lte: endOfMonth(now),
+              },
             },
             {
               paymentDate: { $exists: false },
               createdAt: {
                 $gte: startOfMonth(now),
-                $lte: endOfMonth(now)
-              }
-            }
-          ]
+                $lte: endOfMonth(now),
+              },
+            },
+          ],
         };
     }
 
@@ -132,12 +230,16 @@ export async function GET(request: NextRequest) {
           _id: null,
           total: { $sum: "$amount" },
           count: { $sum: 1 },
-          avgAmount: { $avg: "$amount" }
-        }
-      }
+          avgAmount: { $avg: "$amount" },
+        },
+      },
     ]);
 
-    const totalExpenses = totalExpensesResult[0] || { total: 0, count: 0, avgAmount: 0 };
+    const totalExpenses = totalExpensesResult[0] || {
+      total: 0,
+      count: 0,
+      avgAmount: 0,
+    };
 
     // Get expenses by category
     const expensesByCategory = await Expense.aggregate([
@@ -146,10 +248,10 @@ export async function GET(request: NextRequest) {
         $group: {
           _id: "$category",
           total: { $sum: "$amount" },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { total: -1 } }
+      { $sort: { total: -1 } },
     ]);
 
     // Get expenses by type
@@ -159,10 +261,26 @@ export async function GET(request: NextRequest) {
         $group: {
           _id: "$expenseType",
           total: { $sum: "$amount" },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { total: -1 } }
+      { $sort: { total: -1 } },
+    ]);
+
+    // Get expenses by tags
+    const expensesByTags = await Expense.aggregate([
+      { $match: baseFilter },
+      { $unwind: { path: "$tags", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$tags",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+      { $match: { _id: { $ne: null, $ne: "" } } },
+      { $sort: { total: -1 } },
+      { $limit: 10 },
     ]);
 
     // Get daily expenses for the period using paymentDate when available
@@ -171,22 +289,22 @@ export async function GET(request: NextRequest) {
       {
         $addFields: {
           effectiveDate: {
-            $ifNull: ["$paymentDate", "$createdAt"]
-          }
-        }
+            $ifNull: ["$paymentDate", "$createdAt"],
+          },
+        },
       },
       {
         $group: {
           _id: {
             year: { $year: "$effectiveDate" },
             month: { $month: "$effectiveDate" },
-            day: { $dayOfMonth: "$effectiveDate" }
+            day: { $dayOfMonth: "$effectiveDate" },
           },
           total: { $sum: "$amount" },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
+      { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } },
     ]);
 
     // Get monthly trend (last 12 months) using paymentDate when available
@@ -198,37 +316,37 @@ export async function GET(request: NextRequest) {
             {
               paymentDate: {
                 $gte: subMonths(now, 12),
-                $lte: now
-              }
+                $lte: now,
+              },
             },
             {
               paymentDate: { $exists: false },
               createdAt: {
                 $gte: subMonths(now, 12),
-                $lte: now
-              }
-            }
-          ]
-        }
+                $lte: now,
+              },
+            },
+          ],
+        },
       },
       {
         $addFields: {
           effectiveDate: {
-            $ifNull: ["$paymentDate", "$createdAt"]
-          }
-        }
+            $ifNull: ["$paymentDate", "$createdAt"],
+          },
+        },
       },
       {
         $group: {
           _id: {
             year: { $year: "$effectiveDate" },
-            month: { $month: "$effectiveDate" }
+            month: { $month: "$effectiveDate" },
           },
           total: { $sum: "$amount" },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { "_id.year": 1, "_id.month": 1 } }
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]);
 
     // Get top companies by spending
@@ -239,8 +357,8 @@ export async function GET(request: NextRequest) {
           from: "companies",
           localField: "company",
           foreignField: "_id",
-          as: "companyInfo"
-        }
+          as: "companyInfo",
+        },
       },
       { $unwind: "$companyInfo" },
       {
@@ -248,11 +366,11 @@ export async function GET(request: NextRequest) {
           _id: "$company",
           name: { $first: "$companyInfo.name" },
           total: { $sum: "$amount" },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       { $sort: { total: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
     // Get recent large expenses
@@ -262,9 +380,39 @@ export async function GET(request: NextRequest) {
       .populate("company", "name")
       .select("name amount category company createdAt");
 
+    // Get detailed category insights
+    const categoryInsights = await Expense.aggregate([
+      { $match: baseFilter },
+      {
+        $group: {
+          _id: "$category",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+          avgAmount: { $avg: "$amount" },
+          maxAmount: { $max: "$amount" },
+          minAmount: { $min: "$amount" },
+        },
+      },
+      { $sort: { total: -1 } },
+      { $limit: 10 },
+    ]);
+
     // Compare with previous period
-    let previousPeriodFilter: { userId?: string; createdAt?: { $gte: Date; $lte: Date } } = {};
+    let previousPeriodFilter: {
+      userId?: string;
+      createdAt?: { $gte: Date; $lte: Date };
+    } = {};
     switch (period) {
+      case "today":
+        const prevDay = subDays(now, 1);
+        previousPeriodFilter = {
+          userId: session.user.id,
+          createdAt: {
+            $gte: startOfDay(prevDay),
+            $lte: endOfDay(prevDay),
+          },
+        };
+        break;
       case "week":
         const prevWeekStart = subDays(startOfWeek(now), 7);
         const prevWeekEnd = subDays(endOfWeek(now), 7);
@@ -272,8 +420,8 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           createdAt: {
             $gte: prevWeekStart,
-            $lte: prevWeekEnd
-          }
+            $lte: prevWeekEnd,
+          },
         };
         break;
       case "month":
@@ -282,8 +430,8 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           createdAt: {
             $gte: startOfMonth(prevMonth),
-            $lte: endOfMonth(prevMonth)
-          }
+            $lte: endOfMonth(prevMonth),
+          },
         };
         break;
       case "year":
@@ -293,8 +441,39 @@ export async function GET(request: NextRequest) {
           userId: session.user.id,
           createdAt: {
             $gte: prevYear,
-            $lte: prevYearEnd
-          }
+            $lte: prevYearEnd,
+          },
+        };
+        break;
+      case "lastYear":
+        const prevLastYear = subYears(now, 2);
+        previousPeriodFilter = {
+          userId: session.user.id,
+          createdAt: {
+            $gte: startOfYear(prevLastYear),
+            $lte: endOfYear(prevLastYear),
+          },
+        };
+        break;
+      case "lastMonth":
+        const prevLastMonth = subMonths(now, 2);
+        previousPeriodFilter = {
+          userId: session.user.id,
+          createdAt: {
+            $gte: startOfMonth(prevLastMonth),
+            $lte: endOfMonth(prevLastMonth),
+          },
+        };
+        break;
+      case "lastWeek":
+        const prevLastWeekStart = subDays(now, 14);
+        const prevLastWeekEnd = subDays(now, 8);
+        previousPeriodFilter = {
+          userId: session.user.id,
+          createdAt: {
+            $gte: startOfWeek(prevLastWeekStart),
+            $lte: endOfWeek(prevLastWeekEnd),
+          },
         };
         break;
     }
@@ -306,34 +485,38 @@ export async function GET(request: NextRequest) {
         {
           $group: {
             _id: null,
-            total: { $sum: "$amount" }
-          }
-        }
+            total: { $sum: "$amount" },
+          },
+        },
       ]);
       previousPeriodTotal = prevPeriodResult[0]?.total || 0;
     }
 
-    const percentageChange = previousPeriodTotal > 0 
-      ? ((totalExpenses.total - previousPeriodTotal) / previousPeriodTotal) * 100 
-      : 0;
+    const percentageChange =
+      previousPeriodTotal > 0
+        ? ((totalExpenses.total - previousPeriodTotal) / previousPeriodTotal) *
+          100
+        : 0;
 
     return NextResponse.json({
       summary: {
         ...totalExpenses,
         previousPeriodTotal,
         percentageChange: Math.round(percentageChange * 100) / 100,
-        period
+        period,
       },
       charts: {
         expensesByCategory,
         expensesByType,
+        expensesByTags,
         dailyExpenses,
-        monthlyTrend
+        monthlyTrend,
       },
       insights: {
         topCompanies,
-        largeExpenses
-      }
+        largeExpenses,
+        categoryInsights,
+      },
     });
   } catch (error) {
     console.error("Error fetching analytics:", error);

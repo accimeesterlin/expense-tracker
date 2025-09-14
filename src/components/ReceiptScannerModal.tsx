@@ -154,14 +154,23 @@ export default function ReceiptScannerModal({
   };
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    try {
+      const file = e.target.files?.[0];
+      if (file) {
+        setShowingCamera(false);
+        setError(""); // Clear any previous errors
+        console.log('Camera capture successful on iPhone Chrome:', file.name, file.size);
+        handleFileSelect(file);
+      } else {
+        // Reset camera state if no file was selected (user cancelled)
+        setShowingCamera(false);
+        setError("");
+        console.log('Camera capture cancelled by user');
+      }
+    } catch (error) {
+      console.error('Camera capture error on iPhone Chrome:', error);
       setShowingCamera(false);
-      handleFileSelect(file);
-    } else {
-      // Reset camera state if no file was selected (user cancelled)
-      setShowingCamera(false);
-      setError("");
+      setError('Failed to capture image. Please try again or upload from your photo library.');
     }
   };
 
@@ -171,9 +180,32 @@ export default function ReceiptScannerModal({
     
     // For iOS Chrome, we need to trigger the camera with a delay to ensure proper handling
     if (cameraInputRef.current) {
-      setTimeout(() => {
-        cameraInputRef.current?.click();
-      }, 100);
+      // Add more robust iPhone/Chrome detection and handling
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isChrome = navigator.userAgent.includes('Chrome');
+      const isSafari = navigator.userAgent.includes('Safari') && !isChrome;
+      
+      if (isIOS && isChrome) {
+        // Longer delay for iPhone Chrome to prevent race conditions
+        setTimeout(() => {
+          try {
+            cameraInputRef.current?.click();
+          } catch (error) {
+            console.error('Camera trigger failed on iPhone Chrome:', error);
+            setError('Camera access failed. Please try uploading from your photo library instead.');
+          }
+        }, 300);
+      } else if (isIOS && isSafari) {
+        // Shorter delay for Safari
+        setTimeout(() => {
+          cameraInputRef.current?.click();
+        }, 150);
+      } else {
+        // Standard delay for other browsers
+        setTimeout(() => {
+          cameraInputRef.current?.click();
+        }, 100);
+      }
     }
   };
 
@@ -392,7 +424,7 @@ export default function ReceiptScannerModal({
                   <span>Take Photo with Camera</span>
                 </button>
                 <p className="text-sm text-[#476788] mb-4">
-                  Recommended: Use your device's camera for best results
+                  Recommended: Use your device&apos;s camera for best results
                 </p>
 
                 <div className="flex items-center justify-center mb-3">
