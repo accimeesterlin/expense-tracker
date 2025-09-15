@@ -6,6 +6,7 @@ interface Company {
   _id: string;
   name: string;
   industry?: string;
+  domain?: string;
   address?: {
     city?: string;
     state?: string;
@@ -37,8 +38,10 @@ export default function CompanyCard({
           <div className="flex items-center space-x-3 mb-2">
             <CompanyLogo
               companyName={company.name}
+              domain={company.domain}
               website={company.contactInfo?.website}
               size="md"
+              showAttribution={true}
             />
             <div>
               <h3 className="font-semibold text-gray-900 text-lg hover:text-[#006BFF] transition-colors">

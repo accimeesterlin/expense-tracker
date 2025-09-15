@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { CreditCard } from "lucide-react";
+import CompanyLogo from "./CompanyLogo";
 
 interface Company {
   _id: string;
@@ -13,6 +13,12 @@ interface Expense {
   amount: number;
   category: string;
   company: Company;
+  metadata?: {
+    companyDomain?: string;
+    companyBrandId?: string;
+    expenseDomain?: string;
+    expenseBrandId?: string;
+  };
 }
 
 interface DashboardExpenseCardProps {
@@ -52,9 +58,13 @@ export default function DashboardExpenseCard({ expense }: DashboardExpenseCardPr
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <CreditCard className="w-4 h-4 text-green-600" />
-          </div>
+          <CompanyLogo
+            companyName={expense.name}
+            domain={expense.metadata?.expenseDomain}
+            size="sm"
+            showAttribution={false}
+            className="w-8 h-8 flex-shrink-0"
+          />
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-gray-900 text-sm truncate">
               {expense.name}

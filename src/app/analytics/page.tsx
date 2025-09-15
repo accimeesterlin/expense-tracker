@@ -96,7 +96,6 @@ const COLORS = [
 export default function AnalyticsPage() {
   const { status } = useSession();
   const router = useRouter();
-  const api = useApiClient();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
     null
   );
@@ -108,9 +107,10 @@ export default function AnalyticsPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await api.getAnalytics({ period: selectedPeriod });
-      if (result) {
-        setAnalyticsData(result);
+      const response = await fetch(`/api/analytics?period=${selectedPeriod}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyticsData(data);
       } else {
         setError("Failed to load analytics data");
       }
@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedPeriod, api]);
+  }, [selectedPeriod]);
 
   useEffect(() => {
     if (status === "loading") return;

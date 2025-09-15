@@ -9,12 +9,16 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  Hash,
+  DollarSign,
 } from "lucide-react";
+import CompanyLogo from "./CompanyLogo";
 
 interface Company {
   _id: string;
   name: string;
   industry?: string;
+  domain?: string;
 }
 
 interface Expense {
@@ -28,14 +32,25 @@ interface Expense {
   paymentDate?: string;
   company: Company;
   isActive: boolean;
+  budget?: string;
+  tags?: string[];
+  metadata?: {
+    companyDomain?: string;
+    companyBrandId?: string;
+    expenseDomain?: string;
+    expenseBrandId?: string;
+  };
 }
 
 interface ExpenseCardProps {
   expense: Expense;
   onEdit: () => void;
   onDelete: () => void;
-  onQuickUpdate?: (expenseId: string, field: string, value: string) => void;
+  onQuickUpdate?: (expenseId: string, field: string, value: any) => void;
   availableCategories?: string[];
+  availableTags?: string[];
+  availableBudgets?: Array<{ _id: string; name: string; totalAmount: number }>;
+  availableCompanies?: Array<{ _id: string; name: string; domain?: string }>;
 }
 
 export default function ExpenseCard({
@@ -44,6 +59,9 @@ export default function ExpenseCard({
   onDelete,
   onQuickUpdate,
   availableCategories = [],
+  availableTags = [],
+  availableBudgets = [],
+  availableCompanies = [],
 }: ExpenseCardProps) {
   const router = useRouter();
   const [quickEdit, setQuickEdit] = useState<{
@@ -81,12 +99,25 @@ export default function ExpenseCard({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on buttons or in edit mode
-    if ((e.target as HTMLElement).closest("button") || quickEdit.field) return;
+    // Don't navigate if clicking on interactive elements or in edit mode
+    const target = e.target as HTMLElement;
+    
+    if (
+      quickEdit.field ||
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("textarea") ||
+      target.closest("[data-no-navigate]") ||
+      target.dataset.noNavigate === "true"
+    ) {
+      return;
+    }
+    
     router.push(`/expenses/${expense._id}`);
   };
 
-  const handleQuickEdit = async (field: string, value: string) => {
+  const handleQuickEdit = async (field: string, value: any) => {
     if (onQuickUpdate) {
       await onQuickUpdate(expense._id, field, value);
       setQuickEdit({ field: null, value: "" });
@@ -109,9 +140,13 @@ export default function ExpenseCard({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-green-600" />
-            </div>
+            <CompanyLogo
+              companyName={expense.name}
+              domain={expense.metadata?.expenseDomain}
+              size="md"
+              showAttribution={false}
+              className="w-10 h-10"
+            />
             <div className="flex-1">
               {quickEdit.field === "name" ? (
                 <input
@@ -180,11 +215,13 @@ export default function ExpenseCard({
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getCategoryColor(
                       expense.category
                     )}`}
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onQuickUpdate &&
                       availableCategories.length > 0 &&
-                      startQuickEdit("category", expense.category)
-                    }
+                      startQuickEdit("category", expense.category);
+                    }}
+                    data-no-navigate="true"
                     title={
                       onQuickUpdate && availableCategories.length > 0
                         ? "Click to change category"
@@ -199,10 +236,54 @@ export default function ExpenseCard({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Building2 className="w-4 h-4" />
-              <span>{expense.company.name}</span>
-            </div>
+            {/* Company quick edit */}
+            {quickEdit.field === "company" ? (
+              <div className="flex items-center space-x-2 text-sm">
+                <Building2 className="w-4 h-4 text-gray-600" />
+                <select
+                  value={quickEdit.value}
+                  onChange={(e) =>
+                    setQuickEdit((prev) => ({
+                      ...prev,
+                      value: e.target.value,
+                    }))
+                  }
+                  onBlur={() => handleQuickEdit("company", quickEdit.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter")
+                      handleQuickEdit("company", quickEdit.value);
+                    if (e.key === "Escape") cancelQuickEdit();
+                  }}
+                  className="text-sm px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
+                  autoFocus
+                >
+                  {availableCompanies.map((company) => (
+                    <option key={company._id} value={company._id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div
+                className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickUpdate &&
+                  availableCompanies.length > 0 &&
+                  startQuickEdit("company", expense.company._id);
+                }}
+                data-no-navigate="true"
+                title={
+                  onQuickUpdate && availableCompanies.length > 0
+                    ? "Click to change company"
+                    : undefined
+                }
+              >
+                <Building2 className="w-4 h-4" />
+                <span>{expense.company.name}</span>
+              </div>
+            )}
             {expense.paymentDate && (
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />
@@ -320,6 +401,146 @@ export default function ExpenseCard({
                 )}
               </div>
             )}
+
+            {/* Budget quick edit */}
+            <div className="mt-2">
+              {quickEdit.field === "budget" ? (
+                <select
+                  value={quickEdit.value}
+                  onChange={(e) =>
+                    setQuickEdit((prev) => ({
+                      ...prev,
+                      value: e.target.value,
+                    }))
+                  }
+                  onBlur={() => handleQuickEdit("budget", quickEdit.value || null)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter")
+                      handleQuickEdit("budget", quickEdit.value || null);
+                    if (e.key === "Escape") cancelQuickEdit();
+                  }}
+                  className="text-xs px-2 py-1 border border-blue-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                >
+                  <option value="">No budget</option>
+                  {availableBudgets.map((budget) => (
+                    <option key={budget._id} value={budget._id}>
+                      {budget.name} (${budget.totalAmount})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div
+                  className="flex items-center space-x-1 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onQuickUpdate && availableBudgets.length > 0) {
+                      const defaultValue = expense.budget || (availableBudgets.length > 0 ? availableBudgets[0]._id : "");
+                      startQuickEdit("budget", defaultValue);
+                    }
+                  }}
+                  data-no-navigate="true"
+                  title={
+                    onQuickUpdate && availableBudgets.length > 0
+                      ? "Click to assign budget"
+                      : undefined
+                  }
+                >
+                  <DollarSign className="w-3 h-3 text-gray-400" />
+                  {expense.budget ? (
+                    <span className="text-xs text-blue-600 font-medium">
+                      {availableBudgets.find(b => b._id === expense.budget)?.name || "Unknown Budget"}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">
+                      {availableBudgets.length > 0 ? "Assign to budget..." : "No budgets available"}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Tags quick edit */}
+            <div className="mt-2">
+              {quickEdit.field === "tags" ? (
+                <div className="space-y-2">
+                  <select
+                    multiple
+                    size={Math.min(availableTags.length + 1, 4)}
+                    value={quickEdit.value.split(",").filter(Boolean)}
+                    onChange={(e) => {
+                      const selectedTags = Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value
+                      );
+                      setQuickEdit((prev) => ({
+                        ...prev,
+                        value: selectedTags.join(","),
+                      }));
+                    }}
+                    className="text-xs px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                  >
+                    {availableTags.map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() =>
+                        handleQuickEdit("tags", quickEdit.value.split(",").filter(Boolean))
+                      }
+                      className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={cancelQuickEdit}
+                      className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex items-start space-x-1 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickUpdate &&
+                    availableTags.length > 0 &&
+                    startQuickEdit("tags", (expense.tags || []).join(","));
+                  }}
+                  data-no-navigate="true"
+                  title={
+                    onQuickUpdate && availableTags.length > 0
+                      ? "Click to edit tags"
+                      : undefined
+                  }
+                >
+                  <Hash className="w-3 h-3 text-gray-400 mt-0.5" />
+                  <div className="flex-1">
+                    {expense.tags && expense.tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {expense.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">
+                        {availableTags.length > 0 ? "Add tags..." : "No tags available"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -329,6 +550,16 @@ export default function ExpenseCard({
           </span>
 
           <div className="flex items-center space-x-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/expenses/${expense._id}`);
+              }}
+              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="View details"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
             <button
               onClick={onEdit}
               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

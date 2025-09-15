@@ -22,6 +22,12 @@ export interface IExpense extends Document {
   budget?: Types.ObjectId;
   tags: string[];
   notes?: string;
+  metadata?: {
+    companyDomain?: string;
+    companyBrandId?: string;
+    expenseDomain?: string;
+    expenseBrandId?: string;
+  };
   comments: Array<{
     text: string;
     createdAt: Date;
@@ -137,6 +143,26 @@ const ExpenseSchema: Schema = new Schema(
       type: String,
       trim: true,
       maxlength: [1000, "Notes cannot exceed 1000 characters"],
+    },
+    metadata: {
+      companyDomain: {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+      companyBrandId: {
+        type: String,
+        trim: true,
+      },
+      expenseDomain: {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+      expenseBrandId: {
+        type: String,
+        trim: true,
+      },
     },
     comments: [
       {

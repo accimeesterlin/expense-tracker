@@ -56,6 +56,13 @@ export default function BudgetPage() {
 
   const fetchBudgets = async () => {
     try {
+      // First sync budgets with latest expense data
+      try {
+        await fetch("/api/budgets/sync", { method: "POST" });
+      } catch (syncError) {
+        console.error("Failed to sync budgets:", syncError);
+      }
+
       const response = await fetch("/api/budgets");
       if (response.ok) {
         const data = await response.json();

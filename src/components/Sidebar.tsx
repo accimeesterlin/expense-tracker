@@ -137,7 +137,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="space-y-1">
                   {group.items.map((item) => {
                     const isActive = pathname === item.href || 
-                      (item.href === "/expenses" && pathname.startsWith("/expenses"));
+                      (item.href === "/expenses" && pathname.startsWith("/expenses")) ||
+                      (item.href === "/companies" && pathname.startsWith("/companies")) ||
+                      (item.href === "/budget" && pathname.startsWith("/budget"));
                     return (
                       <Link
                         key={item.name}

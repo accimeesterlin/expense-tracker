@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   PiggyBank,
 } from "lucide-react";
+import CompanyLogo from "./CompanyLogo";
 
 interface SearchResult {
   id: string;
@@ -19,6 +20,13 @@ interface SearchResult {
   amount?: number;
   category?: string;
   date?: string;
+  metadata?: {
+    companyDomain?: string;
+    companyBrandId?: string;
+    expenseDomain?: string;
+    expenseBrandId?: string;
+  };
+  domain?: string;
 }
 
 export default function GlobalSearch() {
@@ -26,6 +34,7 @@ export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({
     top: 0,
     left: 0,
@@ -70,11 +79,11 @@ export default function GlobalSearch() {
     try {
       const [companiesRes, expensesRes, incomeRes, debtsRes, assetsRes] =
         await Promise.all([
-          fetch("/api/companies"),
-          fetch("/api/expenses"),
-          fetch("/api/income"),
-          fetch("/api/debts"),
-          fetch("/api/assets"),
+          fetch("/api/companies").catch(() => ({ ok: false })),
+          fetch("/api/expenses").catch(() => ({ ok: false })),
+          fetch("/api/income").catch(() => ({ ok: false })),
+          fetch("/api/debts").catch(() => ({ ok: false })),
+          fetch("/api/assets").catch(() => ({ ok: false })),
         ]);
 
       const allResults: SearchResult[] = [];
@@ -82,13 +91,14 @@ export default function GlobalSearch() {
       if (companiesRes.ok) {
         const companies = await companiesRes.json();
         companies.forEach(
-          (company: { _id: string; name: string; industry: string }) => {
+          (company: { _id: string; name: string; industry: string; domain?: string }) => {
             if (company.name.toLowerCase().includes(query.toLowerCase())) {
               allResults.push({
                 id: company._id,
                 type: "company",
                 name: company.name,
                 category: company.industry,
+                domain: company.domain,
               });
             }
           }
@@ -104,10 +114,17 @@ export default function GlobalSearch() {
             category: string;
             amount: number;
             company: { name: string };
+            metadata?: {
+              companyDomain?: string;
+              companyBrandId?: string;
+              expenseDomain?: string;
+              expenseBrandId?: string;
+            };
           }) => {
             if (
               expense.name.toLowerCase().includes(query.toLowerCase()) ||
-              expense.category.toLowerCase().includes(query.toLowerCase())
+              expense.category.toLowerCase().includes(query.toLowerCase()) ||
+              expense.company.name.toLowerCase().includes(query.toLowerCase())
             ) {
               allResults.push({
                 id: expense._id,
@@ -115,6 +132,7 @@ export default function GlobalSearch() {
                 name: expense.name,
                 amount: expense.amount,
                 category: expense.category,
+                metadata: expense.metadata,
                 date:
                   (
                     expense as {
@@ -237,11 +255,16 @@ export default function GlobalSearch() {
   }, [query]);
 
   useEffect(() => {
-    if (query.length > 2) {
-      searchData();
-    } else {
-      setResults([]);
-    }
+    const debounceTimer = setTimeout(() => {
+      if (query.length > 2) {
+        searchData();
+      } else {
+        setResults([]);
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
   }, [query, searchData]);
 
   const getTypeIcon = (type: string) => {
@@ -289,10 +312,15 @@ export default function GlobalSearch() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+    if (!dateString) return null;
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return null;
+    }
   };
 
   const getResultUrl = (result: SearchResult) => {
@@ -323,9 +351,38 @@ export default function GlobalSearch() {
           type="text"
           placeholder="Search..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelectedIndex(-1);
+          }}
+          onKeyDown={(e) => {
+            if (!isOpen || results.length === 0) return;
+            
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setSelectedIndex(prev => 
+                prev < results.length - 1 ? prev + 1 : 0
+              );
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setSelectedIndex(prev => 
+                prev > 0 ? prev - 1 : results.length - 1
+              );
+            } else if (e.key === "Enter" && selectedIndex >= 0) {
+              e.preventDefault();
+              const selectedResult = results[selectedIndex];
+              if (selectedResult) {
+                window.location.href = getResultUrl(selectedResult);
+                setIsOpen(false);
+              }
+            } else if (e.key === "Escape") {
+              setIsOpen(false);
+              setSelectedIndex(-1);
+            }
+          }}
           onFocus={() => {
             setIsOpen(true);
+            setSelectedIndex(-1);
             // Update position when opening
             if (searchRef.current) {
               const rect = searchRef.current.getBoundingClientRect();
@@ -367,20 +424,40 @@ export default function GlobalSearch() {
             </div>
           ) : results.length > 0 ? (
             <div className="py-2">
-              {results.map((result) => (
+              {results.map((result, index) => (
                 <Link
                   key={`${result.type}-${result.id}`}
                   href={getResultUrl(result)}
-                  className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                  className={`flex items-center space-x-3 px-4 py-3 cursor-pointer ${
+                    index === selectedIndex ? "bg-blue-50" : "hover:bg-gray-50"
+                  }`}
                   onClick={() => setIsOpen(false)}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${getTypeColor(
-                      result.type
-                    )}`}
-                  >
-                    {getTypeIcon(result.type)}
-                  </div>
+                  {result.type === "expense" ? (
+                    <CompanyLogo
+                      companyName={result.name}
+                      domain={result.metadata?.expenseDomain}
+                      size="sm"
+                      showAttribution={false}
+                      className="w-8 h-8"
+                    />
+                  ) : result.type === "company" ? (
+                    <CompanyLogo
+                      companyName={result.name}
+                      domain={result.domain}
+                      size="sm"
+                      showAttribution={false}
+                      className="w-8 h-8"
+                    />
+                  ) : (
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${getTypeColor(
+                        result.type
+                      )}`}
+                    >
+                      {getTypeIcon(result.type)}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0 pr-3">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {result.name}
@@ -393,7 +470,7 @@ export default function GlobalSearch() {
                           <span className="truncate">{result.category}</span>
                         </>
                       )}
-                      {result.date && (
+                      {result.date && formatDate(result.date) && (
                         <>
                           <span>•</span>
                           <span className="flex-shrink-0">

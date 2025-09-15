@@ -150,10 +150,10 @@ export default function ExpenseDetailPage() {
 
   const fetchBudgets = useCallback(async () => {
     try {
-      const response = await fetch("/api/v1/budgets");
+      const response = await fetch("/api/budgets");
       if (response.ok) {
         const data = await response.json();
-        setBudgets(data.data || []);
+        setBudgets(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Error fetching budgets:", error);
@@ -313,6 +313,15 @@ export default function ExpenseDetailPage() {
         const updatedExpense = await response.json();
         setExpense(updatedExpense);
         setQuickEdit({ field: null, value: "" });
+        
+        // Sync budgets if budget field was updated
+        if (field === "budget") {
+          try {
+            await fetch("/api/budgets/sync", { method: "POST" });
+          } catch (error) {
+            console.error("Failed to sync budgets:", error);
+          }
+        }
       } else {
         setError("Failed to update expense");
       }

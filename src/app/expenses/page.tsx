@@ -28,6 +28,7 @@ function ExpensesPageContent() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
+  const [budgets, setBudgets] = useState<Array<{ _id: string; name: string; totalAmount: number }>>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,7 +109,7 @@ function ExpensesPageContent() {
         'Expires': '0'
       };
       
-      const [expensesRes, companiesRes, categoriesRes, tagsRes] =
+      const [expensesRes, companiesRes, categoriesRes, tagsRes, budgetsRes] =
         await Promise.all([
           fetch("/api/expenses", { 
             headers: cacheHeaders,
@@ -123,6 +124,10 @@ function ExpensesPageContent() {
             cache: 'no-store' 
           }),
           fetch("/api/tags", { 
+            headers: cacheHeaders,
+            cache: 'no-store' 
+          }),
+          fetch("/api/budgets", { 
             headers: cacheHeaders,
             cache: 'no-store' 
           }),
@@ -152,6 +157,19 @@ function ExpensesPageContent() {
         setTags(
           Array.isArray(tagsData)
             ? tagsData.map((tag: { name: string }) => tag.name)
+            : []
+        );
+      }
+
+      if (budgetsRes.ok) {
+        const budgetsData = await budgetsRes.json();
+        setBudgets(
+          Array.isArray(budgetsData)
+            ? budgetsData.map((budget: any) => ({
+                _id: budget._id,
+                name: budget.name,
+                totalAmount: budget.totalAmount
+              }))
             : []
         );
       }
@@ -277,7 +295,7 @@ function ExpensesPageContent() {
   const handleQuickUpdate = async (
     expenseId: string,
     field: string,
-    value: string
+    value: any
   ) => {
     try {
       const response = await fetch(`/api/expenses/${expenseId}`, {
@@ -293,15 +311,17 @@ function ExpensesPageContent() {
         setExpenses((prev) =>
           prev.map((e) => (e._id === expenseId ? updatedExpense : e))
         );
-        // Only show notification for non-title updates to reduce noise
-        if (field !== "name") {
-          setNotification({
-            isOpen: true,
-            type: "success",
-            title: "Success",
-            message: "Expense updated successfully",
-          });
+
+        // Sync budgets if budget field was updated
+        if (field === "budget") {
+          try {
+            await fetch("/api/budgets/sync", { method: "POST" });
+          } catch (error) {
+            console.error("Failed to sync budgets:", error);
+          }
         }
+
+        // Don't show notifications for quick edits to reduce noise
       } else {
         const errorData = await response.json();
         setNotification({
@@ -815,6 +835,9 @@ function ExpensesPageContent() {
                 availableCategories={
                   categories.length > 0 ? categories : getUniqueCategories()
                 }
+                availableTags={tags}
+                availableBudgets={budgets}
+                availableCompanies={companies}
               />
             ))}
           </div>

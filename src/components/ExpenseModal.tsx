@@ -5,6 +5,8 @@ import { X, CreditCard, FileText, Camera } from "lucide-react";
 import NextImage from "next/image";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useApiClient } from "@/hooks/useApiClient";
+import { useBrandfetch, BrandfetchSearchResult } from "@/hooks/useBrandfetch";
+import CompanyAutocomplete from "./CompanyAutocomplete";
 import ErrorModal from "./ErrorModal";
 
 interface Company {
@@ -12,6 +14,8 @@ interface Company {
   name: string;
   industry: string;
   description?: string;
+  domain?: string;
+  brandId?: string;
   address?: {
     street?: string;
     city?: string;
@@ -101,10 +105,11 @@ export default function ExpenseModal({
     showError,
     clearError,
   } = useErrorHandler();
-  
+
   const api = useApiClient({
-    onError: (error) => showError(error, "API Error")
+    onError: (error) => showError(error, "API Error"),
   });
+  const { searchCompanies } = useBrandfetch();
   const [categories, setCategories] = useState<
     { _id: string; name: string; color: string }[]
   >([]);
@@ -124,6 +129,7 @@ export default function ExpenseModal({
     paymentDate: "",
     tags: "" as string,
     isActive: true,
+    budget: "",
     receipt: null as File | null,
     removeReceipt: false,
   });
@@ -133,12 +139,17 @@ export default function ExpenseModal({
   const [scanningReceipt, setScanningReceipt] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [suggestedCompany, setSuggestedCompany] =
+    useState<BrandfetchSearchResult | null>(null);
+  const [suggestedExpense, setSuggestedExpense] =
+    useState<BrandfetchSearchResult | null>(null);
 
   // Check if user has companies
   const hasCompanies = companies.length > 0;
 
   useEffect(() => {
     fetchCategoriesAndTags();
+    fetchBudgets();
   }, []);
 
   useEffect(() => {
@@ -158,6 +169,7 @@ export default function ExpenseModal({
           : "",
         tags: expense.tags ? expense.tags.join(", ") : "",
         isActive: expense.isActive,
+        budget: expense.budget || "",
         receipt: null,
         removeReceipt: false,
       });
@@ -210,6 +222,19 @@ export default function ExpenseModal({
     }
   };
 
+  const fetchBudgets = async () => {
+    try {
+      const response = await fetch("/api/budgets");
+      if (response.ok) {
+        const budgetsData = await response.json();
+        setBudgets(Array.isArray(budgetsData) ? budgetsData : []);
+      }
+    } catch (error) {
+      console.error("Error fetching budgets:", error);
+      setBudgets([]);
+    }
+  };
+
   const resetForm = () => {
     if (!expense) {
       // For new expenses, try to restore the last selected company from localStorage
@@ -235,11 +260,14 @@ export default function ExpenseModal({
         paymentDate: "",
         tags: "",
         isActive: true,
+        budget: "",
         receipt: null,
         removeReceipt: false,
       });
     }
     setError("");
+    setSuggestedCompany(null);
+    setSuggestedExpense(null);
   };
 
   const scanReceipt = async (file: File) => {
@@ -464,7 +492,28 @@ export default function ExpenseModal({
       const description = formData.description.trim() || formData.name.trim();
 
       // Build expense data with proper field validation
-      const expenseData: any = {
+      const expenseData: {
+        company: string;
+        name: string;
+        description: string;
+        amount: number;
+        currency: string;
+        category: string;
+        expenseType: string;
+        frequency?: string;
+        startDate: string;
+        paymentDate?: string;
+        nextBillingDate?: string;
+        tags: string[];
+        isActive: boolean;
+        budget?: string;
+        metadata?: {
+          companyDomain?: string;
+          companyBrandId?: string;
+          expenseDomain?: string;
+          expenseBrandId?: string;
+        };
+      } = {
         company: formData.company,
         name: formData.name.trim(),
         description,
@@ -480,9 +529,24 @@ export default function ExpenseModal({
         startDate: formData.startDate || new Date().toISOString().split("T")[0],
         paymentDate: formData.paymentDate || undefined,
         isActive: formData.isActive,
+        budget: formData.budget || undefined,
         tags,
         ...receiptData,
       };
+
+      // Add metadata if available
+      const selectedCompany = companies.find(c => c._id === formData.company);
+      const hasCompanyMetadata = selectedCompany?.domain || selectedCompany?.brandId || suggestedCompany;
+      const hasExpenseMetadata = suggestedExpense;
+      
+      if (hasCompanyMetadata || hasExpenseMetadata) {
+        expenseData.metadata = {
+          companyDomain: selectedCompany?.domain || suggestedCompany?.domain,
+          companyBrandId: selectedCompany?.brandId || suggestedCompany?.brandId,
+          expenseDomain: suggestedExpense?.domain,
+          expenseBrandId: suggestedExpense?.brandId,
+        };
+      }
 
       // Add nextBillingDate for subscription/recurring expenses
       if (
@@ -524,6 +588,13 @@ export default function ExpenseModal({
       }
 
       if (result) {
+        // Sync budgets after creating/updating expense
+        try {
+          await fetch("/api/budgets/sync", { method: "POST" });
+        } catch (error) {
+          console.error("Failed to sync budgets:", error);
+        }
+
         onSuccess(result);
         resetForm();
         if (previewUrl) {
@@ -551,7 +622,7 @@ export default function ExpenseModal({
         }
       }}
     >
-      <div className="card max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
+      <div className="card max-w-xs sm:max-w-sm md:max-w-md lg:max-w-md w-full my-8 max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
           <div className="flex items-center space-x-3">
@@ -649,16 +720,76 @@ export default function ExpenseModal({
                 <label className="block text-sm font-medium text-[#0B3558] mb-2">
                   Expense Name
                 </label>
-                <input
-                  type="text"
+                <CompanyAutocomplete
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  className="input-field w-full"
-                  placeholder="Enter expense name"
-                  required
+                  onChange={(value, company) => {
+                    setFormData((prev) => ({ ...prev, name: value }));
+                    if (company) {
+                      setSuggestedExpense(company);
+                    }
+                  }}
+                  placeholder="Enter expense name or search for a company"
+                  className="w-full"
+                  showLogo={true}
                 />
+                {suggestedCompany && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-blue-600">💡 Suggestion:</span>
+                      <span className="text-blue-800">
+                        Create expense for{" "}
+                        <strong>{suggestedCompany.name}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!suggestedCompany) return;
+                          
+                          try {
+                            const response = await fetch("/api/companies", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                name: suggestedCompany.name,
+                                domain: suggestedCompany.domain,
+                                brandId: suggestedCompany.brandId,
+                              }),
+                            });
+
+                            if (response.ok) {
+                              const newCompany = await response.json();
+                              
+                              // Update the form to select the new company
+                              setFormData((prev) => ({ 
+                                ...prev, 
+                                company: newCompany._id 
+                              }));
+                              
+                              // Clear the suggestion
+                              setSuggestedCompany(null);
+                            } else {
+                              showError(new Error("Failed to create company"), "Company Creation Error");
+                            }
+                          } catch (error) {
+                            showError(error, "Company Creation Error");
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-700 underline text-xs"
+                      >
+                        Create Company
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSuggestedCompany(null)}
+                        className="text-gray-500 hover:text-gray-700 text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -868,6 +999,43 @@ export default function ExpenseModal({
                       placeholder="Optional description"
                       rows={3}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#0B3558] mb-2">
+                      Budget
+                      <span className="text-xs text-[#476788] font-normal ml-1">
+                        (Optional)
+                      </span>
+                    </label>
+                    <select
+                      value={formData.budget}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          budget: e.target.value,
+                        }))
+                      }
+                      className="input-field w-full"
+                    >
+                      <option value="">No budget</option>
+                      {budgets.map((budget) => (
+                        <option key={budget._id} value={budget._id}>
+                          {budget.name} ({budget.category || "All categories"})
+                        </option>
+                      ))}
+                    </select>
+                    {budgets.length === 0 && (
+                      <p className="text-xs text-[#476788] mt-1">
+                        <a
+                          href="/budget"
+                          className="text-[#006BFF] hover:underline"
+                        >
+                          Create budgets
+                        </a>{" "}
+                        to track spending against goals
+                      </p>
+                    )}
                   </div>
 
                   <div>

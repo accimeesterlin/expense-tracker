@@ -23,30 +23,45 @@ export async function POST(request: NextRequest) {
     const updatedBudgets = [];
 
     for (const budget of budgets) {
-      // Calculate actual spent amount from expenses for this budget period
-      const spentAmount = await Expense.aggregate([
-        {
-          $match: {
-            userId: session.user.email,
-            $or: [
+      // Calculate actual spent amount from expenses for this budget
+      // Include both directly assigned expenses and category-based expenses
+      const matchConditions = {
+        userId: session.user.email,
+        $or: [
+          // Expenses directly assigned to this budget
+          { budget: budget._id },
+          // Expenses that match by category and date range (for legacy budgets)
+          // Only include if not directly assigned to any budget
+          {
+            $and: [
               {
-                paymentDate: {
-                  $gte: budget.startDate,
-                  $lte: budget.endDate,
-                },
+                $or: [
+                  {
+                    paymentDate: {
+                      $gte: budget.startDate,
+                      $lte: budget.endDate,
+                    },
+                  },
+                  {
+                    paymentDate: { $exists: false },
+                    createdAt: {
+                      $gte: budget.startDate,
+                      $lte: budget.endDate,
+                    },
+                  },
+                ],
               },
-              {
-                paymentDate: { $exists: false },
-                createdAt: {
-                  $gte: budget.startDate,
-                  $lte: budget.endDate,
-                },
-              },
+              // If budget has a category, filter expenses by that category
+              ...(budget.category ? [{ category: budget.category }] : []),
+              // Exclude expenses that are already assigned to any budget (including this one)
+              { budget: { $exists: false } },
             ],
-            // If budget has a category, filter expenses by that category
-            ...(budget.category ? { category: budget.category } : {}),
           },
-        },
+        ],
+      };
+
+      const spentAmount = await Expense.aggregate([
+        { $match: matchConditions },
         {
           $group: {
             _id: null,

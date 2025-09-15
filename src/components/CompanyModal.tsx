@@ -2,12 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { X, Building2 } from "lucide-react";
+import { useBrandfetch, BrandfetchSearchResult } from "@/hooks/useBrandfetch";
+import CompanyAutocomplete from "./CompanyAutocomplete";
 
 interface Company {
   _id: string;
   name: string;
   industry: string;
   description?: string;
+  domain?: string;
+  brandId?: string;
   address?: {
     street?: string;
     city?: string;
@@ -36,14 +40,24 @@ export default function CompanyModal({
   onSuccess,
 }: CompanyModalProps) {
   const [name, setName] = useState("");
+  const [domain, setDomain] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState<BrandfetchSearchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  const { getCompanyIcon } = useBrandfetch();
 
   useEffect(() => {
     if (company) {
       setName(company.name);
+      setDomain(company.domain || "");
+      setBrandId(company.brandId || "");
     } else {
       setName("");
+      setDomain("");
+      setBrandId("");
+      setSelectedCompany(null);
     }
     setError("");
   }, [company]);
@@ -68,13 +82,20 @@ export default function CompanyModal({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ 
+          name: name.trim(),
+          domain: domain.trim() || undefined,
+          brandId: brandId.trim() || undefined,
+        }),
       });
 
       if (response.ok) {
         const result = await response.json();
         onSuccess(result);
         setName("");
+        setDomain("");
+        setBrandId("");
+        setSelectedCompany(null);
         onClose();
       } else {
         const errorData = await response.json();
@@ -129,18 +150,54 @@ export default function CompanyModal({
             <label className="block text-sm font-medium text-[#0B3558] mb-2">
               Company Name
             </label>
-            <div className="input-field-with-icon">
-              <Building2 className="icon w-5 h-5" />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-field w-full"
-                placeholder="Enter company name"
-                required
-                autoFocus
-              />
-            </div>
+            <CompanyAutocomplete
+              value={name}
+              onChange={(value, companyData) => {
+                setName(value);
+                if (companyData) {
+                  setSelectedCompany(companyData);
+                  setDomain(companyData.domain);
+                  setBrandId(companyData.brandId);
+                }
+              }}
+              placeholder="Search for a company name"
+              className="w-full"
+              showLogo={true}
+            />
+            {selectedCompany && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={selectedCompany.icon}
+                    alt={`${selectedCompany.name} logo`}
+                    className="w-8 h-8 rounded object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                    }}
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-green-800">
+                      Company found: {selectedCompany.name}
+                    </div>
+                    <div className="text-xs text-green-600">
+                      Domain: {selectedCompany.domain}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCompany(null);
+                      setDomain("");
+                      setBrandId("");
+                    }}
+                    className="text-green-600 hover:text-green-700 text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <p className="text-xs text-[#476788]">

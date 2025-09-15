@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface ICompany extends Document {
   name: string;
   industry?: string;
+  domain?: string;
+  brandId?: string;
   address?: {
     street?: string;
     city?: string;
@@ -30,6 +32,15 @@ const CompanySchema: Schema = new Schema(
       maxlength: [100, "Company name cannot exceed 100 characters"],
     },
     industry: {
+      type: String,
+      trim: true,
+    },
+    domain: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    brandId: {
       type: String,
       trim: true,
     },
