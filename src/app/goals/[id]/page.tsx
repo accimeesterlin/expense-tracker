@@ -335,7 +335,7 @@ export default function GoalDetailPage() {
                       : "text-blue-600"
                   }`}
                 >
-                  {goal.percentageCompleted.toFixed(1)}%
+                  {(goal.percentageCompleted || 0).toFixed(1)}%
                 </p>
               </div>
               <div

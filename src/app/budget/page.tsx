@@ -54,6 +54,29 @@ export default function BudgetPage() {
     fetchBudgets();
   }, [status, router]);
 
+  // Auto-refresh budgets when page becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && status === "authenticated") {
+        fetchBudgets();
+      }
+    };
+
+    const handleFocus = () => {
+      if (status === "authenticated") {
+        fetchBudgets();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [status]);
+
   const fetchBudgets = async () => {
     try {
       // First sync budgets with latest expense data

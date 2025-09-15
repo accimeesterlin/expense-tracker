@@ -84,7 +84,7 @@ export default function CompanyDetailsPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"expenses" | "team" | "overview">(
+  const [activeTab, setActiveTab] = useState<"expenses" | "team" | "overview" | "analytics">(
     "overview"
   );
   const [mounted, setMounted] = useState(false);
@@ -292,11 +292,11 @@ export default function CompanyDetailsPage() {
       <div className="bg-white border-b border-[#E5E7EB]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
-            {["overview", "expenses", "team"].map((tab) => (
+            {["overview", "expenses", "analytics", "team"].map((tab) => (
               <button
                 key={tab}
                 onClick={() =>
-                  setActiveTab(tab as "expenses" | "team" | "overview")
+                  setActiveTab(tab as "expenses" | "team" | "overview" | "analytics")
                 }
                 className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize whitespace-nowrap ${
                   activeTab === tab
@@ -609,6 +609,158 @@ export default function CompanyDetailsPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+        
+        {activeTab === "analytics" && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Analytics Overview Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+              <div className="card p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                      Average Expense
+                    </p>
+                    <p className="text-lg sm:text-xl font-bold text-[#0B3558]">
+                      {formatCurrency(expenses.length > 0 ? totalExpenseAmount / expenses.length : 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="card p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                      Monthly Recurring
+                    </p>
+                    <p className="text-lg sm:text-xl font-bold text-[#0B3558]">
+                      {formatCurrency(expenses.filter(e => e.frequency === 'monthly').reduce((sum, e) => sum + e.amount, 0))}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="card p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                      Subscriptions
+                    </p>
+                    <p className="text-lg sm:text-xl font-bold text-[#0B3558]">
+                      {expenses.filter(e => e.expenseType === 'subscription').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="card p-4 sm:p-6">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                    <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                      Categories Used
+                    </p>
+                    <p className="text-lg sm:text-xl font-bold text-[#0B3558]">
+                      {new Set(expenses.map(e => e.category)).size}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Expense Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Expenses by Category */}
+              <div className="card p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+                  Expenses by Category
+                </h3>
+                <div className="space-y-3">
+                  {Object.entries(
+                    expenses.reduce((acc, expense) => {
+                      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  )
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 5)
+                    .map(([category, amount]) => (
+                      <div key={category} className="flex items-center justify-between">
+                        <span className="text-sm text-[#476788]">{category}</span>
+                        <span className="text-sm font-medium text-[#0B3558]">
+                          {formatCurrency(amount)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Expenses by Type */}
+              <div className="card p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+                  Expenses by Type
+                </h3>
+                <div className="space-y-3">
+                  {Object.entries(
+                    expenses.reduce((acc, expense) => {
+                      acc[expense.expenseType] = (acc[expense.expenseType] || 0) + expense.amount;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  )
+                    .sort(([,a], [,b]) => b - a)
+                    .map(([type, amount]) => (
+                      <div key={type} className="flex items-center justify-between">
+                        <span className="text-sm text-[#476788] capitalize">{type}</span>
+                        <span className="text-sm font-medium text-[#0B3558]">
+                          {formatCurrency(amount)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="card p-4 sm:p-6">
+              <h3 className="text-lg font-semibold text-[#0B3558] mb-4">
+                Recent Expense Activity
+              </h3>
+              <div className="space-y-3">
+                {expenses
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .slice(0, 5)
+                  .map((expense) => (
+                    <div key={expense._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-[#0B3558]">{expense.name}</p>
+                        <p className="text-xs text-[#476788]">
+                          {new Date(expense.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <span className="text-sm font-medium text-[#0B3558]">
+                        {formatCurrency(expense.amount)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
           </div>
         )}
       </main>

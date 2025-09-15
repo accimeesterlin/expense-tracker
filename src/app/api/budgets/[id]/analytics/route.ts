@@ -15,41 +15,69 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Use both email and id to handle different user identifier patterns
+    const userEmail = session.user.email;
+    const userId = session.user.id;
+
     await connectToDatabase();
     const { id } = await params;
 
-    // Get the budget
+    // Get the budget (budgets use email as userId)
     const budget = await Budget.findOne({
       _id: id,
-      userId: session.user.email,
+      userId: userEmail,
     });
 
     if (!budget) {
       return NextResponse.json({ error: "Budget not found" }, { status: 404 });
     }
 
-    // Calculate actual spent amount from expenses
+    // Calculate actual spent amount from expenses (expenses use id as userId)
+    // Include both directly assigned expenses and category-based expenses
+    const categoryConditions = budget.category 
+      ? [{ category: budget.category }] 
+      : [];
+    
     const spentAmount = await Expense.aggregate([
       {
         $match: {
-          userId: session.user.email,
+          userId: userId,
           $or: [
+            // Expenses directly assigned to this budget
+            { budget: budget._id },
+            // Expenses that match by category and date range (for legacy budgets)
+            // Only include if not directly assigned to any budget
             {
-              paymentDate: {
-                $gte: budget.startDate,
-                $lte: budget.endDate,
-              },
-            },
-            {
-              paymentDate: { $exists: false },
-              createdAt: {
-                $gte: budget.startDate,
-                $lte: budget.endDate,
-              },
+              $and: [
+                {
+                  $or: [
+                    {
+                      paymentDate: {
+                        $gte: budget.startDate,
+                        $lte: budget.endDate,
+                      },
+                    },
+                    {
+                      paymentDate: { $exists: false },
+                      createdAt: {
+                        $gte: budget.startDate,
+                        $lte: budget.endDate,
+                      },
+                    },
+                  ],
+                },
+                // Only include unassigned expenses for category-based matching
+                { 
+                  $or: [
+                    { budget: { $exists: false } },
+                    { budget: null }
+                  ]
+                },
+                // If budget has a category, filter expenses by that category
+                ...categoryConditions,
+              ],
             },
           ],
-          // If budget has a category, filter expenses by that category
-          ...(budget.category ? { category: budget.category } : {}),
         },
       },
       {
@@ -71,7 +99,7 @@ export async function GET(
       categoryBreakdown = await Expense.aggregate([
         {
           $match: {
-            userId: session.user.email,
+            userId: userId,
             $or: [
               {
                 paymentDate: {
@@ -100,25 +128,45 @@ export async function GET(
       ]);
     }
 
-    // Get recent expenses for this budget period
+    // Get recent expenses for this budget (using same logic as budget calculation)
     const recentExpenses = await Expense.find({
-      userId: session.user.email,
+      userId: userId,
       $or: [
+        // Expenses directly assigned to this budget
+        { budget: budget._id },
+        // Expenses that match by category and date range (for legacy budgets)
+        // Only include if not directly assigned to any budget
         {
-          paymentDate: {
-            $gte: budget.startDate,
-            $lte: budget.endDate,
-          },
-        },
-        {
-          paymentDate: { $exists: false },
-          createdAt: {
-            $gte: budget.startDate,
-            $lte: budget.endDate,
-          },
+          $and: [
+            {
+              $or: [
+                {
+                  paymentDate: {
+                    $gte: budget.startDate,
+                    $lte: budget.endDate,
+                  },
+                },
+                {
+                  paymentDate: { $exists: false },
+                  createdAt: {
+                    $gte: budget.startDate,
+                    $lte: budget.endDate,
+                  },
+                },
+              ],
+            },
+            // Only include unassigned expenses for category-based matching
+            { 
+              $or: [
+                { budget: { $exists: false } },
+                { budget: null }
+              ]
+            },
+            // If budget has a category, filter expenses by that category
+            ...categoryConditions,
+          ],
         },
       ],
-      ...(budget.category ? { category: budget.category } : {}),
     })
       .populate("company", "name")
       .sort({ paymentDate: -1, createdAt: -1 })

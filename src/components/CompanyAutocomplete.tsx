@@ -12,6 +12,7 @@ interface CompanyAutocompleteProps {
   className?: string;
   disabled?: boolean;
   showLogo?: boolean;
+  disableAutoSearch?: boolean;
 }
 
 export default function CompanyAutocomplete({
@@ -21,6 +22,7 @@ export default function CompanyAutocomplete({
   className = "",
   disabled = false,
   showLogo = true,
+  disableAutoSearch = false,
 }: CompanyAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
@@ -35,7 +37,7 @@ export default function CompanyAutocomplete({
 
   // Search for companies when the debounced search term changes
   useEffect(() => {
-    if (debouncedSearchTerm && debouncedSearchTerm.length >= 2) {
+    if (!disableAutoSearch && debouncedSearchTerm && debouncedSearchTerm.length >= 2) {
       searchCompanies(debouncedSearchTerm).then((companies) => {
         setResults(companies);
         setSelectedIndex(-1);
@@ -45,7 +47,7 @@ export default function CompanyAutocomplete({
       setResults([]);
       setIsOpen(false);
     }
-  }, [debouncedSearchTerm, searchCompanies]);
+  }, [debouncedSearchTerm, searchCompanies, disableAutoSearch]);
 
   // Update search term when value prop changes
   useEffect(() => {

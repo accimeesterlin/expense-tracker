@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import ExpenseModal from "@/components/ExpenseModal";
 import AppLayout from "@/components/AppLayout";
+import CompanyLogo from "@/components/CompanyLogo";
 
 interface Company {
   _id: string;
@@ -62,6 +63,12 @@ interface Expense {
   budget?: string;
   receiptUrl?: string;
   receiptContentType?: string;
+  metadata?: {
+    companyDomain?: string;
+    companyBrandId?: string;
+    expenseDomain?: string;
+    expenseBrandId?: string;
+  };
   comments: Array<{
     text: string;
     createdAt: string;
@@ -438,9 +445,13 @@ export default function ExpenseDetailPage() {
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center flex-shrink-0">
-                <CreditCard className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-              </div>
+              <CompanyLogo
+                companyName={expense.name}
+                domain={expense.metadata?.expenseDomain}
+                size="md"
+                showAttribution={false}
+                className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+              />
               {quickEdit.field === "name" ? (
                 <div className="flex items-center space-x-2 flex-1">
                   <input
@@ -1240,9 +1251,13 @@ export default function ExpenseDetailPage() {
                 Company
               </h2>
               <div className="flex items-start space-x-3">
-                <div className="w-12 h-12 bg-[#006BFF]/10 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-[#006BFF]" />
-                </div>
+                <CompanyLogo
+                  companyName={expense.company.name}
+                  domain={expense.metadata?.companyDomain}
+                  size="lg"
+                  showAttribution={false}
+                  className="w-12 h-12 flex-shrink-0"
+                />
                 <div>
                   <h3 className="font-medium text-[#0B3558]">
                     {expense.company.name}
@@ -1273,25 +1288,66 @@ export default function ExpenseDetailPage() {
                 Timeline
               </h2>
               <div className="space-y-4">
-                {expense.paymentDate && (
-                  <div>
-                    <label className="block text-sm font-medium text-[#476788] mb-1">
-                      Purchase Date
-                    </label>
-                    <p className="text-sm text-[#0B3558]">
-                      {new Date(expense.paymentDate).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
+                <div>
+                  <label className="block text-sm font-medium text-[#476788] mb-1">
+                    Purchase Date
+                  </label>
+                  {quickEdit.field === "paymentDate" ? (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="date"
+                        value={quickEdit.value}
+                        onChange={(e) =>
+                          setQuickEdit((prev) => ({
+                            ...prev,
+                            value: e.target.value,
+                          }))
                         }
-                      )}
+                        className="input-field text-sm"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() =>
+                          handleQuickEdit("paymentDate", quickEdit.value)
+                        }
+                        className="btn-primary text-sm px-3 py-1"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={cancelQuickEdit}
+                        className="btn-secondary text-sm px-3 py-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <p
+                      className="text-sm text-[#0B3558] cursor-pointer hover:text-[#006BFF] transition-colors"
+                      onClick={() => {
+                        const currentDate = expense.paymentDate 
+                          ? new Date(expense.paymentDate).toISOString().split('T')[0]
+                          : new Date().toISOString().split('T')[0];
+                        startQuickEdit("paymentDate", currentDate);
+                      }}
+                      title="Click to edit payment date"
+                    >
+                      {expense.paymentDate 
+                        ? new Date(expense.paymentDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            }
+                          )
+                        : "Click to set payment date"
+                      }
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-[#476788] mb-1">
                     Created

@@ -731,6 +731,7 @@ export default function ExpenseModal({
                   placeholder="Enter expense name or search for a company"
                   className="w-full"
                   showLogo={true}
+                  disableAutoSearch={!!expense}
                 />
                 {suggestedCompany && (
                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">

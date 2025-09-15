@@ -20,6 +20,7 @@ import {
 import AppLayout from "@/components/AppLayout";
 import CompanyModal from "@/components/CompanyModal";
 import ErrorModal from "@/components/ErrorModal";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 interface Company {
   _id: string;
@@ -68,6 +69,15 @@ export default function CompaniesPage() {
     isOpen: false,
     title: "",
     message: "",
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    companyId: string;
+    companyName: string;
+  }>({
+    isOpen: false,
+    companyId: "",
+    companyName: "",
   });
 
   const fetchCompanies = useCallback(async () => {
@@ -120,14 +130,6 @@ export default function CompaniesPage() {
   };
 
   const handleDeleteCompany = async (companyId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this company? This will also delete all associated expenses."
-      )
-    ) {
-      return;
-    }
-
     try {
       const result = await api.deleteCompany(companyId);
       if (result !== null) {
@@ -147,6 +149,14 @@ export default function CompaniesPage() {
         message: "Failed to delete company. Please try again.",
       });
     }
+  };
+
+  const showDeleteConfirmation = (companyId: string, companyName: string) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      companyId,
+      companyName,
+    });
   };
 
   if (status === "loading" || loading) {
@@ -325,7 +335,7 @@ export default function CompaniesPage() {
                       <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteCompany(company._id)}
+                      onClick={() => showDeleteConfirmation(company._id, company.name)}
                       className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete company"
                     >
@@ -398,6 +408,18 @@ export default function CompaniesPage() {
         onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
         title={errorModal.title}
         message={errorModal.message}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, companyId: "", companyName: "" })}
+        onConfirm={() => handleDeleteCompany(deleteConfirmation.companyId)}
+        title="Delete Company"
+        message={`Are you sure you want to delete "${deleteConfirmation.companyName}"? This will also delete all associated expenses and cannot be undone.`}
+        confirmText="Delete Company"
+        cancelText="Cancel"
+        type="danger"
       />
     </AppLayout>
   );

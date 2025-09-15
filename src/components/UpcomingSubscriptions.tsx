@@ -1,5 +1,6 @@
 import { Calendar, AlertCircle, Edit, X, MoreVertical } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import CompanyLogo from "./CompanyLogo";
 
 interface Company {
   _id: string;
@@ -37,6 +38,12 @@ interface Expense {
   receiptS3Key?: string;
   receiptFileName?: string;
   receiptContentType?: string;
+  metadata?: {
+    companyDomain?: string;
+    companyBrandId?: string;
+    expenseDomain?: string;
+    expenseBrandId?: string;
+  };
   comments: Array<{
     text: string;
     createdAt: string;
@@ -146,9 +153,13 @@ export default function UpcomingSubscriptions({
               className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 gap-3 sm:gap-0"
             >
               <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                </div>
+                <CompanyLogo
+                  companyName={expense.name}
+                  domain={expense.metadata?.expenseDomain}
+                  size="sm"
+                  showAttribution={false}
+                  className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+                />
                 <div className="min-w-0 flex-1">
                   <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{expense.name}</h3>
                   <p className="text-xs sm:text-sm text-gray-600 truncate">

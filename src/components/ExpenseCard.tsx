@@ -284,16 +284,56 @@ export default function ExpenseCard({
                 <span>{expense.company.name}</span>
               </div>
             )}
-            {expense.paymentDate && (
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+            {/* Payment Date quick edit */}
+            {quickEdit.field === "paymentDate" ? (
+              <div className="flex items-center space-x-2 text-sm">
+                <Calendar className="w-4 h-4 text-gray-600" />
+                <span className="text-gray-600">Paid:</span>
+                <input
+                  type="date"
+                  value={quickEdit.value}
+                  onChange={(e) =>
+                    setQuickEdit((prev) => ({
+                      ...prev,
+                      value: e.target.value,
+                    }))
+                  }
+                  onBlur={() => handleQuickEdit("paymentDate", quickEdit.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter")
+                      handleQuickEdit("paymentDate", quickEdit.value);
+                    if (e.key === "Escape") cancelQuickEdit();
+                  }}
+                  className="text-sm px-2 py-1 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+            ) : (
+              <div
+                className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onQuickUpdate) {
+                    const currentDate = expense.paymentDate 
+                      ? new Date(expense.paymentDate).toISOString().split('T')[0]
+                      : new Date().toISOString().split('T')[0];
+                    startQuickEdit("paymentDate", currentDate);
+                  }
+                }}
+                data-no-navigate="true"
+                title={onQuickUpdate ? "Click to edit payment date" : undefined}
+              >
                 <Calendar className="w-4 h-4" />
                 <span>
                   Paid:{" "}
-                  {new Date(expense.paymentDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {expense.paymentDate 
+                    ? new Date(expense.paymentDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Not set"
+                  }
                 </span>
               </div>
             )}
@@ -350,10 +390,12 @@ export default function ExpenseCard({
                   <div className="space-y-1">
                     <div
                       className="flex items-start space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors"
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onQuickUpdate &&
                         startQuickEdit("description", expense.description || "")
-                      }
+                      }}
+                      data-no-navigate="true"
                       title={
                         onQuickUpdate ? "Click to edit description" : undefined
                       }
@@ -391,7 +433,11 @@ export default function ExpenseCard({
                   onQuickUpdate && (
                     <div
                       className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors text-gray-400"
-                      onClick={() => startQuickEdit("description", "")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startQuickEdit("description", "")
+                      }}
+                      data-no-navigate="true"
                       title="Click to add description"
                     >
                       <FileText className="w-3 h-3" />
@@ -527,6 +573,8 @@ export default function ExpenseCard({
                           <span
                             key={index}
                             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800"
+                            onClick={(e) => e.stopPropagation()}
+                            data-no-navigate="true"
                           >
                             #{tag}
                           </span>

@@ -16,6 +16,7 @@ import {
   DollarSign,
   Target,
   LogOut,
+  Zap,
 } from "lucide-react";
 
 const navigationGroups = [
@@ -87,6 +88,11 @@ const navigationGroups = [
         href: "/team",
         icon: User,
       },
+      {
+        name: "Integrations",
+        href: "/integrations",
+        icon: Zap,
+      },
     ],
   },
 ];
@@ -144,7 +150,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <Link
                         key={item.name}
                         href={item.href}
-                        onClick={() => onClose()}
+                        onClick={() => {
+                          // Only close sidebar on mobile
+                          if (window.innerWidth < 1024) {
+                            onClose();
+                          }
+                        }}
                         className={`flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors ${
                           isActive
                             ? "bg-[#006BFF] text-white"
