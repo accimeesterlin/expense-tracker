@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CreditCard,
   Building2,
@@ -11,6 +11,7 @@ import {
   ChevronUp,
   Hash,
   DollarSign,
+  ExternalLink,
 } from "lucide-react";
 import CompanyLogo from "./CompanyLogo";
 
@@ -34,6 +35,10 @@ interface Expense {
   isActive: boolean;
   budget?: string;
   tags?: string[];
+  receiptUrl?: string;
+  receiptS3Key?: string;
+  receiptFileName?: string;
+  receiptContentType?: string;
   metadata?: {
     companyDomain?: string;
     companyBrandId?: string;
@@ -69,6 +74,10 @@ export default function ExpenseCard({
     value: string;
   }>({ field: null, value: "" });
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
   const getExpenseTypeColor = (type: string) => {
     switch (type) {
       case "subscription":
@@ -117,6 +126,31 @@ export default function ExpenseCard({
     router.push(`/expenses/${expense._id}`);
   };
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
+  const handleOpenInNewTab = () => {
+    window.open(`/expenses/${expense._id}`, '_blank');
+    setShowContextMenu(false);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/expenses/${expense._id}`);
+    setShowContextMenu(false);
+  };
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowContextMenu(false);
+    if (showContextMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showContextMenu]);
+
   const handleQuickEdit = async (field: string, value: any) => {
     if (onQuickUpdate) {
       await onQuickUpdate(expense._id, field, value);
@@ -133,10 +167,12 @@ export default function ExpenseCard({
   };
 
   return (
-    <div
-      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-      onClick={handleCardClick}
-    >
+    <>
+      <div
+        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer relative"
+        onClick={handleCardClick}
+        onContextMenu={handleContextMenu}
+      >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
@@ -179,6 +215,24 @@ export default function ExpenseCard({
                 </h3>
               )}
               <div className="flex items-center space-x-2 mt-1">
+                {/* Receipt indicator */}
+                {expense.receiptUrl && (
+                  <div
+                    className="relative"
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setPreviewPosition({ x: rect.left + rect.width + 10, y: rect.top });
+                      setShowReceiptPreview(true);
+                    }}
+                    onMouseLeave={() => setShowReceiptPreview(false)}
+                  >
+                    <div className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200 transition-colors"
+                         title="Receipt attached - Hover to preview">
+                      <FileText className="w-3 h-3 mr-1" />
+                      Receipt
+                    </div>
+                  </div>
+                )}
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getExpenseTypeColor(
                     expense.expenseType
@@ -609,6 +663,16 @@ export default function ExpenseCard({
               <FileText className="w-4 h-4" />
             </button>
             <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenInNewTab();
+              }}
+              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Open in new tab"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+            <button
               onClick={onEdit}
               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit expense"
@@ -625,6 +689,116 @@ export default function ExpenseCard({
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* Context Menu */}
+      {showContextMenu && (
+        <div
+          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-48"
+          style={{
+            left: contextMenuPosition.x,
+            top: contextMenuPosition.y,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={handleOpenInNewTab}
+            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span>Open in new tab</span>
+          </button>
+          <button
+            onClick={handleCopyLink}
+            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Copy link</span>
+          </button>
+          <hr className="my-2 border-gray-200" />
+          <button
+            onClick={() => {
+              onEdit();
+              setShowContextMenu(false);
+            }}
+            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2"
+          >
+            <Edit className="w-4 h-4" />
+            <span>Edit expense</span>
+          </button>
+          <button
+            onClick={() => {
+              onDelete();
+              setShowContextMenu(false);
+            }}
+            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600 flex items-center space-x-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Delete expense</span>
+          </button>
+        </div>
+      )}
+
+      {/* Receipt Preview Tooltip */}
+      {showReceiptPreview && expense.receiptUrl && (
+        <div
+          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-2 max-w-xs"
+          style={{
+            left: Math.min(previewPosition.x, window.innerWidth - 300),
+            top: Math.min(previewPosition.y, window.innerHeight - 250),
+          }}
+          onMouseEnter={() => setShowReceiptPreview(true)}
+          onMouseLeave={() => setShowReceiptPreview(false)}
+        >
+          {expense.receiptUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i) ||
+          expense.receiptContentType?.startsWith('image/') ? (
+            <div>
+              <img
+                src={expense.receiptUrl}
+                alt="Receipt Preview"
+                className="max-w-full h-auto max-h-48 object-contain rounded"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="text-center p-4">
+                        <div class="w-12 h-12 mx-auto mb-2 text-gray-400">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                        </div>
+                        <p class="text-xs text-gray-600">Receipt file attached</p>
+                      </div>
+                    `;
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-600 mt-1 text-center">
+                {expense.receiptFileName || 'Receipt image'}
+              </p>
+            </div>
+          ) : expense.receiptUrl.match(/\.pdf(\?|$)/i) ||
+            expense.receiptContentType === 'application/pdf' ? (
+            <div className="text-center p-4">
+              <FileText className="w-12 h-12 text-blue-600 mx-auto mb-2" />
+              <p className="text-xs text-gray-600 mb-1">PDF Receipt</p>
+              <p className="text-xs text-blue-600">
+                {expense.receiptFileName || 'receipt.pdf'}
+              </p>
+            </div>
+          ) : (
+            <div className="text-center p-4">
+              <FileText className="w-12 h-12 text-gray-600 mx-auto mb-2" />
+              <p className="text-xs text-gray-600 mb-1">Receipt File</p>
+              <p className="text-xs text-gray-600">
+                {expense.receiptFileName || 'Attached file'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 }

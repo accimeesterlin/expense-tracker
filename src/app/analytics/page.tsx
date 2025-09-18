@@ -309,6 +309,7 @@ export default function AnalyticsPage() {
           <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Expenses by Category
+              <span className="text-xs text-[#476788] font-normal ml-2">(Click to filter expenses)</span>
             </h3>
             <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -324,6 +325,12 @@ export default function AnalyticsPage() {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="total"
+                    cursor="pointer"
+                    onClick={(data) => {
+                      if (data && data._id) {
+                        router.push(`/expenses?category=${encodeURIComponent(data._id)}`);
+                      }
+                    }}
                   >
                     {charts.expensesByCategory.map((entry, index) => (
                       <Cell
@@ -397,6 +404,7 @@ export default function AnalyticsPage() {
           <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Daily Expenses
+              <span className="text-xs text-[#476788] font-normal ml-2">(Click bars to view expenses from that day)</span>
             </h3>
             <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -404,6 +412,7 @@ export default function AnalyticsPage() {
                   data={charts.dailyExpenses.map((item) => ({
                     ...item,
                     date: formatDate(item._id),
+                    fullDate: `${item._id.year}-${String(item._id.month).padStart(2, '0')}-${String(item._id.day).padStart(2, '0')}`,
                   }))}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -412,7 +421,24 @@ export default function AnalyticsPage() {
                   <Tooltip
                     formatter={(value: number) => formatCurrency(value)}
                   />
-                  <Bar dataKey="total" fill="#00C7BE" />
+                  <Bar 
+                    dataKey="total" 
+                    fill="#00C7BE" 
+                    cursor="pointer"
+                    onClick={(data) => {
+                      if (data && data.fullDate) {
+                        // Create date range for the clicked day
+                        const startDate = new Date(data.fullDate);
+                        const endDate = new Date(data.fullDate);
+                        endDate.setDate(endDate.getDate() + 1);
+                        
+                        // Navigate to expenses with date filter
+                        const startStr = startDate.toISOString().split('T')[0];
+                        const endStr = endDate.toISOString().split('T')[0];
+                        router.push(`/expenses?startDate=${startStr}&endDate=${endStr}`);
+                      }
+                    }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -424,17 +450,35 @@ export default function AnalyticsPage() {
           <div className="card p-3 sm:p-4 lg:p-6 mb-6 sm:mb-8">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Expenses by Tags
+              <span className="text-xs text-[#476788] font-normal ml-2">(Click to filter expenses)</span>
             </h3>
             <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={charts.expensesByTags}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="_id" />
+                  <XAxis 
+                    dataKey="_id" 
+                    tick={{ cursor: 'pointer' }}
+                    onClick={(data) => {
+                      if (data && data.value) {
+                        router.push(`/expenses?tag=${encodeURIComponent(data.value)}`);
+                      }
+                    }}
+                  />
                   <YAxis />
                   <Tooltip
                     formatter={(value: number) => formatCurrency(value)}
                   />
-                  <Bar dataKey="total" fill="#4ECDC4" />
+                  <Bar 
+                    dataKey="total" 
+                    fill="#4ECDC4" 
+                    cursor="pointer"
+                    onClick={(data) => {
+                      if (data && data._id) {
+                        router.push(`/expenses?tag=${encodeURIComponent(data._id)}`);
+                      }
+                    }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -446,12 +490,18 @@ export default function AnalyticsPage() {
           <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Top Companies by Spending
+              <span className="text-xs text-[#476788] font-normal ml-2">(Click to filter expenses)</span>
             </h3>
             <div className="space-y-2 sm:space-y-3">
               {insights.topCompanies.map((company) => (
                 <div
                   key={company._id}
-                  className="flex items-center justify-between p-2 sm:p-3 bg-[#F8F9FB] rounded-lg"
+                  className="flex items-center justify-between p-2 sm:p-3 bg-[#F8F9FB] rounded-lg cursor-pointer hover:bg-[#E5F3FF] transition-colors"
+                  onClick={() => {
+                    // Navigate to expenses filtered by company
+                    router.push(`/expenses?company=${encodeURIComponent(company._id)}`);
+                  }}
+                  title="Click to view expenses from this company"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-[#006BFF]/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -517,12 +567,17 @@ export default function AnalyticsPage() {
           <div className="card p-3 sm:p-4 lg:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
               Category Insights
+              <span className="text-xs text-[#476788] font-normal ml-2">(Click to filter expenses)</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {insights.categoryInsights.map((category) => (
                 <div
                   key={category._id}
-                  className="p-3 sm:p-4 bg-[#F8F9FB] rounded-lg"
+                  className="p-3 sm:p-4 bg-[#F8F9FB] rounded-lg cursor-pointer hover:bg-[#E5F3FF] transition-colors"
+                  onClick={() => {
+                    router.push(`/expenses?category=${encodeURIComponent(category._id)}`);
+                  }}
+                  title="Click to view expenses in this category"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-[#0B3558] text-sm sm:text-base truncate">

@@ -601,6 +601,7 @@ export default function ExpenseModal({
           URL.revokeObjectURL(previewUrl);
           setPreviewUrl(null);
         }
+        setShowReceiptPreview(false);
         onClose();
       }
     } catch (error) {

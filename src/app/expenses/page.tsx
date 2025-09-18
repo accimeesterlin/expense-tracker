@@ -30,12 +30,15 @@ function ExpensesPageContent() {
   const [tags, setTags] = useState<string[]>([]);
   const [budgets, setBudgets] = useState<Array<{ _id: string; name: string; totalAmount: number }>>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [dateFilter, setDateFilter] = useState<{startDate?: string; endDate?: string}>({});
   const [sortBy, setSortBy] = useState<string>("date");
   const [showFilters, setShowFilters] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -91,12 +94,25 @@ function ExpensesPageContent() {
     // Set initial filters from URL parameters
     const categoryParam = searchParams.get("category");
     const tagParam = searchParams.get("tag");
+    const companyParam = searchParams.get("company");
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
 
     if (categoryParam) {
       setSelectedCategories([categoryParam]);
     }
     if (tagParam) {
       setSelectedTags([tagParam]);
+    }
+    if (companyParam) {
+      setSelectedCompanies([companyParam]);
+    }
+    if (startDateParam || endDateParam) {
+      setDateFilter({
+        startDate: startDateParam || undefined,
+        endDate: endDateParam || undefined
+      });
+      setShowFilters(true); // Show filters when date filtering is applied
     }
   }, [searchParams]);
 
@@ -200,13 +216,27 @@ function ExpensesPageContent() {
         selectedTags.length === 0 ||
         (expense.tags &&
           expense.tags.some((tag) => selectedTags.includes(tag)));
+      
+      // Date filtering
+      const matchesDate = (() => {
+        if (!dateFilter.startDate && !dateFilter.endDate) return true;
+        
+        const expenseDate = new Date(expense.paymentDate || expense.createdAt);
+        const startDate = dateFilter.startDate ? new Date(dateFilter.startDate) : null;
+        const endDate = dateFilter.endDate ? new Date(dateFilter.endDate) : null;
+        
+        if (startDate && expenseDate < startDate) return false;
+        if (endDate && expenseDate >= endDate) return false;
+        return true;
+      })();
 
       return (
         matchesSearch &&
         matchesCategory &&
         matchesType &&
         matchesCompany &&
-        matchesTag
+        matchesTag &&
+        matchesDate
       );
     });
 
@@ -237,6 +267,7 @@ function ExpensesPageContent() {
     selectedTypes,
     selectedCompanies,
     selectedTags,
+    dateFilter,
     sortBy,
   ]);
 
@@ -450,6 +481,30 @@ function ExpensesPageContent() {
     setSelectedTypes([]);
     setSelectedCompanies([]);
     setSelectedTags([]);
+    setDateFilter({});
+    setCurrentPage(1); // Reset to first page when clearing filters
+  };
+
+  // Calculate pagination
+  const totalItems = filteredExpenses.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedExpenses = filteredExpenses.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredExpenses]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
   };
   const activeExpenses = expenses.filter((e) => e.isActive).length;
   const monthlySubscriptions = expenses.filter(
@@ -822,7 +877,7 @@ function ExpensesPageContent() {
           </div>
         ) : (
           <div className="space-y-3 sm:space-y-4">
-            {filteredExpenses.map((expense) => (
+            {paginatedExpenses.map((expense) => (
               <ExpenseCard
                 key={expense._id}
                 expense={expense}
@@ -840,6 +895,82 @@ function ExpensesPageContent() {
                 availableCompanies={companies}
               />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredExpenses.length > 0 && (
+          <div className="card p-4 sm:p-6 mt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-[#476788]">Show:</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                    className="input-field text-sm py-1 px-2"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-[#476788]">per page</span>
+                </div>
+                <div className="text-sm text-[#476788]">
+                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} expenses
+                </div>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="btn-secondary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {/* Show page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-8 h-8 text-sm rounded ${
+                            currentPage === pageNum
+                              ? 'bg-[#006BFF] text-white'
+                              : 'bg-white text-[#476788] hover:bg-[#F8F9FB] border border-[#E5E7EB]'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="btn-secondary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
