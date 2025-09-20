@@ -523,6 +523,14 @@ export default function DashboardPage() {
                   onCancel={(expenseId) => {
                     handleExpenseDeleted(expenseId);
                   }}
+                  onRecordPayment={(expense) => {
+                    // Pre-fill the expense modal with payment data
+                    setSelectedExpense({
+                      ...expense,
+                      paymentDate: new Date().toISOString().split('T')[0]
+                    });
+                    setShowExpenseModal(true);
+                  }}
                 />
               </div>
 

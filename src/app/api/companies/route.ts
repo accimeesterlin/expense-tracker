@@ -24,10 +24,12 @@ export async function GET() {
     // Get expense stats for each company
     const companiesWithStats = await Promise.all(
       companies.map(async (company) => {
+        // Try both user ID and email for compatibility
         const expenses = await Expense.find({ 
-          userId: session.user.id, 
-          company: company._id,
-          isActive: true 
+          $or: [
+            { userId: session.user.id, company: company._id, isActive: true },
+            { userId: session.user.email, company: company._id, isActive: true }
+          ]
         });
         
         const expenseCount = expenses.length;

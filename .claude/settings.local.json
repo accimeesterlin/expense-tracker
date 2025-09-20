@@ -18,7 +18,8 @@
       "Bash(find:*)",
       "Bash(true)",
       "Bash(mkdir:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": [],

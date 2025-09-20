@@ -83,8 +83,9 @@ export default function CompanyDetailsPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"expenses" | "team" | "overview" | "analytics">(
+  const [activeTab, setActiveTab] = useState<"expenses" | "team" | "overview" | "analytics" | "payments">(
     "overview"
   );
   const [mounted, setMounted] = useState(false);
@@ -107,10 +108,11 @@ export default function CompanyDetailsPage() {
 
   const fetchCompanyDetails = useCallback(async () => {
     try {
-      const [companyRes, expensesRes, teamRes] = await Promise.all([
+      const [companyRes, expensesRes, teamRes, paymentsRes] = await Promise.all([
         fetch(`/api/companies/${companyId}`),
         fetch(`/api/expenses?companyId=${companyId}`),
         fetch(`/api/team-members?companyId=${companyId}`),
+        fetch(`/api/payments?company=${companyId}`),
       ]);
 
       if (companyRes.ok) {
@@ -126,6 +128,11 @@ export default function CompanyDetailsPage() {
       if (teamRes.ok) {
         const teamData = await teamRes.json();
         setTeamMembers(teamData);
+      }
+
+      if (paymentsRes.ok) {
+        const paymentsData = await paymentsRes.json();
+        setPayments(paymentsData.payments || []);
       }
     } catch (error) {
       console.error("Error fetching company details:", error);
@@ -292,11 +299,11 @@ export default function CompanyDetailsPage() {
       <div className="bg-white border-b border-[#E5E7EB]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
-            {["overview", "expenses", "analytics", "team"].map((tab) => (
+            {["overview", "expenses", "analytics", "payments", "team"].map((tab) => (
               <button
                 key={tab}
                 onClick={() =>
-                  setActiveTab(tab as "expenses" | "team" | "overview" | "analytics")
+                  setActiveTab(tab as "expenses" | "team" | "overview" | "analytics" | "payments")
                 }
                 className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm capitalize whitespace-nowrap ${
                   activeTab === tab
@@ -614,6 +621,33 @@ export default function CompanyDetailsPage() {
         
         {activeTab === "analytics" && (
           <div className="space-y-4 sm:space-y-6">
+            {/* Key Metrics Summary */}
+            <div className="card p-4 sm:p-6">
+              <h3 className="text-lg font-semibold text-[#0B3558] mb-4">Company Summary</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[#0B3558]">{expenses.length}</p>
+                  <p className="text-xs text-[#476788]">Total Expenses</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{formatCurrency(totalExpenseAmount)}</p>
+                  <p className="text-xs text-[#476788]">Total Spent</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {expenses.filter(e => e.expenseType === 'subscription').length}
+                  </p>
+                  <p className="text-xs text-[#476788]">Active Subscriptions</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {new Set(expenses.map(e => e.category)).size}
+                  </p>
+                  <p className="text-xs text-[#476788]">Categories</p>
+                </div>
+              </div>
+            </div>
+
             {/* Analytics Overview Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
               <div className="card p-4 sm:p-6">
@@ -761,6 +795,278 @@ export default function CompanyDetailsPage() {
                   ))}
               </div>
             </div>
+
+            {/* Advanced Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Expense Trends */}
+              <div className="card p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">Expense Trends</h3>
+                <div className="space-y-4">
+                  {/* Monthly Growth */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-[#0B3558]">This Month</p>
+                      <p className="text-xs text-[#476788]">
+                        {expenses.filter(e => {
+                          const expenseDate = new Date(e.createdAt);
+                          const now = new Date();
+                          return expenseDate.getMonth() === now.getMonth() && 
+                                 expenseDate.getFullYear() === now.getFullYear();
+                        }).length} expenses
+                      </p>
+                    </div>
+                    <span className="text-sm font-bold text-[#0B3558]">
+                      {formatCurrency(expenses.filter(e => {
+                        const expenseDate = new Date(e.createdAt);
+                        const now = new Date();
+                        return expenseDate.getMonth() === now.getMonth() && 
+                               expenseDate.getFullYear() === now.getFullYear();
+                      }).reduce((sum, e) => sum + e.amount, 0))}
+                    </span>
+                  </div>
+
+                  {/* Last Month */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-[#0B3558]">Last Month</p>
+                      <p className="text-xs text-[#476788]">
+                        {expenses.filter(e => {
+                          const expenseDate = new Date(e.createdAt);
+                          const lastMonth = new Date();
+                          lastMonth.setMonth(lastMonth.getMonth() - 1);
+                          return expenseDate.getMonth() === lastMonth.getMonth() && 
+                                 expenseDate.getFullYear() === lastMonth.getFullYear();
+                        }).length} expenses
+                      </p>
+                    </div>
+                    <span className="text-sm font-bold text-[#0B3558]">
+                      {formatCurrency(expenses.filter(e => {
+                        const expenseDate = new Date(e.createdAt);
+                        const lastMonth = new Date();
+                        lastMonth.setMonth(lastMonth.getMonth() - 1);
+                        return expenseDate.getMonth() === lastMonth.getMonth() && 
+                               expenseDate.getFullYear() === lastMonth.getFullYear();
+                      }).reduce((sum, e) => sum + e.amount, 0))}
+                    </span>
+                  </div>
+
+                  {/* High Value Expenses */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-[#0B3558]">High Value (&gt;$500)</p>
+                      <p className="text-xs text-[#476788]">
+                        {expenses.filter(e => e.amount > 500).length} expenses
+                      </p>
+                    </div>
+                    <span className="text-sm font-bold text-[#0B3558]">
+                      {formatCurrency(expenses.filter(e => e.amount > 500).reduce((sum, e) => sum + e.amount, 0))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Patterns */}
+              <div className="card p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-[#0B3558] mb-4">Payment Patterns</h3>
+                <div className="space-y-4">
+                  {/* Frequency Analysis */}
+                  {Object.entries(
+                    expenses.reduce((acc, expense) => {
+                      acc[expense.expenseType] = (acc[expense.expenseType] || 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  )
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 4)
+                    .map(([type, count]) => (
+                      <div key={type} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-[#0B3558] capitalize">{type.replace('_', ' ')}</p>
+                          <p className="text-xs text-[#476788]">
+                            {((count / expenses.length) * 100).toFixed(1)}% of expenses
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-bold text-[#0B3558]">{count}</span>
+                          <p className="text-xs text-[#476788]">
+                            {formatCurrency(expenses.filter(e => e.expenseType === type).reduce((sum, e) => sum + e.amount, 0))}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Expense Efficiency Metrics */}
+            <div className="card p-4 sm:p-6">
+              <h3 className="text-lg font-semibold text-[#0B3558] mb-4">Expense Insights</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {expenses.length > 0 ? (totalExpenseAmount / expenses.length).toFixed(0) : '0'}
+                  </p>
+                  <p className="text-xs text-[#476788]">Average per Expense</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">
+                    {expenses.length > 0 ? Math.max(...expenses.map(e => e.amount)).toFixed(0) : '0'}
+                  </p>
+                  <p className="text-xs text-[#476788]">Highest Expense</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {expenses.filter(e => e.nextBillingDate && new Date(e.nextBillingDate) > new Date()).length}
+                  </p>
+                  <p className="text-xs text-[#476788]">Upcoming Bills</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "payments" && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Payments Overview */}
+            <div className="card p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#0B3558]">
+                  Payment History
+                </h3>
+                <div className="text-sm text-[#476788]">
+                  {payments.length} payments recorded
+                </div>
+              </div>
+
+              {payments.length === 0 ? (
+                <div className="text-center py-8">
+                  <DollarSign className="w-12 h-12 text-[#A6BBD1] mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-[#0B3558] mb-2">
+                    No payments recorded
+                  </h3>
+                  <p className="text-[#476788]">
+                    Payment history for this company will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {payments.map((payment) => (
+                    <div
+                      key={payment._id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          payment.type === "debt_payment" 
+                            ? "bg-red-100" 
+                            : "bg-green-100"
+                        }`}>
+                          <DollarSign className={`w-5 h-5 ${
+                            payment.type === "debt_payment" 
+                              ? "text-red-600" 
+                              : "text-green-600"
+                          }`} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-[#0B3558]">
+                            {payment.type === "debt_payment" ? "Debt Payment" : "Income Received"}
+                          </p>
+                          <p className="text-sm text-[#476788]">
+                            {payment.description || payment.category}
+                          </p>
+                          <p className="text-xs text-[#476788]">
+                            {new Date(payment.paymentDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${
+                          payment.type === "debt_payment" 
+                            ? "text-red-600" 
+                            : "text-green-600"
+                        }`}>
+                          {payment.type === "debt_payment" ? "-" : "+"}
+                          ${payment.amount.toFixed(2)}
+                        </p>
+                        {payment.paymentMethod && (
+                          <p className="text-xs text-[#476788]">
+                            {payment.paymentMethod.name}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Payment Summary */}
+            {payments.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div className="card p-4 sm:p-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                        Total Income
+                      </p>
+                      <p className="text-lg sm:text-xl font-bold text-green-600">
+                        ${payments
+                          .filter(p => p.type === "income_received")
+                          .reduce((sum, p) => sum + p.amount, 0)
+                          .toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-4 sm:p-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                        Total Debt Payments
+                      </p>
+                      <p className="text-lg sm:text-xl font-bold text-red-600">
+                        ${payments
+                          .filter(p => p.type === "debt_payment")
+                          .reduce((sum, p) => sum + p.amount, 0)
+                          .toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-4 sm:p-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
+                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium text-[#476788]">
+                        This Month
+                      </p>
+                      <p className="text-lg sm:text-xl font-bold text-[#0B3558]">
+                        {payments.filter(p => {
+                          const paymentDate = new Date(p.paymentDate);
+                          const now = new Date();
+                          return paymentDate.getMonth() === now.getMonth() && 
+                                 paymentDate.getFullYear() === now.getFullYear();
+                        }).length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

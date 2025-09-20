@@ -1,4 +1,4 @@
-import { Calendar, AlertCircle, Edit, X, MoreVertical } from "lucide-react";
+import { Calendar, AlertCircle, Edit, X, MoreVertical, DollarSign } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import CompanyLogo from "./CompanyLogo";
 
@@ -57,6 +57,7 @@ interface UpcomingSubscriptionsProps {
   onEdit?: (expense: Expense) => void;
   onCancel?: (expenseId: string) => void;
   onViewDetails?: (expenseId: string) => void;
+  onRecordPayment?: (expense: Expense) => void;
 }
 
 export default function UpcomingSubscriptions({
@@ -64,6 +65,7 @@ export default function UpcomingSubscriptions({
   onEdit,
   onCancel,
   onViewDetails,
+  onRecordPayment,
 }: UpcomingSubscriptionsProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -212,7 +214,19 @@ export default function UpcomingSubscriptions({
                   </button>
                   
                   {openDropdown === expense._id && (
-                    <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-32">
+                    <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-40">
+                      {onRecordPayment && (
+                        <button
+                          onClick={() => {
+                            onRecordPayment(expense);
+                            setOpenDropdown(null);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50 flex items-center space-x-2"
+                        >
+                          <DollarSign className="w-4 h-4" />
+                          <span>Record Payment</span>
+                        </button>
+                      )}
                       {onViewDetails && (
                         <button
                           onClick={() => {

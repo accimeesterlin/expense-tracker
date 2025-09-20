@@ -305,7 +305,7 @@ export default function IntegrationsPage() {
                   ) : (
                     <button
                       onClick={() => handleConnect(integration)}
-                      className="btn-primary text-xs sm:text-sm w-full inline-flex items-center justify-center space-x-1"
+                      className="btn-primary text-xs sm:text-sm inline-flex items-center justify-center space-x-1 px-4"
                     >
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span>Connect</span>

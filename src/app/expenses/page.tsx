@@ -674,7 +674,9 @@ function ExpensesPageContent() {
               {(selectedCategories.length > 0 ||
                 selectedTypes.length > 0 ||
                 selectedCompanies.length > 0 ||
-                selectedTags.length > 0) && (
+                selectedTags.length > 0 ||
+                dateFilter.startDate ||
+                dateFilter.endDate) && (
                 <div className="flex flex-wrap items-center gap-2 mb-4">
                   <span className="text-sm font-medium text-[#476788]">
                     Active filters:
@@ -738,6 +740,21 @@ function ExpensesPageContent() {
                       </button>
                     </span>
                   ))}
+                  {(dateFilter.startDate || dateFilter.endDate) && (
+                    <span className="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                      {dateFilter.startDate && dateFilter.endDate
+                        ? `${dateFilter.startDate} to ${dateFilter.endDate}`
+                        : dateFilter.startDate
+                        ? `From ${dateFilter.startDate}`
+                        : `Until ${dateFilter.endDate}`}
+                      <button
+                        onClick={() => setDateFilter({})}
+                        className="ml-1 hover:text-indigo-900"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
                   <button
                     onClick={clearAllFilters}
                     className="text-xs text-red-600 hover:text-red-800 font-medium"
@@ -746,6 +763,37 @@ function ExpensesPageContent() {
                   </button>
                 </div>
               )}
+
+              {/* Date Range Filter */}
+              <div className="mb-4 pb-4 border-b border-[#E5E7EB]">
+                <label className="block text-sm font-medium text-[#476788] mb-2">
+                  Date Range
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-[#476788] mb-1">From</label>
+                    <input
+                      type="date"
+                      value={dateFilter.startDate || ""}
+                      onChange={(e) =>
+                        setDateFilter(prev => ({ ...prev, startDate: e.target.value || undefined }))
+                      }
+                      className="input-field text-sm w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#476788] mb-1">To</label>
+                    <input
+                      type="date"
+                      value={dateFilter.endDate || ""}
+                      onChange={(e) =>
+                        setDateFilter(prev => ({ ...prev, endDate: e.target.value || undefined }))
+                      }
+                      className="input-field text-sm w-full"
+                    />
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 <div>
@@ -898,37 +946,43 @@ function ExpensesPageContent() {
           </div>
         )}
 
-        {/* Pagination */}
-        {filteredExpenses.length > 0 && (
-          <div className="card p-4 sm:p-6 mt-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
+        {/* Spacing for fixed pagination on mobile */}
+        <div className="h-20 sm:h-0"></div>
+      </div>
+
+      {/* Fixed Pagination */}
+      {filteredExpenses.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] p-3 sm:p-4 z-40 sm:relative sm:border-t-0 sm:bg-transparent sm:mt-6">
+          <div className="card sm:p-6 p-0 sm:border sm:border-gray-200 sm:rounded-lg sm:shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center justify-between w-full sm:w-auto sm:space-x-4">
                 <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium text-[#476788]">Show:</label>
+                  <label className="text-xs sm:text-sm font-medium text-[#476788]">Show:</label>
                   <select
                     value={itemsPerPage}
                     onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
-                    className="input-field text-sm py-1 px-2"
+                    className="input-field text-xs sm:text-sm py-1 px-2"
                   >
                     <option value={25}>25</option>
                     <option value={50}>50</option>
                     <option value={100}>100</option>
                   </select>
-                  <span className="text-sm text-[#476788]">per page</span>
+                  <span className="text-xs sm:text-sm text-[#476788] hidden sm:inline">per page</span>
                 </div>
-                <div className="text-sm text-[#476788]">
-                  Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} expenses
+                <div className="text-xs sm:text-sm text-[#476788] sm:block">
+                  {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
                 </div>
               </div>
 
               {totalPages > 1 && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 sm:space-x-2 w-full sm:w-auto justify-center">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="btn-secondary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary text-xs sm:text-sm px-2 sm:px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Previous
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
                   </button>
                   
                   <div className="flex items-center space-x-1">
@@ -949,11 +1003,11 @@ function ExpensesPageContent() {
                         <button
                           key={pageNum}
                           onClick={() => handlePageChange(pageNum)}
-                          className={`w-8 h-8 text-sm rounded ${
+                          className={`w-6 h-6 sm:w-8 sm:h-8 text-xs sm:text-sm rounded ${
                             currentPage === pageNum
                               ? 'bg-[#006BFF] text-white'
                               : 'bg-white text-[#476788] hover:bg-[#F8F9FB] border border-[#E5E7EB]'
-                          }`}
+                          } ${i >= 3 ? 'hidden sm:flex' : 'flex'} items-center justify-center`}
                         >
                           {pageNum}
                         </button>
@@ -964,16 +1018,17 @@ function ExpensesPageContent() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="btn-secondary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-secondary text-xs sm:text-sm px-2 sm:px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Next
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Next</span>
                   </button>
                 </div>
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showExpenseModal && (

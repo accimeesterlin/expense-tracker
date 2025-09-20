@@ -214,7 +214,7 @@ export default function ExpenseCard({
                   {expense.name}
                 </h3>
               )}
-              <div className="flex items-center space-x-2 mt-1">
+              <div className="flex items-center flex-wrap gap-1 sm:gap-2 mt-1">
                 {/* Receipt indicator */}
                 {expense.receiptUrl && (
                   <div
@@ -227,7 +227,8 @@ export default function ExpenseCard({
                     onMouseLeave={() => setShowReceiptPreview(false)}
                   >
                     <div className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200 transition-colors"
-                         title="Receipt attached - Hover to preview">
+                         title="Receipt attached - Hover to preview"
+                         data-no-navigate="true">
                       <FileText className="w-3 h-3 mr-1" />
                       Receipt
                     </div>
@@ -439,7 +440,7 @@ export default function ExpenseCard({
                 </div>
               </div>
             ) : (
-              <div className="mt-3">
+              <div className="mt-3 hidden sm:block">
                 {expense.description ? (
                   <div className="space-y-1">
                     <div

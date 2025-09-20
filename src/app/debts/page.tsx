@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import SimpleDebtModal from "@/components/SimpleDebtModal";
+import PaymentModal from "@/components/PaymentModal";
 import AppLayout from "@/components/AppLayout";
 import ErrorModal from "@/components/ErrorModal";
 
@@ -59,6 +60,8 @@ export default function DebtsPage() {
   const [sortBy, setSortBy] = useState<string>("date");
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<Debt | undefined>(undefined);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedDebtForPayment, setSelectedDebtForPayment] = useState<Debt | undefined>(undefined);
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -421,6 +424,16 @@ export default function DebtsPage() {
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={() => {
+                          setSelectedDebtForPayment(debt);
+                          setShowPaymentModal(true);
+                        }}
+                        className="p-1.5 sm:p-2 text-[#476788] hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Record debt payment"
+                      >
+                        <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
                           setSelectedDebt(debt);
                           setShowDebtModal(true);
                         }}
@@ -453,6 +466,27 @@ export default function DebtsPage() {
             }}
             onSuccess={handleDebtCreated}
             debt={selectedDebt}
+          />
+        )}
+
+        {/* Payment Modal */}
+        {showPaymentModal && selectedDebtForPayment && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => {
+              setShowPaymentModal(false);
+              setSelectedDebtForPayment(undefined);
+            }}
+            type="debt_payment"
+            referenceId={selectedDebtForPayment._id}
+            referenceName={selectedDebtForPayment.name}
+            suggestedAmount={selectedDebtForPayment.minimumPayment}
+            onSuccess={() => {
+              setShowPaymentModal(false);
+              setSelectedDebtForPayment(undefined);
+              // Optionally refresh data
+              fetchDebts();
+            }}
           />
         )}
 

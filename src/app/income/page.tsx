@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import SimpleIncomeModal from "@/components/SimpleIncomeModal";
+import PaymentModal from "@/components/PaymentModal";
 import ErrorModal from "@/components/ErrorModal";
 
 interface Income {
@@ -74,6 +75,10 @@ export default function IncomePage() {
   const [sortBy, setSortBy] = useState<string>("date");
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [selectedIncome, setSelectedIncome] = useState<Income | undefined>(
+    undefined
+  );
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedIncomeForPayment, setSelectedIncomeForPayment] = useState<Income | undefined>(
     undefined
   );
   const [errorModal, setErrorModal] = useState<{
@@ -458,6 +463,16 @@ export default function IncomePage() {
                   <div className="flex items-center justify-end space-x-1 sm:space-x-2">
                     <button
                       onClick={() => {
+                        setSelectedIncomeForPayment(income);
+                        setShowPaymentModal(true);
+                      }}
+                      className="p-1 sm:p-1.5 lg:p-2 text-[#476788] hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      title="Record income payment"
+                    >
+                      <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
                         setSelectedIncome(income);
                         setShowIncomeModal(true);
                       }}
@@ -491,6 +506,27 @@ export default function IncomePage() {
           }}
           onSuccess={handleIncomeCreated}
           income={selectedIncome}
+        />
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedIncomeForPayment && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedIncomeForPayment(undefined);
+          }}
+          type="income_received"
+          referenceId={selectedIncomeForPayment._id}
+          referenceName={selectedIncomeForPayment.source}
+          company={selectedIncomeForPayment.company}
+          suggestedAmount={selectedIncomeForPayment.amount}
+          onSuccess={() => {
+            setShowPaymentModal(false);
+            setSelectedIncomeForPayment(undefined);
+            // Optionally refresh data
+          }}
         />
       )}
 

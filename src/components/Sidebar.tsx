@@ -150,9 +150,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <Link
                         key={item.name}
                         href={item.href}
-                        onClick={() => {
-                          // Only close sidebar on mobile
-                          if (window.innerWidth < 1024) {
+                        onClick={(e) => {
+                          // Only close sidebar on mobile (check for lg:block classes)
+                          const shouldCloseOnMobile = window.innerWidth < 1024;
+                          if (shouldCloseOnMobile) {
                             onClose();
                           }
                         }}

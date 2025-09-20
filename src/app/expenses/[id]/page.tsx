@@ -439,8 +439,9 @@ export default function ExpenseDetailPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.back()}
               className="text-[#476788] hover:text-[#0B3558] transition-colors flex-shrink-0"
+              title="Go back"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
