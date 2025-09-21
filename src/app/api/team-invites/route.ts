@@ -3,13 +3,18 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import TeamInvite from "@/models/TeamInvite";
+import TeamMember from "@/models/TeamMember";
 import Company from "@/models/Company";
 import User from "@/models/User";
 import { sendTeamInviteEmail } from "@/lib/email";
+import { ensureModelsRegistered } from "@/lib/models";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,11 +45,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is already registered
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
+    // Check if user is already a team member of this company
+    const existingTeamMember = await TeamMember.findOne({ 
+      email: email.toLowerCase(), 
+      company: companyId,
+      isActive: true 
+    });
+    if (existingTeamMember) {
       return NextResponse.json(
-        { error: "User with this email already exists in the system" },
+        { error: "User is already a member of this company" },
         { status: 400 }
       );
     }
@@ -130,8 +139,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

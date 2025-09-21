@@ -10,6 +10,7 @@ export interface ITeamMember extends Document {
   isActive: boolean;
   company: Types.ObjectId;
   userId: string;
+  permissions?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +65,23 @@ const TeamMemberSchema: Schema = new Schema(
       type: String,
       required: [true, "User ID is required"],
     },
+    permissions: [{
+      type: String,
+      enum: [
+        'view_expenses',
+        'create_expenses',
+        'edit_expenses',
+        'delete_expenses',
+        'view_budgets',
+        'create_budgets',
+        'edit_budgets',
+        'delete_budgets',
+        'view_analytics',
+        'manage_team',
+        'manage_companies',
+        'admin_access'
+      ]
+    }],
   },
   {
     timestamps: true,

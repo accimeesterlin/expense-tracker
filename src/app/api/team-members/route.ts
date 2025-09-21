@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import TeamMember from "@/models/TeamMember";
+import TeamInvite from "@/models/TeamInvite";
+import Company from "@/models/Company";
 
 export async function GET() {
   try {
@@ -12,10 +14,48 @@ export async function GET() {
     }
 
     await dbConnect();
-    const teamMembers = await TeamMember.find({ userId: session.user.id })
+    
+    // Get companies owned by the user
+    const ownedCompanies = await Company.find({ userId: session.user.id });
+    const ownedCompanyIds = ownedCompanies.map(c => c._id.toString());
+    
+    // Get actual team members for owned companies
+    const teamMembers = await TeamMember.find({ 
+      company: { $in: ownedCompanyIds }
+    })
       .populate("company", "name industry")
       .sort({ createdAt: -1 });
-    return NextResponse.json(teamMembers);
+    
+    // Get pending invites for owned companies
+    const pendingInvites = await TeamInvite.find({
+      inviterId: session.user.id,
+      isAccepted: false,
+      expiresAt: { $gt: new Date() }
+    })
+      .populate("companyId", "name industry")
+      .sort({ createdAt: -1 });
+    
+    // Format pending invites to match team member structure
+    const formattedInvites = pendingInvites.map(invite => ({
+      _id: invite._id,
+      name: "Pending Invitation",
+      email: invite.email,
+      role: invite.role,
+      department: invite.department,
+      phone: invite.phone,
+      isActive: false,
+      isPending: true,
+      company: invite.companyId,
+      permissions: invite.permissions,
+      createdAt: invite.createdAt,
+      updatedAt: invite.updatedAt,
+      expiresAt: invite.expiresAt
+    }));
+    
+    // Combine team members and pending invites
+    const allMembers = [...teamMembers, ...formattedInvites];
+    
+    return NextResponse.json(allMembers);
   } catch (error) {
     console.error("Error fetching team members:", error);
     return NextResponse.json(

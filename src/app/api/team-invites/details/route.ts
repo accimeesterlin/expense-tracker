@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import TeamInvite from "@/models/TeamInvite";
 import User from "@/models/User";
+import Company from "@/models/Company";
+import { ensureModelsRegistered } from "@/lib/models";
 
 export async function GET(request: NextRequest) {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     await dbConnect();
     
     const { searchParams } = new URL(request.url);
@@ -35,6 +40,10 @@ export async function GET(request: NextRequest) {
     const inviter = await User.findById(invite.inviterId);
     const inviterName = inviter?.name || 'A team member';
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: invite.email });
+    const userExists = !!existingUser;
+
     return NextResponse.json({
       email: invite.email,
       role: invite.role,
@@ -43,6 +52,8 @@ export async function GET(request: NextRequest) {
       inviterName,
       permissions: invite.permissions || [],
       isValid: true,
+      userExists, // This tells the frontend whether to show account creation
+      userName: existingUser?.name, // Existing user's name if available
     });
 
   } catch (error) {

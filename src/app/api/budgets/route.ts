@@ -3,18 +3,30 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import Budget from "@/models/Budget";
+import { getUserCompanyIds, hasPermission } from "@/lib/permissions";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
     
+    // Get all company IDs the user has access to
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    if (accessibleCompanyIds.length === 0) {
+      return NextResponse.json([]);
+    }
+    
     const budgets = await Budget.find({ 
-      userId: session.user.email,
+      $or: [
+        { userId: session.user.id }, // User's own budgets
+        { userId: session.user.email }, // Legacy compatibility
+        { companyId: { $in: accessibleCompanyIds } } // Company budgets they have access to
+      ],
       isActive: true
     }).sort({ startDate: -1 });
     

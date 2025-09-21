@@ -155,6 +155,12 @@ interface TeamInviteEmailParams {
   role: string;
 }
 
+interface PasswordResetEmailParams {
+  to: string;
+  resetToken: string;
+  userName?: string;
+}
+
 export async function sendTeamInviteEmail({
   to,
   inviterName,
@@ -369,6 +375,125 @@ export async function sendWelcomeEmail(to: string, name: string) {
     }
   } catch (error: unknown) {
     console.error("Error sending welcome email:", error);
+
+    // Handle different types of errors
+    const errorObj = error as any;
+    if (errorObj?.error?.code === "TM_4001") {
+      console.error("ZeptoMail Access Denied - Check:");
+      console.error("1. API key is correct and has send permissions");
+      console.error("2. From email domain is verified in ZeptoMail");
+      console.error("3. Account has sufficient credits");
+      console.error("From email used:", process.env.ZEPTOMAIL_FROM_EMAIL);
+    }
+
+    return { success: false, error: errorObj };
+  }
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  resetToken,
+  userName,
+}: PasswordResetEmailParams) {
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #006BFF 0%, #0056CC 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px;">ExpenseTracker</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">Password Reset</p>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+        <h2 style="color: #0B3558; margin-top: 0;">Reset Your Password</h2>
+        
+        <p style="color: #476788; line-height: 1.6;">
+          ${userName ? `Hi ${userName},` : 'Hi there,'}
+        </p>
+        
+        <p style="color: #476788; line-height: 1.6;">
+          We received a request to reset your password for your ExpenseTracker account. If you made this request, click the button below to reset your password.
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background: #006BFF; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; display: inline-block;">
+            Reset Password
+          </a>
+        </div>
+        
+        <p style="color: #A6BBD1; font-size: 14px; text-align: center; margin-top: 30px;">
+          If the button doesn't work, copy and paste this link into your browser:
+          <br>
+          <span style="word-break: break-all;">${resetUrl}</span>
+        </p>
+        
+        <p style="color: #A6BBD1; font-size: 12px; text-align: center; margin-top: 20px;">
+          This password reset link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+        </p>
+        
+        <p style="color: #A6BBD1; font-size: 12px; text-align: center; margin-top: 10px;">
+          For security reasons, this link can only be used once.
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (emailService === "resend" && resend) {
+      const { data, error } = await resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+        to: [to],
+        subject: "Reset Your ExpenseTracker Password",
+        html: htmlContent,
+      });
+
+      if (error) {
+        console.error("Error sending password reset email via Resend:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data };
+    } else if (emailService === "zeptomail") {
+      const emailData = {
+        from: {
+          address: process.env.ZEPTOMAIL_FROM_EMAIL || "noreply@yourdomain.com",
+          name: "ExpenseTracker",
+        },
+        to: [
+          {
+            email_address: {
+              address: to,
+              name: userName || "",
+            },
+          },
+        ],
+        subject: "Reset Your ExpenseTracker Password",
+        htmlbody: htmlContent,
+      };
+
+      const zeptoResult = await sendViaZeptoMailSDK(emailData);
+
+      if (!zeptoResult.success) {
+        throw zeptoResult.error;
+      }
+
+      return zeptoResult;
+    } else {
+      // Fallback: Log the email instead of sending
+      console.log("Password reset email service not configured. Email would be sent to:", to);
+      console.log("Subject: Reset Your ExpenseTracker Password");
+      console.log("Reset URL:", resetUrl);
+      return {
+        success: true,
+        data: {
+          message: "Password reset email logged (no email service configured)",
+          resetUrl,
+        },
+      };
+    }
+  } catch (error: unknown) {
+    console.error("Error sending password reset email:", error);
 
     // Handle different types of errors
     const errorObj = error as any;

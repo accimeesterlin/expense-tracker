@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import TeamMember from "@/models/TeamMember";
+import TeamInvite from "@/models/TeamInvite";
+import Company from "@/models/Company";
+import { getUserCompanyIds } from "@/lib/permissions";
 
 export async function GET(
   request: NextRequest,
@@ -16,8 +19,15 @@ export async function GET(
 
     await dbConnect();
     const { id } = await params;
-    const teamMember = await TeamMember.findOne({ _id: id, userId: session.user.id })
-      .populate("company", "name industry");
+    
+    // Get companies the user has access to (owns or is member of)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    // Find team member that belongs to companies we have access to
+    const teamMember = await TeamMember.findOne({ 
+      _id: id, 
+      company: { $in: accessibleCompanyIds }
+    }).populate("company", "name industry");
 
     if (!teamMember) {
       return NextResponse.json({ error: "Team member not found" }, { status: 404 });
@@ -47,8 +57,12 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    // Get companies owned by the user (only owners can update team members)
+    const ownedCompanies = await Company.find({ userId: session.user.id });
+    const ownedCompanyIds = ownedCompanies.map(c => c._id.toString());
+
     const teamMember = await TeamMember.findOneAndUpdate(
-      { _id: id, userId: session.user.id },
+      { _id: id, company: { $in: ownedCompanyIds } },
       body,
       {
         new: true,
@@ -57,7 +71,7 @@ export async function PUT(
     ).populate("company", "name industry");
 
     if (!teamMember) {
-      return NextResponse.json({ error: "Team member not found" }, { status: 404 });
+      return NextResponse.json({ error: "Team member not found or you don't have permission to edit" }, { status: 404 });
     }
 
     return NextResponse.json(teamMember);
@@ -101,14 +115,26 @@ export async function DELETE(
 
     await dbConnect();
     const { id } = await params;
+    
+    // Get companies owned by the user (only owners can delete team members)
+    const ownedCompanies = await Company.find({ userId: session.user.id });
+    const ownedCompanyIds = ownedCompanies.map(c => c._id.toString());
+    
     const teamMember = await TeamMember.findOneAndDelete({
       _id: id,
-      userId: session.user.id,
+      company: { $in: ownedCompanyIds }
     });
 
     if (!teamMember) {
-      return NextResponse.json({ error: "Team member not found" }, { status: 404 });
+      return NextResponse.json({ error: "Team member not found or you don't have permission to delete" }, { status: 404 });
     }
+
+    // Also delete any pending team invites for this email and company
+    await TeamInvite.deleteMany({
+      email: teamMember.email,
+      companyId: teamMember.company,
+      isAccepted: false
+    });
 
     return NextResponse.json({ message: "Team member deleted successfully" });
   } catch (error) {

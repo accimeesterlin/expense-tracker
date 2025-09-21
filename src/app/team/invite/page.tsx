@@ -14,6 +14,8 @@ interface InviteDetails {
   inviterName: string;
   permissions: string[];
   isValid: boolean;
+  userExists?: boolean;
+  userName?: string;
 }
 
 function TeamInviteContent() {
@@ -52,7 +54,8 @@ function TeamInviteContent() {
       if (response.ok) {
         setInviteDetails(data);
         // Check if user needs to create an account
-        if (!session && data.isValid) {
+        // User needs account if: no current session AND the invited user doesn't exist yet
+        if (!session && data.isValid && !data.userExists) {
           setNeedsAccount(true);
         }
       } else {
@@ -190,6 +193,14 @@ function TeamInviteContent() {
             </div>
           )}
 
+          {/* Existing User Message */}
+          {inviteDetails && inviteDetails.userExists && !session && (
+            <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 text-sm">
+              <p className="font-medium">Welcome back, {inviteDetails.userName || inviteDetails.email}!</p>
+              <p>You already have an account. Please <Link href="/auth/signin" className="underline font-medium">sign in</Link> to accept this invitation.</p>
+            </div>
+          )}
+
           {inviteDetails && (
             <>
               {/* Invitation Details */}
@@ -314,13 +325,22 @@ function TeamInviteContent() {
 
               {/* Actions */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleAcceptInvite}
-                  disabled={accepting}
-                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {accepting ? "Accepting..." : "Accept Invitation"}
-                </button>
+                {inviteDetails.userExists && !session ? (
+                  <Link 
+                    href={`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`}
+                    className="btn-primary flex-1 text-center"
+                  >
+                    Sign In to Accept Invitation
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleAcceptInvite}
+                    disabled={accepting}
+                    className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {accepting ? "Accepting..." : "Accept Invitation"}
+                  </button>
+                )}
                 <Link href="/" className="btn-secondary flex-1 text-center">
                   Cancel
                 </Link>

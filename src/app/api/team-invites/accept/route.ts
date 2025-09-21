@@ -3,10 +3,15 @@ import dbConnect from "@/lib/db";
 import TeamInvite from "@/models/TeamInvite";
 import TeamMember from "@/models/TeamMember";
 import User from "@/models/User";
+import Company from "@/models/Company";
 import { sendWelcomeEmail } from "@/lib/email";
+import { ensureModelsRegistered } from "@/lib/models";
 
 export async function POST(request: NextRequest) {
   try {
+    // Ensure models are registered before proceeding
+    ensureModelsRegistered();
+    
     await dbConnect();
     const body = await request.json();
     const { token, userData } = body;
@@ -64,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "User account required. Please sign up first." },
+        { error: "User account required. Please sign in to accept this invitation." },
         { status: 400 }
       );
     }
@@ -77,7 +82,7 @@ export async function POST(request: NextRequest) {
       department: invite.department,
       phone: invite.phone,
       company: invite.companyId,
-      userId: invite.inviterId, // The user who sent the invite manages this team member
+      userId: user._id.toString(), // The actual team member's user ID
       permissions: invite.permissions,
       isActive: true,
     });

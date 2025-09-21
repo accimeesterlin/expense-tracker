@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Expense from "@/models/Expense";
 import { ensureModelsRegistered } from "@/lib/models";
+import { getUserCompanyIds, hasPermission } from "@/lib/permissions";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,9 +23,24 @@ export async function GET(request: NextRequest) {
     const expenseType = searchParams.get("expenseType");
     const isActive = searchParams.get("isActive");
 
-    const query: { userId: string; company?: string; category?: string; expenseType?: string; isActive?: boolean } = { userId: session.user.id };
+    // Get all company IDs the user has access to
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    if (accessibleCompanyIds.length === 0) {
+      return NextResponse.json([]);
+    }
 
-    if (companyId) query.company = companyId;
+    const query: { company: { $in: string[] }; category?: string; expenseType?: string; isActive?: boolean } = { 
+      company: { $in: accessibleCompanyIds }
+    };
+
+    if (companyId) {
+      // Check if user has access to this specific company
+      if (!accessibleCompanyIds.includes(companyId)) {
+        return NextResponse.json({ error: "Access denied to this company" }, { status: 403 });
+      }
+      query.company = { $in: [companyId] };
+    }
     if (category) query.category = category;
     if (expenseType) query.expenseType = expenseType;
     if (isActive !== null) query.isActive = isActive === "true";
@@ -55,6 +71,17 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
     const body = await request.json();
+
+    // Check if user has permission to create expenses for this company
+    if (body.company) {
+      const canCreate = await hasPermission(session.user.id, body.company, 'create_expenses');
+      if (!canCreate) {
+        return NextResponse.json(
+          { error: "You don't have permission to create expenses for this company" },
+          { status: 403 }
+        );
+      }
+    }
 
     // Calculate next billing date for subscriptions and recurring expenses
     if (

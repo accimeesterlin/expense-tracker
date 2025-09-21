@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Company from "@/models/Company";
 import Expense from "@/models/Expense";
+import TeamMember from "@/models/TeamMember";
 import { ensureModelsRegistered } from "@/lib/models";
+import { getUserCompanyAccess } from "@/lib/permissions";
 
 export async function GET() {
   try {
@@ -17,26 +19,42 @@ export async function GET() {
     }
 
     await dbConnect();
-    const companies = await Company.find({ userId: session.user.id }).sort({
-      createdAt: -1,
+    
+    // Get all companies the user has access to
+    const companyAccess = await getUserCompanyAccess(session.user.id);
+    const companyIds = companyAccess.map(access => access.companyId);
+    
+    // Fetch company details
+    const companies = await Company.find({ 
+      _id: { $in: companyIds }
+    }).sort({ createdAt: -1 });
+    
+    // Add access info to each company
+    const companiesWithAccess = companies.map(company => {
+      const access = companyAccess.find(a => a.companyId === company._id.toString());
+      return {
+        ...company.toObject(),
+        isOwner: access?.isOwner || false,
+        permissions: access?.permissions || [],
+        role: access?.role,
+        department: access?.department
+      };
     });
 
     // Get expense stats for each company
     const companiesWithStats = await Promise.all(
-      companies.map(async (company) => {
-        // Try both user ID and email for compatibility
+      companiesWithAccess.map(async (company) => {
+        // Get all expenses for this company (from all users)
         const expenses = await Expense.find({ 
-          $or: [
-            { userId: session.user.id, company: company._id, isActive: true },
-            { userId: session.user.email, company: company._id, isActive: true }
-          ]
+          company: company._id, 
+          isActive: true 
         });
         
         const expenseCount = expenses.length;
         const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
         
         return {
-          ...company.toObject(),
+          ...company,
           expenseCount,
           totalAmount
         };
