@@ -63,6 +63,7 @@ const TeamInviteSchema = new Schema<ITeamInvite>(
         'view_analytics',
         'manage_team',
         'manage_companies',
+        'view_audit_logs',
         'admin_access'
       ]
     }],

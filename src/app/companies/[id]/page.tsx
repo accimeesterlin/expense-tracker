@@ -89,6 +89,8 @@ export default function CompanyDetailsPage() {
     "overview"
   );
   const [mounted, setMounted] = useState(false);
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
+  const [isOwner, setIsOwner] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [expenseFilter, setExpenseFilter] = useState<string>("all");
   const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -108,16 +110,23 @@ export default function CompanyDetailsPage() {
 
   const fetchCompanyDetails = useCallback(async () => {
     try {
-      const [companyRes, expensesRes, teamRes, paymentsRes] = await Promise.all([
+      const [companyRes, expensesRes, teamRes, paymentsRes, permissionsRes] = await Promise.all([
         fetch(`/api/companies/${companyId}`),
         fetch(`/api/expenses?companyId=${companyId}`),
         fetch(`/api/team-members?companyId=${companyId}`),
         fetch(`/api/payments?company=${companyId}`),
+        fetch(`/api/user-permissions?companyId=${companyId}`),
       ]);
 
       if (companyRes.ok) {
         const companyData = await companyRes.json();
         setCompany(companyData);
+      }
+
+      if (permissionsRes.ok) {
+        const permissionsData = await permissionsRes.json();
+        setUserPermissions(permissionsData.permissions || []);
+        setIsOwner(permissionsData.isOwner || false);
       }
 
       if (expensesRes.ok) {
@@ -235,6 +244,9 @@ export default function CompanyDetailsPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const canCreateExpenses = userPermissions.includes('create_expenses') || userPermissions.includes('admin_access') || userPermissions.includes('all') || isOwner;
+  const canManageCompanies = userPermissions.includes('manage_companies') || userPermissions.includes('admin_access') || userPermissions.includes('all') || isOwner;
+
   const totalExpenseAmount = expenses.reduce(
     (sum, expense) => sum + expense.amount,
     0
@@ -276,20 +288,24 @@ export default function CompanyDetailsPage() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
-              <button
-                onClick={() => setShowExpenseModal(true)}
-                className="btn-secondary inline-flex items-center space-x-2 justify-center text-sm sm:text-base"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Expense</span>
-              </button>
-              <button
-                onClick={() => setShowCompanyModal(true)}
-                className="btn-primary inline-flex items-center space-x-2 justify-center text-sm sm:text-base"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Edit Company</span>
-              </button>
+              {canCreateExpenses && (
+                <button
+                  onClick={() => setShowExpenseModal(true)}
+                  className="btn-secondary inline-flex items-center space-x-2 justify-center text-sm sm:text-base"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Expense</span>
+                </button>
+              )}
+              {canManageCompanies && (
+                <button
+                  onClick={() => setShowCompanyModal(true)}
+                  className="btn-primary inline-flex items-center space-x-2 justify-center text-sm sm:text-base"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit Company</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -549,13 +565,15 @@ export default function CompanyDetailsPage() {
                     ? "Start tracking expenses for this company"
                     : "Try adjusting your search or filters"}
                 </p>
-                <button
-                  onClick={() => setShowExpenseModal(true)}
-                  className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add First Expense</span>
-                </button>
+                {canCreateExpenses && (
+                  <button
+                    onClick={() => setShowExpenseModal(true)}
+                    className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add First Expense</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-3 sm:space-y-4">

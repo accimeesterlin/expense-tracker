@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, Users } from "lucide-react";
 
+const DEFAULT_PERMISSIONS = ["view_expenses", "create_expenses"] as const;
+
 interface Company {
   _id: string;
   name: string;
@@ -17,6 +19,7 @@ interface TeamMember {
   phone?: string;
   isActive: boolean;
   company: Company;
+  permissions?: string[];
 }
 
 interface TeamMemberModalProps {
@@ -47,12 +50,16 @@ export default function TeamMemberModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sendInvite, setSendInvite] = useState(true);
-  const [permissions, setPermissions] = useState<string[]>(['view_expenses', 'create_expenses']);
+  const [permissions, setPermissions] = useState<string[]>(
+    teamMember?.permissions && teamMember.permissions.length
+      ? teamMember.permissions
+      : [...DEFAULT_PERMISSIONS]
+  );
 
   // Role-based permission mappings (memoized to prevent recreation)
   const rolePermissions = useMemo(() => ({
-    'Manager': ['view_expenses', 'create_expenses', 'edit_expenses', 'delete_expenses', 'view_budgets', 'create_budgets', 'edit_budgets', 'view_analytics', 'manage_team'],
-    'Team Lead': ['view_expenses', 'create_expenses', 'edit_expenses', 'view_budgets', 'create_budgets', 'view_analytics', 'manage_team'],
+    'Manager': ['view_expenses', 'create_expenses', 'edit_expenses', 'delete_expenses', 'view_budgets', 'create_budgets', 'edit_budgets', 'view_analytics', 'view_audit_logs', 'manage_team'],
+    'Team Lead': ['view_expenses', 'create_expenses', 'edit_expenses', 'view_budgets', 'create_budgets', 'view_analytics', 'view_audit_logs', 'manage_team'],
     'Senior Developer': ['view_expenses', 'create_expenses', 'edit_expenses', 'view_budgets', 'view_analytics'],
     'Developer': ['view_expenses', 'create_expenses', 'edit_expenses', 'view_budgets'],
     'Junior Developer': ['view_expenses', 'create_expenses'],
@@ -65,9 +72,9 @@ export default function TeamMemberModal({
     'Marketing Specialist': ['view_expenses', 'create_expenses', 'view_budgets'],
     'Sales Representative': ['view_expenses', 'create_expenses'],
     'Customer Support': ['view_expenses'],
-    'HR Specialist': ['view_expenses', 'view_budgets', 'manage_team'],
-    'Finance Manager': ['view_expenses', 'create_expenses', 'edit_expenses', 'delete_expenses', 'view_budgets', 'create_budgets', 'edit_budgets', 'delete_budgets', 'view_analytics', 'admin_access'],
-    'Operations Manager': ['view_expenses', 'create_expenses', 'edit_expenses', 'view_budgets', 'create_budgets', 'view_analytics', 'manage_team'],
+    'HR Specialist': ['view_expenses', 'view_budgets', 'view_audit_logs', 'manage_team'],
+    'Finance Manager': ['view_expenses', 'create_expenses', 'edit_expenses', 'delete_expenses', 'view_budgets', 'create_budgets', 'edit_budgets', 'delete_budgets', 'view_analytics', 'view_audit_logs', 'admin_access'],
+    'Operations Manager': ['view_expenses', 'create_expenses', 'edit_expenses', 'view_budgets', 'create_budgets', 'view_analytics', 'view_audit_logs', 'manage_team'],
     'Consultant': ['view_expenses', 'create_expenses', 'view_budgets', 'view_analytics'],
     'Intern': ['view_expenses'],
     'Contractor': ['view_expenses', 'create_expenses'],
@@ -88,10 +95,16 @@ export default function TeamMemberModal({
         isActive: teamMember.isActive,
       });
       setSendInvite(false); // Don't send invite when editing
+      setPermissions(
+        teamMember.permissions && teamMember.permissions.length
+          ? teamMember.permissions
+          : [...DEFAULT_PERMISSIONS]
+      );
     } else if (hasCompanies && !formData.company) {
       // Set first company as default for new team members
       setFormData((prev) => ({ ...prev, company: companies[0]._id }));
       setSendInvite(true); // Send invite for new members
+      setPermissions([...DEFAULT_PERMISSIONS]);
     }
   }, [teamMember, companies, hasCompanies, formData.company]);
 
@@ -108,6 +121,7 @@ export default function TeamMemberModal({
       });
     }
     setError("");
+    setPermissions([...DEFAULT_PERMISSIONS]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,6 +201,7 @@ export default function TeamMemberModal({
           phone: formData.phone.trim() || undefined,
           company: formData.company,
           isActive: formData.isActive,
+          permissions,
         };
 
         const response = await fetch(url, {
@@ -404,48 +419,57 @@ export default function TeamMemberModal({
               )}
 
               {/* Permissions */}
-              {(!teamMember && sendInvite) && (
-                <div>
-                  <label className="block text-sm font-medium text-[#0B3558] mb-3">
-                    Permissions
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-[#E5E7EB] rounded-lg p-3">
-                    {[
-                      { value: 'view_expenses', label: 'View Expenses' },
-                      { value: 'create_expenses', label: 'Create Expenses' },
-                      { value: 'edit_expenses', label: 'Edit Expenses' },
-                      { value: 'delete_expenses', label: 'Delete Expenses' },
-                      { value: 'view_budgets', label: 'View Budgets' },
-                      { value: 'create_budgets', label: 'Create Budgets' },
-                      { value: 'edit_budgets', label: 'Edit Budgets' },
-                      { value: 'delete_budgets', label: 'Delete Budgets' },
-                      { value: 'view_analytics', label: 'View Analytics' },
-                      { value: 'manage_team', label: 'Manage Team' },
-                      { value: 'manage_companies', label: 'Manage Companies' },
-                      { value: 'admin_access', label: 'Admin Access' },
-                    ].map((permission) => (
-                      <label
-                        key={permission.value}
-                        className="flex items-center text-xs hover:bg-gray-50 cursor-pointer p-1 rounded"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={permissions.includes(permission.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setPermissions(prev => [...prev, permission.value]);
-                            } else {
-                              setPermissions(prev => prev.filter(p => p !== permission.value));
-                            }
-                          }}
-                          className="mr-2 text-blue-600"
-                        />
-                        {permission.label}
-                      </label>
-                    ))}
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-[#0B3558] mb-2">
+                  Permissions
+                </label>
+                <p className="text-xs text-[#476788] mb-3">
+                  Choose the access levels this team member should have. Grant
+                  "View Audit Logs" so they can inspect activity history.
+                </p>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-[#E5E7EB] rounded-lg p-3">
+                  {[
+                    { value: 'view_expenses', label: 'View Expenses' },
+                    { value: 'create_expenses', label: 'Create Expenses' },
+                    { value: 'edit_expenses', label: 'Edit Expenses' },
+                    { value: 'delete_expenses', label: 'Delete Expenses' },
+                    { value: 'view_budgets', label: 'View Budgets' },
+                    { value: 'create_budgets', label: 'Create Budgets' },
+                    { value: 'edit_budgets', label: 'Edit Budgets' },
+                    { value: 'delete_budgets', label: 'Delete Budgets' },
+                    { value: 'view_analytics', label: 'View Analytics' },
+                    { value: 'view_audit_logs', label: 'View Audit Logs' },
+                    { value: 'manage_team', label: 'Manage Team' },
+                    { value: 'manage_companies', label: 'Manage Companies' },
+                    { value: 'admin_access', label: 'Admin Access' },
+                  ].map((permission) => (
+                    <label
+                      key={permission.value}
+                      className="flex items-center text-xs hover:bg-gray-50 cursor-pointer p-1 rounded"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={permissions.includes(permission.value)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setPermissions((prev) =>
+                              prev.includes(permission.value)
+                                ? prev
+                                : [...prev, permission.value]
+                            );
+                          } else {
+                            setPermissions((prev) =>
+                              prev.filter((p) => p !== permission.value)
+                            );
+                          }
+                        }}
+                        className="mr-2 text-blue-600"
+                      />
+                      {permission.label}
+                    </label>
+                  ))}
                 </div>
-              )}
+              </div>
 
               <div className="flex items-center space-x-2">
                 <input

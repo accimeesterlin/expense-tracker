@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Plus, Users, Edit, Trash2, Mail, Phone, User } from "lucide-react";
+import { Plus, Users, Edit, Trash2, Mail, Phone, User, Activity } from "lucide-react";
 import Link from "next/link";
 import TeamMemberModal from "@/components/TeamMemberModal";
 import AppLayout from "@/components/AppLayout";
@@ -23,6 +23,8 @@ interface TeamMember {
   phone?: string;
   isActive: boolean;
   company: Company;
+  permissions?: string[];
+  isPending?: boolean;
 }
 
 export default function TeamPage() {
@@ -157,14 +159,23 @@ export default function TeamPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            disabled={!hasCompanies}
-            className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Team Member</span>
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Link
+              href="/team/audit-logs"
+              className="btn-secondary flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
+            >
+              <Activity className="w-4 h-4" />
+              <span>Audit Logs</span>
+            </Link>
+            <button
+              onClick={() => setShowModal(true)}
+              disabled={!hasCompanies}
+              className="btn-primary inline-flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Team Member</span>
+            </button>
+          </div>
         </div>
         {!hasCompanies && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 sm:px-4 py-2 sm:py-3 rounded-lg mb-6 sm:mb-8 text-sm sm:text-base">
@@ -204,7 +215,14 @@ export default function TeamPage() {
               {teamMembers.map((member) => (
                 <div
                   key={member._id}
-                  className="p-3 sm:p-4 lg:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 w-full overflow-hidden"
+                  onClick={() => {
+                    if (!member.isPending) {
+                      router.push(`/team/${member._id}`);
+                    }
+                  }}
+                  className={`p-3 sm:p-4 lg:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 w-full overflow-hidden rounded-lg transition-colors ${
+                    member.isPending ? "cursor-default" : "cursor-pointer hover:bg-[#F3F5F9]"
+                  }`}
                 >
                   <div className="flex items-center space-x-3 sm:space-x-4">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#006BFF]/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -253,14 +271,20 @@ export default function TeamPage() {
 
                   <div className="flex items-center space-x-1 sm:space-x-2 sm:justify-end">
                     <button
-                      onClick={() => handleEdit(member)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(member);
+                      }}
                       className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
                       title="Edit member"
                     >
                       <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(member)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(member);
+                      }}
                       className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Delete member"
                     >

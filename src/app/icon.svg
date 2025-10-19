@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#006BFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0052CC;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle with gradient -->
+  <circle cx="64" cy="64" r="60" fill="url(#gradient)"/>
+
+  <!-- Letter "E" -->
+  <text
+    x="64"
+    y="64"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="72"
+    font-weight="700"
+    fill="white"
+    text-anchor="middle"
+    dominant-baseline="central"
+    letter-spacing="-2">E</text>
+</svg>

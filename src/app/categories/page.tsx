@@ -7,6 +7,13 @@ import Link from "next/link";
 import { Tag, Edit, Trash2, CreditCard, ArrowRight } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import ErrorModal from "@/components/ErrorModal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Category {
   _id: string;
@@ -20,9 +27,10 @@ export default function CategoriesPage() {
   const { status } = useSession();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [expenseCounts, setExpenseCounts] = useState<Record<string, number>>({});
+  const [expenseCounts, setExpenseCounts] = useState<Record<string, number>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
-  const [showForm] = useState(true); // Always show form
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -54,7 +62,7 @@ export default function CategoriesPage() {
     try {
       const [categoriesRes, expensesRes] = await Promise.all([
         fetch("/api/categories"),
-        fetch("/api/expenses")
+        fetch("/api/expenses"),
       ]);
 
       if (categoriesRes.ok) {
@@ -68,7 +76,7 @@ export default function CategoriesPage() {
       if (expensesRes.ok) {
         const expenses = await expensesRes.json();
         const counts: Record<string, number> = {};
-        expenses.forEach((expense: any) => {
+        expenses.forEach((expense: { category: string }) => {
           counts[expense.category] = (counts[expense.category] || 0) + 1;
         });
         setExpenseCounts(counts);
@@ -125,7 +133,7 @@ export default function CategoriesPage() {
         const errorData = await response.json();
         setError(errorData.error || "Failed to save category");
       }
-    } catch (error) {
+    } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
@@ -162,7 +170,7 @@ export default function CategoriesPage() {
           message: errorData.error || "Failed to delete category",
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         isOpen: true,
         title: "Delete Failed",
@@ -193,164 +201,159 @@ export default function CategoriesPage() {
     <AppLayout title="Categories">
       <div className="max-w-4xl mx-auto w-full overflow-x-hidden">
         {/* Form - Always visible */}
-        <div className="card p-4 sm:p-6 mb-6 sm:mb-8">
-          <h2 className="text-base sm:text-lg font-semibold text-[#0B3558] mb-3 sm:mb-4">
-            {editingCategory ? "Edit Category" : "Add New Category"}
-          </h2>
+        <Card className="mb-6 sm:mb-8">
+          <CardHeader>
+            <CardTitle>
+              {editingCategory ? "Edit Category" : "Add New Category"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Category Name</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    placeholder="Enter category name"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="color">Color</Label>
+                  <Input
+                    id="color"
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        color: e.target.value,
+                      }))
+                    }
+                    className="h-10"
+                  />
+                </div>
               </div>
-            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                  Category Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
                   }
-                  className="input-field w-full"
-                  placeholder="Enter category name"
-                  required
+                  placeholder="Enter category description"
+                  rows={3}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                  Color
-                </label>
-                <input
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, color: e.target.value }))
-                  }
-                  className="input-field w-full h-10"
-                />
+              <div className="flex items-center justify-end gap-2">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={submitting}>
+                  {submitting
+                    ? "Saving..."
+                    : editingCategory
+                      ? "Update Category"
+                      : "Create Category"}
+                </Button>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Description (Optional)
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                className="input-field w-full"
-                placeholder="Enter category description"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 sm:space-x-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting
-                  ? "Saving..."
-                  : editingCategory
-                  ? "Update Category"
-                  : "Create Category"}
-              </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Categories List */}
-        <div className="card w-full overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-[#E5E7EB]">
-            <h3 className="text-base sm:text-lg font-semibold text-[#0B3558]">
-              Your Categories ({categories.length})
-            </h3>
-          </div>
-
-          {categories.length === 0 ? (
-            <div className="p-8 sm:p-12 text-center">
-              <Tag className="w-10 h-10 sm:w-12 sm:h-12 text-[#A6BBD1] mx-auto mb-3 sm:mb-4" />
-              <p className="text-sm sm:text-base text-[#476788]">
-                No categories created yet
-              </p>
-              <p className="text-xs sm:text-sm text-[#A6BBD1]">
-                Use the form above to create your first category
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-[#E5E7EB]">
-              {categories.map((category) => (
-                <div
-                  key={category._id}
-                  className="p-4 sm:p-6 flex items-center justify-between w-full overflow-hidden hover:bg-[#F8F9FB] transition-colors group"
-                >
-                  <Link 
-                    href={`/expenses?category=${encodeURIComponent(category.name)}`}
-                    className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1 cursor-pointer"
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Categories ({categories.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {categories.length === 0 ? (
+              <div className="p-12 text-center">
+                <Tag className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  No categories created yet
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Use the form above to create your first category
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {categories.map((category) => (
+                  <div
+                    key={category._id}
+                    className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50 sm:p-6"
                   >
-                    <div
-                      className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-[#0B3558] text-sm sm:text-base truncate group-hover:text-[#006BFF] transition-colors">
-                          {category.name}
-                        </h4>
-                        <div className="flex items-center space-x-1 text-[#476788]">
-                          <CreditCard className="w-3 h-3" />
-                          <span className="text-xs font-medium">
-                            {expenseCounts[category.name] || 0}
-                          </span>
+                    <Link
+                      href={`/expenses?category=${encodeURIComponent(category.name)}`}
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 sm:gap-4"
+                    >
+                      <div
+                        className="h-4 w-4 flex-shrink-0 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="truncate font-medium transition-colors group-hover:text-primary">
+                            {category.name}
+                          </h4>
+                          <Badge variant="secondary" className="gap-1">
+                            <CreditCard className="h-3 w-3" />
+                            <span className="text-xs">
+                              {expenseCounts[category.name] || 0}
+                            </span>
+                          </Badge>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground transition-colors group-hover:text-primary" />
                         </div>
-                        <ArrowRight className="w-3 h-3 text-[#A6BBD1] group-hover:text-[#006BFF] transition-colors" />
+                        {category.description && (
+                          <p className="mt-1 truncate text-sm text-muted-foreground">
+                            {category.description}
+                          </p>
+                        )}
                       </div>
-                      {category.description && (
-                        <p className="text-xs sm:text-sm text-[#476788] mt-1 truncate">
-                          {category.description}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
+                    </Link>
 
-                  <div className="flex items-center space-x-1 sm:space-x-2 ml-2">
-                    <button
-                      onClick={() => handleEdit(category)}
-                      className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
-                    >
-                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category)}
-                      className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
+                    <div className="ml-2 flex items-center gap-1 sm:gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(category)}
+                        className="h-8 w-8"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(category)}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Error Modal */}

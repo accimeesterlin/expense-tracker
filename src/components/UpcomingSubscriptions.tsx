@@ -1,6 +1,21 @@
-import { Calendar, AlertCircle, Edit, X, MoreVertical, DollarSign } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import {
+  Calendar,
+  AlertCircle,
+  Edit,
+  X,
+  MoreVertical,
+  DollarSign,
+} from "lucide-react";
 import CompanyLogo from "./CompanyLogo";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Company {
   _id: string;
@@ -67,21 +82,6 @@ export default function UpcomingSubscriptions({
   onViewDetails,
   onRecordPayment,
 }: UpcomingSubscriptionsProps) {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-  
   const upcomingExpenses = expenses
     .filter((expense) => expense.nextBillingDate)
     .sort(
@@ -98,11 +98,13 @@ export default function UpcomingSubscriptions({
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const getStatusColor = (daysUntil: number) => {
-    if (daysUntil < 0) return "text-red-600 bg-red-100";
-    if (daysUntil <= 7) return "text-orange-600 bg-orange-100";
-    if (daysUntil <= 30) return "text-yellow-600 bg-yellow-100";
-    return "text-green-600 bg-green-100";
+  const getStatusVariant = (
+    daysUntil: number
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    if (daysUntil < 0) return "destructive";
+    if (daysUntil <= 7) return "default";
+    if (daysUntil <= 30) return "secondary";
+    return "outline";
   };
 
   const getStatusText = (daysUntil: number) => {
@@ -116,43 +118,49 @@ export default function UpcomingSubscriptions({
 
   if (upcomingExpenses.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-        <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-          <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
-            Upcoming Subscriptions
-          </h2>
-        </div>
-        <div className="text-center py-6 sm:py-8">
-          <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-          <p className="text-sm sm:text-base text-gray-500">No upcoming subscriptions</p>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            <CardTitle className="text-base sm:text-lg lg:text-xl">
+              Upcoming Subscriptions
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 sm:py-8">
+            <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+            <p className="text-sm sm:text-base text-muted-foreground">
+              No upcoming subscriptions
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-      <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
-        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-        <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
-          Upcoming Subscriptions
-        </h2>
-        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 sm:px-2.5 py-0.5 rounded-full">
-          {upcomingExpenses.length}
-        </span>
-      </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          <CardTitle className="text-base sm:text-lg lg:text-xl">
+            Upcoming Subscriptions
+          </CardTitle>
+          <Badge variant="default">{upcomingExpenses.length}</Badge>
+        </div>
+      </CardHeader>
 
-      <div className="space-y-3 sm:space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4">
         {upcomingExpenses.map((expense) => {
           const daysUntil = getDaysUntil(expense.nextBillingDate!);
-          const statusColor = getStatusColor(daysUntil);
+          const statusVariant = getStatusVariant(daysUntil);
           const statusText = getStatusText(daysUntil);
 
           return (
             <div
               key={expense._id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 gap-3 sm:gap-0"
+              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg border gap-3 sm:gap-0"
             >
               <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                 <CompanyLogo
@@ -163,11 +171,13 @@ export default function UpcomingSubscriptions({
                   className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{expense.name}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">
+                  <h3 className="font-medium text-foreground text-sm sm:text-base truncate">
+                    {expense.name}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {expense.company.name} • {expense.category}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+                  <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                     {new Date(expense.nextBillingDate!).toLocaleDateString(
                       "en-US",
                       {
@@ -178,7 +188,7 @@ export default function UpcomingSubscriptions({
                       }
                     )}
                   </p>
-                  <p className="text-xs text-gray-500 sm:hidden">
+                  <p className="text-xs text-muted-foreground sm:hidden">
                     {new Date(expense.nextBillingDate!).toLocaleDateString(
                       "en-US",
                       {
@@ -192,95 +202,80 @@ export default function UpcomingSubscriptions({
               </div>
 
               <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4">
-                <span className="text-base sm:text-lg font-semibold text-gray-900">
+                <span className="text-base sm:text-lg font-semibold text-foreground">
                   ${expense.amount.toFixed(2)}
                 </span>
-                <span
-                  className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${statusColor} whitespace-nowrap`}
-                >
+                <Badge variant={statusVariant} className="whitespace-nowrap">
                   {statusText}
-                </span>
-                
+                </Badge>
+
                 {/* Action Buttons */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() =>
-                      setOpenDropdown(openDropdown === expense._id ? null : expense._id)
-                    }
-                    className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
-                    title="Actions"
-                  >
-                    <MoreVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
-                  </button>
-                  
-                  {openDropdown === expense._id && (
-                    <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-40">
-                      {onRecordPayment && (
-                        <button
-                          onClick={() => {
-                            onRecordPayment(expense);
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50 flex items-center space-x-2"
-                        >
-                          <DollarSign className="w-4 h-4" />
-                          <span>Record Payment</span>
-                        </button>
-                      )}
-                      {onViewDetails && (
-                        <button
-                          onClick={() => {
-                            onViewDetails(expense._id);
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                        >
-                          <Calendar className="w-4 h-4" />
-                          <span>View Details</span>
-                        </button>
-                      )}
-                      {onEdit && (
-                        <button
-                          onClick={() => {
-                            onEdit(expense);
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                          <span>Edit</span>
-                        </button>
-                      )}
-                      {onCancel && (
-                        <button
-                          onClick={() => {
-                            if (confirm('Are you sure you want to cancel this subscription?')) {
-                              onCancel(expense._id);
-                            }
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-                        >
-                          <X className="w-4 h-4" />
-                          <span>Cancel</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="flex-shrink-0"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {onRecordPayment && (
+                      <DropdownMenuItem
+                        onClick={() => onRecordPayment(expense)}
+                        className="text-green-600"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        <span>Record Payment</span>
+                      </DropdownMenuItem>
+                    )}
+                    {onViewDetails && (
+                      <DropdownMenuItem
+                        onClick={() => onViewDetails(expense._id)}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>View Details</span>
+                      </DropdownMenuItem>
+                    )}
+                    {onEdit && (
+                      <DropdownMenuItem onClick={() => onEdit(expense)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                    )}
+                    {onCancel && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (
+                            confirm(
+                              "Are you sure you want to cancel this subscription?"
+                            )
+                          ) {
+                            onCancel(expense._id);
+                          }
+                        }}
+                        className="text-destructive"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        <span>Cancel</span>
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           );
         })}
-      </div>
 
-      {expenses.filter((e) => e.nextBillingDate).length > 5 && (
-        <div className="text-center pt-4">
-          <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-            View All Subscriptions →
-          </button>
-        </div>
-      )}
-    </div>
+        {expenses.filter((e) => e.nextBillingDate).length > 5 && (
+          <div className="text-center pt-4">
+            <Button variant="link" className="text-primary">
+              View All Subscriptions →
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

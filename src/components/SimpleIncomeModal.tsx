@@ -1,10 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign, Calendar, X } from "lucide-react";
-import { Modal, ModalHeader, ModalContent, ModalFooter, ModalTitle, ModalDescription } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
-import { FormField, FormLabel, FormInput, FormSelect, FormError } from "@/components/ui/Form";
+import { DollarSign, Calendar } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Income {
   _id: string;
@@ -135,8 +150,11 @@ export default function SimpleIncomeModal({
 
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (response.ok) {
         const result = await response.json();
         console.log("Success response:", result);
@@ -162,135 +180,118 @@ export default function SimpleIncomeModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div className="card max-w-xs w-full mx-2 sm:mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[#0B3558]">
+            <DialogTitle>
               {isEditing ? "Edit Income" : "Add Income"}
-            </h2>
+            </DialogTitle>
           </div>
-          <button
-            onClick={onClose}
-            className="text-[#A6BBD1] hover:text-[#0B3558] transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+          <DialogDescription>
+            {isEditing
+              ? "Update your income details below."
+              : "Add a new income source to track your earnings."}
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Income Source *
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="source">Income Source *</Label>
+            <Input
+              id="source"
               type="text"
               value={source}
               onChange={(e) => setSource(e.target.value)}
-              className="input-field w-full"
               placeholder="e.g., Salary, Freelance, Investment"
               required
               autoFocus
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Amount *
-            </label>
-            <div className="input-field-with-icon">
-              <DollarSign className="icon w-5 h-5" />
-              <input
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount *</Label>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="amount"
                 type="number"
                 step="0.01"
                 min="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="input-field w-full"
+                className="pl-9"
                 placeholder="0.00"
                 required
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Frequency
-            </label>
-            <select
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
-              className="input-field w-full"
-            >
-              <option value="one-time">One-time</option>
-              <option value="weekly">Weekly</option>
-              <option value="bi-weekly">Bi-weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="yearly">Yearly</option>
-            </select>
+          <div className="space-y-2">
+            <Label htmlFor="frequency">Frequency</Label>
+            <Select value={frequency} onValueChange={setFrequency}>
+              <SelectTrigger id="frequency">
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="one-time">One-time</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Received Date *
-            </label>
-            <div className="input-field-with-icon">
-              <Calendar className="icon w-5 h-5" />
-              <input
+          <div className="space-y-2">
+            <Label htmlFor="receivedDate">Received Date *</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="receivedDate"
                 type="date"
                 value={receivedDate}
                 onChange={(e) => setReceivedDate(e.target.value)}
-                className="input-field w-full"
+                className="pl-9"
                 required
               />
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex space-x-3 pt-4">
-            <button
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="flex-1 btn-secondary"
               disabled={loading}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 btn-primary"
-              disabled={loading}
-            >
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Saving...
+                </>
               ) : isEditing ? (
                 "Update Income"
               ) : (
                 "Add Income"
               )}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

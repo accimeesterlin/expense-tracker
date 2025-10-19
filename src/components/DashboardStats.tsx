@@ -1,5 +1,7 @@
 import { Building2, CreditCard, TrendingUp, Calendar } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface Company {
   _id: string;
@@ -77,23 +79,37 @@ export default function DashboardStats({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
       {stats.map((stat) => (
-        <div
+        <Card
           key={stat.name}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => router.push(stat.href)}
         >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center">
-            <div className={`${stat.color} rounded-lg p-2 sm:p-3 mb-2 sm:mb-0 sm:mr-3 lg:mr-4 flex-shrink-0`}>
-              <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center">
+              <div
+                className={cn(
+                  stat.color,
+                  "rounded-lg p-2 sm:p-3 mb-2 sm:mb-0 sm:mr-3 lg:mr-4 flex-shrink-0"
+                )}
+              >
+                <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                  {stat.name}
+                </p>
+                <p
+                  className={cn(
+                    "text-lg sm:text-xl lg:text-2xl font-bold truncate",
+                    stat.textColor
+                  )}
+                >
+                  {stat.value}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.name}</p>
-              <p className={`text-lg sm:text-xl lg:text-2xl font-bold ${stat.textColor} truncate`}>
-                {stat.value}
-              </p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

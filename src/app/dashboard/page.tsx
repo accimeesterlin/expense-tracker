@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus,
   Building2,
@@ -20,7 +22,6 @@ import {
 import CompanyModal from "@/components/CompanyModal";
 import ExpenseModal from "@/components/ExpenseModal";
 import CompanyCard from "@/components/CompanyCard";
-import ExpenseCard from "@/components/ExpenseCard";
 import DashboardExpenseCard from "@/components/DashboardExpenseCard";
 import DashboardStats from "@/components/DashboardStats";
 import UpcomingSubscriptions from "@/components/UpcomingSubscriptions";
@@ -37,6 +38,7 @@ import Sidebar from "@/components/Sidebar";
 import ReceiptScannerModal from "@/components/ReceiptScannerModal";
 import NotificationModal from "@/components/NotificationModal";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { useSidebar } from "@/contexts/SidebarContext";
 import type {
   Company,
   Expense,
@@ -75,7 +77,7 @@ export default function DashboardPage() {
     "overview"
   );
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false);
+  const { isOpen: showSidebar, setIsOpen: setShowSidebar } = useSidebar();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{
     isOpen: boolean;
@@ -245,15 +247,21 @@ export default function DashboardPage() {
           isOpen: true,
           type: "error",
           title: "No Companies Available",
-          message: "Please create a company first before adding expenses from receipts.",
+          message:
+            "Please create a company first before adding expenses from receipts.",
         });
         return;
       }
 
       // Get the saved company preference or use the first company
-      const savedCompanyId = localStorage.getItem("expense-tracker-last-company");
-      const validCompany = savedCompanyId && companies.find(c => c._id === savedCompanyId);
-      const selectedCompanyId = validCompany ? savedCompanyId : companies[0]._id;
+      const savedCompanyId = localStorage.getItem(
+        "expenci-last-company"
+      );
+      const validCompany =
+        savedCompanyId && companies.find((c) => c._id === savedCompanyId);
+      const selectedCompanyId = validCompany
+        ? savedCompanyId
+        : companies[0]._id;
 
       // Create the expense directly
       const response = await fetch("/api/expenses", {
@@ -270,7 +278,8 @@ export default function DashboardPage() {
           category: expenseData.category,
           expenseType: expenseData.expenseType,
           startDate: new Date().toISOString().split("T")[0],
-          paymentDate: expenseData.paymentDate || new Date().toISOString().split("T")[0],
+          paymentDate:
+            expenseData.paymentDate || new Date().toISOString().split("T")[0],
           isActive: true,
           tags: expenseData.tags,
           receiptUrl: expenseData.receiptUrl,
@@ -293,10 +302,15 @@ export default function DashboardPage() {
           message: "Expense created successfully from receipt!",
         });
       } else {
-        console.error("Failed to create expense from receipt. Status:", response.status);
-        const errorData = await response.json().catch(() => ({ error: "Unknown error occurred" }));
+        console.error(
+          "Failed to create expense from receipt. Status:",
+          response.status
+        );
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error occurred" }));
         console.error("Error response:", errorData);
-        
+
         setNotification({
           isOpen: true,
           type: "error",
@@ -339,17 +353,19 @@ export default function DashboardPage() {
           <div className="w-full px-3 sm:px-4 lg:px-6 overflow-x-hidden">
             <div className="flex justify-between items-center h-16 min-w-0 gap-2">
               <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-shrink">
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setShowSidebar(true)}
-                  className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden flex-shrink-0"
+                  className="lg:hidden flex-shrink-0 h-9 w-9"
                 >
-                  <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
                 <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl items-center justify-center lg:hidden flex-shrink-0 hidden sm:flex">
                   <DollarSign className="w-4 h-4 lg:w-6 lg:h-6 text-white" />
                 </div>
                 <h1 className="text-sm sm:text-lg lg:text-2xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
-                  ExpenseTracker
+                  Expenci
                 </h1>
                 <h1 className="text-xl lg:text-2xl font-semibold text-[#0B3558] hidden lg:block truncate min-w-0">
                   Dashboard
@@ -372,23 +388,27 @@ export default function DashboardPage() {
                     </span>
                   </div>
 
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowSettingsModal(true)}
-                    className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
+                    className="flex-shrink-0 h-9 w-9"
                     title="Settings"
                   >
-                    <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
 
                   {/* Make sign out button more prominent and always visible */}
-                  <button
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 inline-flex items-center space-x-1 shadow-sm"
+                    className="flex-shrink-0 gap-1 shadow-sm"
                     title="Sign out"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="h-4 w-4" />
                     <span>Exit</span>
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -399,26 +419,28 @@ export default function DashboardPage() {
         <div className="bg-white border-b border-[#E5E7EB] w-full overflow-x-hidden">
           <div className="w-full px-3 sm:px-4 lg:px-6 overflow-x-auto">
             <nav className="flex space-x-4 sm:space-x-6 lg:space-x-8 min-w-max">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => setActiveTab("overview")}
-                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                className={`h-auto py-3 sm:py-4 px-1 rounded-none border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                   activeTab === "overview"
-                    ? "border-[#006BFF] text-[#006BFF]"
-                    : "border-transparent text-[#476788] hover:text-[#0B3558] hover:border-gray-300"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
               >
                 Overview
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => setActiveTab("financial")}
-                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                className={`h-auto py-3 sm:py-4 px-1 rounded-none border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                   activeTab === "financial"
-                    ? "border-[#006BFF] text-[#006BFF]"
-                    : "border-transparent text-[#476788] hover:text-[#0B3558] hover:border-gray-300"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
               >
                 Financial Dashboard
-              </button>
+              </Button>
             </nav>
           </div>
         </div>
@@ -432,15 +454,16 @@ export default function DashboardPage() {
 
               {/* Quick Actions - Essential Only */}
               <div className="mt-3 sm:mt-4 lg:mt-6 flex flex-wrap gap-2 sm:gap-3 lg:gap-4 max-w-4xl">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setShowSimpleIncomeModal(true)}
-                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-green-50 hover:bg-green-100 border-green-200 w-48 sm:w-56 lg:w-64"
+                  className="h-auto p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all bg-green-50 hover:bg-green-100 border-green-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 text-left">
                       <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-green-800 truncate">
                         Add Income
                       </h3>
@@ -449,17 +472,18 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setShowExpenseModal(true)}
-                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-blue-50 hover:bg-blue-100 border-blue-200 w-48 sm:w-56 lg:w-64"
+                  className="h-auto p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all bg-blue-50 hover:bg-blue-100 border-blue-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 text-left">
                       <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-blue-800 truncate">
                         Add Expense
                       </h3>
@@ -468,17 +492,18 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setShowReceiptScannerModal(true)}
-                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-purple-50 hover:bg-purple-100 border-purple-200 w-48 sm:w-56 lg:w-64"
+                  className="h-auto p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all bg-purple-50 hover:bg-purple-100 border-purple-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Scan className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 text-left">
                       <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-purple-800 truncate">
                         Scan Receipt
                       </h3>
@@ -487,17 +512,18 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setShowSimpleDebtModal(true)}
-                  className="card p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all cursor-pointer bg-orange-50 hover:bg-orange-100 border-orange-200 w-48 sm:w-56 lg:w-64"
+                  className="h-auto p-2 sm:p-3 lg:p-3 hover:shadow-lg transition-all bg-orange-50 hover:bg-orange-100 border-orange-200 w-48 sm:w-56 lg:w-64"
                 >
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 text-left">
                       <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-orange-800 truncate">
                         Add Debt
                       </h3>
@@ -506,7 +532,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                </button>
+                </Button>
               </div>
 
               {/* Upcoming Subscriptions */}
@@ -527,7 +553,7 @@ export default function DashboardPage() {
                     // Pre-fill the expense modal with payment data
                     setSelectedExpense({
                       ...expense,
-                      paymentDate: new Date().toISOString().split('T')[0]
+                      paymentDate: new Date().toISOString().split("T")[0],
                     });
                     setShowExpenseModal(true);
                   }}
@@ -537,114 +563,123 @@ export default function DashboardPage() {
               {/* Companies and Expenses Grid */}
               <div className="mt-3 sm:mt-4 lg:mt-6 grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-4 w-full">
                 {/* Companies Section */}
-                <div className="card p-2 sm:p-3 lg:p-4 w-full overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3 lg:mb-4 gap-1 sm:gap-2 w-full">
-                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                      <Building2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#006BFF] flex-shrink-0" />
-                      <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] truncate">
-                        Companies
-                      </h2>
+                <Card className="w-full overflow-hidden">
+                  <CardContent className="p-2 sm:p-3 lg:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3 lg:mb-4 gap-1 sm:gap-2 w-full">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                        <Building2 className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#006BFF] flex-shrink-0" />
+                        <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] truncate">
+                          Companies
+                        </h2>
+                      </div>
+                      <div className="flex items-center justify-between sm:space-x-3 flex-shrink-0">
+                        <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2 py-1 rounded-full">
+                          {companies.length}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => setShowCompanyModal(true)}
+                          className="ml-2 h-7 text-xs"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span className="hidden sm:inline ml-1">Add</span>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between sm:space-x-3 flex-shrink-0">
-                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2 py-1 rounded-full">
-                        {companies.length}
-                      </span>
-                      <button
-                        onClick={() => setShowCompanyModal(true)}
-                        className="btn-primary text-xs px-2 py-1 inline-flex items-center space-x-1 ml-2"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span className="hidden sm:inline">Add</span>
-                      </button>
-                    </div>
-                  </div>
 
-                  {companies.length === 0 ? (
-                    <div className="text-center py-4 sm:py-6 lg:py-8">
-                      <Building2 className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-[#A6BBD1] mx-auto mb-2 sm:mb-3" />
-                      <p className="text-xs sm:text-sm text-[#476788] mb-2 sm:mb-3">
-                        No companies added yet
-                      </p>
-                      <button
-                        onClick={() => setShowCompanyModal(true)}
-                        className="btn-primary inline-flex items-center space-x-1 text-xs sm:text-sm"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add Company</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 sm:space-y-3">
-                      {companies.map((company) => (
-                        <CompanyCard
-                          key={company._id}
-                          company={company}
-                          onEdit={() => {
-                            setSelectedCompany(company);
-                            setShowCompanyModal(true);
-                          }}
-                          onDelete={() => handleCompanyDeleted(company._id)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {companies.length === 0 ? (
+                      <div className="text-center py-4 sm:py-6 lg:py-8">
+                        <Building2 className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-[#A6BBD1] mx-auto mb-2 sm:mb-3" />
+                        <p className="text-xs sm:text-sm text-[#476788] mb-2 sm:mb-3">
+                          No companies added yet
+                        </p>
+                        <Button
+                          onClick={() => setShowCompanyModal(true)}
+                          className="text-xs sm:text-sm"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          <span>Add Company</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 sm:space-y-3">
+                        {companies.map((company) => (
+                          <CompanyCard
+                            key={company._id}
+                            company={company}
+                            onEdit={() => {
+                              setSelectedCompany(company);
+                              setShowCompanyModal(true);
+                            }}
+                            onDelete={() => handleCompanyDeleted(company._id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Expenses Section */}
-                <div className="card p-2 sm:p-3 lg:p-4 w-full overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3 lg:mb-4 gap-1 sm:gap-2 w-full">
-                    <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#006BFF] flex-shrink-0" />
-                      <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] truncate">
-                        Recent Expenses
-                      </h2>
+                <Card className="w-full overflow-hidden">
+                  <CardContent className="p-2 sm:p-3 lg:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-3 lg:mb-4 gap-1 sm:gap-2 w-full">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                        <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#006BFF] flex-shrink-0" />
+                        <h2 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] truncate">
+                          Recent Expenses
+                        </h2>
+                      </div>
+                      <div className="flex items-center justify-between sm:space-x-3 flex-shrink-0">
+                        <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2 py-1 rounded-full">
+                          {expenses.length}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => setShowExpenseModal(true)}
+                          className="ml-2 h-7 text-xs"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span className="hidden sm:inline ml-1">Add</span>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between sm:space-x-3 flex-shrink-0">
-                      <span className="bg-[#006BFF]/10 text-[#006BFF] text-xs font-medium px-2 py-1 rounded-full">
-                        {expenses.length}
-                      </span>
-                      <button
-                        onClick={() => setShowExpenseModal(true)}
-                        className="btn-primary text-xs px-2 py-1 inline-flex items-center space-x-1 ml-2"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span className="hidden sm:inline">Add</span>
-                      </button>
-                    </div>
-                  </div>
 
-                  {expenses.length === 0 ? (
-                    <div className="text-center py-4 sm:py-6 lg:py-8">
-                      <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-[#A6BBD1] mx-auto mb-2 sm:mb-3" />
-                      <p className="text-xs sm:text-sm text-[#476788] mb-2 sm:mb-3">
-                        No expenses tracked yet
-                      </p>
-                      <button
-                        onClick={() => setShowExpenseModal(true)}
-                        className="btn-primary inline-flex items-center space-x-1 text-xs sm:text-sm"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add Expense</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2 sm:space-y-3">
-                      {expenses.slice(0, 5).map((expense) => (
-                        <DashboardExpenseCard
-                          key={expense._id}
-                          expense={expense}
-                        />
-                      ))}
-                      {expenses.length > 5 && (
-                        <div className="text-center pt-3 sm:pt-4">
-                          <button className="text-[#006BFF] hover:text-[#0052CC] text-xs sm:text-sm font-medium transition-colors">
-                            View All Expenses →
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    {expenses.length === 0 ? (
+                      <div className="text-center py-4 sm:py-6 lg:py-8">
+                        <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-[#A6BBD1] mx-auto mb-2 sm:mb-3" />
+                        <p className="text-xs sm:text-sm text-[#476788] mb-2 sm:mb-3">
+                          No expenses tracked yet
+                        </p>
+                        <Button
+                          onClick={() => setShowExpenseModal(true)}
+                          className="text-xs sm:text-sm"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          <span>Add Expense</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 sm:space-y-3">
+                        {expenses.slice(0, 5).map((expense) => (
+                          <DashboardExpenseCard
+                            key={expense._id}
+                            expense={expense}
+                          />
+                        ))}
+                        {expenses.length > 5 && (
+                          <div className="text-center pt-3 sm:pt-4">
+                            <Button
+                              variant="link"
+                              className="text-xs sm:text-sm"
+                            >
+                              View All Expenses →
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </>
           ) : (
@@ -660,78 +695,85 @@ export default function DashboardPage() {
           <div className="relative">
             {showMobileMenu && (
               <div className="absolute bottom-14 right-0 space-y-2">
-                <button
+                <Button
+                  size="icon"
                   onClick={() => {
                     setShowReceiptScannerModal(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 bg-purple-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-purple-700 transition-colors"
+                  className="h-9 w-9 rounded-full bg-purple-600 shadow-lg hover:bg-purple-700"
                   title="Scan Receipt"
                 >
-                  <Scan className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  <Scan className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
                   onClick={() => {
                     setShowAssetModal(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+                  className="h-9 w-9 rounded-full bg-green-600 shadow-lg hover:bg-green-700"
                   title="Add Asset"
                 >
-                  <PiggyBank className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  <PiggyBank className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
                   onClick={() => {
                     setShowSimpleDebtModal(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 bg-orange-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-orange-700 transition-colors"
+                  className="h-9 w-9 rounded-full bg-orange-600 shadow-lg hover:bg-orange-700"
                   title="Add Debt"
                 >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
                   onClick={() => {
                     setShowSimpleIncomeModal(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-green-700 transition-colors"
+                  className="h-9 w-9 rounded-full bg-green-600 shadow-lg hover:bg-green-700"
                   title="Add Income"
                 >
-                  <TrendingUp className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  <TrendingUp className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
                   onClick={() => {
                     setShowPaymentMethodModal(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+                  className="h-9 w-9 rounded-full bg-blue-600 shadow-lg hover:bg-blue-700"
                   title="Add Payment Method"
                 >
-                  <CreditCard className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  <CreditCard className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
                   onClick={() => {
                     setShowExpenseModal(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-9 h-9 bg-red-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-red-700 transition-colors"
+                  className="h-9 w-9 rounded-full bg-red-600 shadow-lg hover:bg-red-700"
                   title="Add Expense"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
               </div>
             )}
-            <button
+            <Button
+              size="icon"
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="w-11 h-11 bg-[#006BFF] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#0052CC] transition-colors"
+              className="h-11 w-11 rounded-full bg-primary shadow-lg hover:bg-primary/90"
             >
               <Plus
-                className={`w-4 h-4 transition-transform ${
+                className={`h-4 w-4 transition-transform ${
                   showMobileMenu ? "rotate-45" : ""
                 }`}
               />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -859,7 +901,7 @@ export default function DashboardPage() {
           title={notification.title}
           message={notification.message}
         />
-        
+
         {/* PWA Install Prompt */}
         <PWAInstallPrompt />
       </div>

@@ -89,6 +89,7 @@ export default function ExpenseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState("");
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
   const [newComment, setNewComment] = useState("");
   const [addingComment, setAddingComment] = useState(false);
   const [editingComment, setEditingComment] = useState<{
@@ -108,6 +109,11 @@ export default function ExpenseDetailPage() {
       if (response.ok) {
         const data = await response.json();
         setExpense(data);
+        
+        // Fetch user permissions for this expense's company
+        if (data.company?._id) {
+          await fetchUserPermissions(data.company._id);
+        }
       } else {
         setError("Failed to load expense");
       }
@@ -118,6 +124,18 @@ export default function ExpenseDetailPage() {
       setLoading(false);
     }
   }, [params.id]);
+
+  const fetchUserPermissions = useCallback(async (companyId: string) => {
+    try {
+      const response = await fetch(`/api/user-permissions?companyId=${companyId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUserPermissions(data.permissions || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user permissions:", error);
+    }
+  }, []);
 
   const fetchCompanies = useCallback(async () => {
     try {
@@ -398,6 +416,9 @@ export default function ExpenseDetailPage() {
     return colors[index];
   };
 
+  const canEditExpense = userPermissions.includes('edit_expenses') || userPermissions.includes('admin_access') || userPermissions.includes('all');
+  const canDeleteExpense = userPermissions.includes('delete_expenses') || userPermissions.includes('admin_access') || userPermissions.includes('all');
+
   if (status === "loading" || loading) {
     return (
       <AppLayout title="Loading...">
@@ -482,9 +503,9 @@ export default function ExpenseDetailPage() {
                 </div>
               ) : (
                 <h1
-                  className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#0B3558] truncate cursor-pointer hover:text-[#006BFF] transition-colors"
-                  onClick={() => startQuickEdit("name", expense.name)}
-                  title="Click to edit title"
+                  className={`text-lg sm:text-xl lg:text-2xl font-semibold text-[#0B3558] truncate ${canEditExpense ? 'cursor-pointer hover:text-[#006BFF] transition-colors' : ''}`}
+                  onClick={canEditExpense ? () => startQuickEdit("name", expense.name) : undefined}
+                  title={canEditExpense ? "Click to edit title" : undefined}
                 >
                   {expense.name}
                 </h1>
@@ -492,20 +513,24 @@ export default function ExpenseDetailPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto justify-end flex-shrink-0">
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="btn-secondary inline-flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-1 sm:flex-none justify-center"
-            >
-              <Edit className="w-4 h-4" />
-              <span className="hidden sm:inline">Edit</span>
-            </button>
-            <button
-              onClick={handleDelete}
-              className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 inline-flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-1 sm:flex-none justify-center"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Delete</span>
-            </button>
+            {canEditExpense && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="btn-secondary inline-flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              >
+                <Edit className="w-4 h-4" />
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+            )}
+            {canDeleteExpense && (
+              <button
+                onClick={handleDelete}
+                className="btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50 inline-flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -556,11 +581,9 @@ export default function ExpenseDetailPage() {
                     <div className="flex items-center space-x-2">
                       <DollarSign className="w-5 h-5 text-[#006BFF]" />
                       <span
-                        className="text-3xl font-bold text-[#0B3558] cursor-pointer hover:text-[#006BFF] transition-colors"
-                        onClick={() =>
-                          startQuickEdit("amount", expense.amount.toString())
-                        }
-                        title="Click to edit amount"
+                        className={`text-3xl font-bold text-[#0B3558] ${canEditExpense ? 'cursor-pointer hover:text-[#006BFF] transition-colors' : ''}`}
+                        onClick={canEditExpense ? () => startQuickEdit("amount", expense.amount.toString()) : undefined}
+                        title={canEditExpense ? "Click to edit amount" : undefined}
                       >
                         ${expense.amount.toFixed(2)}
                       </span>

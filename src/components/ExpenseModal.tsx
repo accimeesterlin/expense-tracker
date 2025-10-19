@@ -177,7 +177,7 @@ export default function ExpenseModal({
     } else if (hasCompanies && companies.length > 0) {
       // For new expenses, try to restore the last selected company from localStorage
       const savedCompanyId = localStorage.getItem(
-        "expense-tracker-last-company"
+        "expenci-last-company"
       );
       const validCompany =
         savedCompanyId && companies.find((c) => c._id === savedCompanyId);
@@ -239,7 +239,7 @@ export default function ExpenseModal({
     if (!expense) {
       // For new expenses, try to restore the last selected company from localStorage
       const savedCompanyId = localStorage.getItem(
-        "expense-tracker-last-company"
+        "expenci-last-company"
       );
       const validCompany =
         savedCompanyId && companies.find((c) => c._id === savedCompanyId);
@@ -702,7 +702,7 @@ export default function ExpenseModal({
                     }));
                     // Save the selected company to localStorage for future use
                     localStorage.setItem(
-                      "expense-tracker-last-company",
+                      "expenci-last-company",
                       selectedCompanyId
                     );
                   }}

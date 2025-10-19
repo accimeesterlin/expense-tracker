@@ -65,6 +65,10 @@ export async function hasPermission(
   if (!companyAccess) return false;
   if (companyAccess.isOwner) return true; // Owner has all permissions
   
+  if (companyAccess.permissions.includes('admin_access')) {
+    return true;
+  }
+
   return companyAccess.permissions.includes(permission);
 }
 

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Company from "@/models/Company";
 import { ensureModelsRegistered } from "@/lib/models";
+import { getUserCompanyIds, hasPermission } from "@/lib/permissions";
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +21,15 @@ export async function GET(
 
     await dbConnect();
     const { id } = await params;
-    const company = await Company.findOne({ _id: id, userId: session.user.id });
+    
+    // Get companies the user has access to (owned or as team member)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    if (!accessibleCompanyIds.includes(id)) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+    
+    const company = await Company.findById(id);
 
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
@@ -53,8 +62,22 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const company = await Company.findOneAndUpdate(
-      { _id: id, userId: session.user.id },
+    // Get companies the user has access to (owned or as team member)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    if (!accessibleCompanyIds.includes(id)) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to manage companies
+    const canManageCompanies = await hasPermission(session.user.id, id, 'manage_companies');
+
+    if (!canManageCompanies) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    }
+
+    const company = await Company.findByIdAndUpdate(
+      id,
       body,
       {
         new: true,
@@ -110,10 +133,22 @@ export async function DELETE(
 
     await dbConnect();
     const { id } = await params;
-    const company = await Company.findOneAndDelete({
-      _id: id,
-      userId: session.user.id,
-    });
+    
+    // Get companies the user has access to (owned or as team member)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    if (!accessibleCompanyIds.includes(id)) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to manage companies (and is owner for deletion)
+    const canManageCompanies = await hasPermission(session.user.id, id, 'manage_companies');
+
+    if (!canManageCompanies) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    }
+
+    const company = await Company.findByIdAndDelete(id);
 
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });

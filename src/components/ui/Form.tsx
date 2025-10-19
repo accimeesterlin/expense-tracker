@@ -1,126 +1,167 @@
-"use client";
+"use client"
 
-import React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+import { Slot } from "@radix-ui/react-slot"
+import {
+  Controller,
+  FormProvider,
+  useFormContext,
+  useFormState,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
+} from "react-hook-form"
 
-interface FormFieldProps {
-  children: React.ReactNode;
-  className?: string;
+import { cn } from "@/lib/utils"
+import { Label } from "@/components/ui/label"
+
+const Form = FormProvider
+
+type FormFieldContextValue<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+> = {
+  name: TName
 }
 
-interface FormLabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
-  children: React.ReactNode;
-  required?: boolean;
-}
+const FormFieldContext = React.createContext<FormFieldContextValue>(
+  {} as FormFieldContextValue
+)
 
-interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon?: React.ReactNode;
-  error?: string;
-}
-
-interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: string;
-}
-
-interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  error?: string;
-  children: React.ReactNode;
-}
-
-interface FormErrorProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function FormField({ children, className }: FormFieldProps) {
+const FormField = <
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>({
+  ...props
+}: ControllerProps<TFieldValues, TName>) => {
   return (
-    <div className={cn("space-y-2", className)}>
-      {children}
-    </div>
-  );
+    <FormFieldContext.Provider value={{ name: props.name }}>
+      <Controller {...props} />
+    </FormFieldContext.Provider>
+  )
 }
 
-export function FormLabel({ children, required, className, ...props }: FormLabelProps) {
-  return (
-    <label 
-      className={cn("block text-sm font-medium text-gray-700", className)} 
-      {...props}
-    >
-      {children}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-  );
-}
+const useFormField = () => {
+  const fieldContext = React.useContext(FormFieldContext)
+  const itemContext = React.useContext(FormItemContext)
+  const { getFieldState } = useFormContext()
+  const formState = useFormState({ name: fieldContext.name })
+  const fieldState = getFieldState(fieldContext.name, formState)
 
-export function FormInput({ icon, error, className, ...props }: FormInputProps) {
-  const baseClasses = cn(
-    "w-full px-3 py-2 border border-gray-300 rounded-lg",
-    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-    "disabled:bg-gray-50 disabled:text-gray-500",
-    "transition-colors",
-    {
-      "border-red-300 focus:ring-red-500": error,
-      "pl-10": icon,
-    },
-    className
-  );
-
-  if (icon) {
-    return (
-      <div className="relative">
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-          {icon}
-        </div>
-        <input className={baseClasses} {...props} />
-      </div>
-    );
+  if (!fieldContext) {
+    throw new Error("useFormField should be used within <FormField>")
   }
 
-  return <input className={baseClasses} {...props} />;
+  const { id } = itemContext
+
+  return {
+    id,
+    name: fieldContext.name,
+    formItemId: `${id}-form-item`,
+    formDescriptionId: `${id}-form-item-description`,
+    formMessageId: `${id}-form-item-message`,
+    ...fieldState,
+  }
 }
 
-export function FormTextarea({ error, className, ...props }: FormTextareaProps) {
+type FormItemContextValue = {
+  id: string
+}
+
+const FormItemContext = React.createContext<FormItemContextValue>(
+  {} as FormItemContextValue
+)
+
+function FormItem({ className, ...props }: React.ComponentProps<"div">) {
+  const id = React.useId()
+
   return (
-    <textarea
-      className={cn(
-        "w-full px-3 py-2 border border-gray-300 rounded-lg",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-        "disabled:bg-gray-50 disabled:text-gray-500",
-        "transition-colors resize-vertical",
-        {
-          "border-red-300 focus:ring-red-500": error,
-        },
-        className
-      )}
+    <FormItemContext.Provider value={{ id }}>
+      <div
+        data-slot="form-item"
+        className={cn("grid gap-2", className)}
+        {...props}
+      />
+    </FormItemContext.Provider>
+  )
+}
+
+function FormLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  const { error, formItemId } = useFormField()
+
+  return (
+    <Label
+      data-slot="form-label"
+      data-error={!!error}
+      className={cn("data-[error=true]:text-destructive", className)}
+      htmlFor={formItemId}
       {...props}
     />
-  );
+  )
 }
 
-export function FormSelect({ error, children, className, ...props }: FormSelectProps) {
+function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
+
   return (
-    <select
-      className={cn(
-        "w-full px-3 py-2 border border-gray-300 rounded-lg",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-        "disabled:bg-gray-50 disabled:text-gray-500",
-        "transition-colors",
-        {
-          "border-red-300 focus:ring-red-500": error,
-        },
-        className
-      )}
+    <Slot
+      data-slot="form-control"
+      id={formItemId}
+      aria-describedby={
+        !error
+          ? `${formDescriptionId}`
+          : `${formDescriptionId} ${formMessageId}`
+      }
+      aria-invalid={!!error}
+      {...props}
+    />
+  )
+}
+
+function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
+  const { formDescriptionId } = useFormField()
+
+  return (
+    <p
+      data-slot="form-description"
+      id={formDescriptionId}
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
+  const { error, formMessageId } = useFormField()
+  const body = error ? String(error?.message ?? "") : props.children
+
+  if (!body) {
+    return null
+  }
+
+  return (
+    <p
+      data-slot="form-message"
+      id={formMessageId}
+      className={cn("text-destructive text-sm", className)}
       {...props}
     >
-      {children}
-    </select>
-  );
+      {body}
+    </p>
+  )
 }
 
-export function FormError({ children, className }: FormErrorProps) {
-  return (
-    <p className={cn("text-sm text-red-600", className)}>
-      {children}
-    </p>
-  );
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+  FormField,
 }

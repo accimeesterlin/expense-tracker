@@ -1,7 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, DollarSign, Calendar, Building2 } from "lucide-react";
+import { DollarSign, Calendar, Building2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Company {
   _id: string;
@@ -180,8 +201,11 @@ export default function IncomeModal({
 
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (response.ok) {
         const result = await response.json();
         console.log("Success response:", result);
@@ -197,7 +221,11 @@ export default function IncomeModal({
           console.log("Failed to parse error response:", parseError);
           errorMessage = response.statusText || errorMessage;
         }
-        console.error("Income submission error:", response.status, errorMessage);
+        console.error(
+          "Income submission error:",
+          response.status,
+          errorMessage
+        );
         setError(errorMessage);
       }
     } catch (error) {
@@ -208,269 +236,241 @@ export default function IncomeModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div className="card max-w-xs w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600">
+              <DollarSign className="h-5 w-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[#0B3558]">
-              {income ? "Edit Income" : "Add Income"}
-            </h2>
+            <div>
+              <DialogTitle>{income ? "Edit Income" : "Add Income"}</DialogTitle>
+              <DialogDescription>
+                {income ? "Update income details" : "Record a new income entry"}
+              </DialogDescription>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-[#A6BBD1] hover:text-[#0B3558] transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Income Source *
-              </label>
-              <div className="input-field-with-icon">
-                <Building2 className="icon w-5 h-5" />
-                <input
-                  type="text"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="source">
+                Income Source <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="source"
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  className="input-field w-full"
                   placeholder="e.g., Salary, Freelance, Investment"
                   required
                   autoFocus
+                  className="pl-9"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Amount *
-              </label>
-              <div className="input-field-with-icon">
-                <DollarSign className="icon w-5 h-5" />
-                <input
+            <div className="space-y-2">
+              <Label htmlFor="amount">
+                Amount <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="amount"
                   type="number"
                   step="0.01"
                   min="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="input-field w-full"
                   placeholder="0.00"
                   required
+                  className="pl-9"
                 />
               </div>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Description
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input-field w-full"
               rows={3}
               placeholder="Optional description of this income"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Currency
-              </label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="input-field w-full"
-              >
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="CAD">CAD</option>
-              </select>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="currency">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                  <SelectItem value="CAD">CAD</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Frequency
-              </label>
-              <select
-                value={frequency}
-                onChange={(e) => setFrequency(e.target.value)}
-                className="input-field w-full"
-              >
-                <option value="one-time">One-time</option>
-                <option value="weekly">Weekly</option>
-                <option value="bi-weekly">Bi-weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="quarterly">Quarterly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor="frequency">Frequency</Label>
+              <Select value={frequency} onValueChange={setFrequency}>
+                <SelectTrigger id="frequency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="one-time">One-time</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Category *
-              </label>
-              <input
-                type="text"
+            <div className="space-y-2">
+              <Label htmlFor="category">
+                Category <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="input-field w-full"
-                placeholder="e.g., Salary, Freelance, Investment"
+                placeholder="e.g., Salary, Freelance"
                 required
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Payment Method
-              </label>
-              <select
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="paymentMethod">Payment Method</Label>
+              <Select
                 value={paymentMethodId}
-                onChange={(e) => setPaymentMethodId(e.target.value)}
-                className="input-field w-full"
+                onValueChange={setPaymentMethodId}
               >
-                <option value="">Select payment method</option>
-                {paymentMethods.map((method) => (
-                  <option key={method._id} value={method._id}>
-                    {method.name}{" "}
-                    {method.lastFourDigits && `****${method.lastFourDigits}`}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="paymentMethod">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {paymentMethods.map((method) => (
+                    <SelectItem key={method._id} value={method._id}>
+                      {method.name}{" "}
+                      {method.lastFourDigits && `****${method.lastFourDigits}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Company
-              </label>
-              <select
-                value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
-                className="input-field w-full"
-              >
-                <option value="">Select company</option>
-                {companies.map((company) => (
-                  <option key={company._id} value={company._id}>
-                    {company.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor="company">Company</Label>
+              <Select value={companyId} onValueChange={setCompanyId}>
+                <SelectTrigger id="company">
+                  <SelectValue placeholder="Select company" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company._id} value={company._id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Received Date *
-            </label>
-            <div className="input-field-with-icon">
-              <Calendar className="icon w-5 h-5" />
-              <input
+          <div className="space-y-2">
+            <Label htmlFor="receivedDate">
+              Received Date <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="receivedDate"
                 type="date"
                 value={receivedDate}
                 onChange={(e) => setReceivedDate(e.target.value)}
-                className="input-field w-full"
                 required
+                className="pl-9"
               />
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
+          <div className="flex items-center space-x-2">
+            <Checkbox
               id="isRecurring"
               checked={isRecurring}
-              onChange={(e) => setIsRecurring(e.target.checked)}
-              className="h-4 w-4 text-green-600 focus:ring-green-600 border-gray-300 rounded"
+              onCheckedChange={(checked) => setIsRecurring(checked === true)}
             />
-            <label
+            <Label
               htmlFor="isRecurring"
-              className="ml-2 block text-sm text-[#0B3558]"
+              className="text-sm font-normal cursor-pointer"
             >
               This is recurring income
-            </label>
+            </Label>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Tags
-            </label>
-            <input
-              type="text"
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <Input
+              id="tags"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="input-field w-full"
               placeholder="e.g., bonus, commission, passive (comma separated)"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Notes
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="input-field w-full"
               rows={3}
               placeholder="Additional notes about this income"
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex space-x-3 pt-4">
-            <button
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="flex-1 btn-secondary"
               disabled={loading}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 btn-primary"
-              disabled={loading}
-            >
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : income ? (
                 "Update"
               ) : (
                 "Add"
               )}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

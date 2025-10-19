@@ -6,6 +6,7 @@ import TeamMember from "@/models/TeamMember";
 import TeamInvite from "@/models/TeamInvite";
 import Company from "@/models/Company";
 import { getUserCompanyIds } from "@/lib/permissions";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function GET(
   request: NextRequest,
@@ -61,17 +62,117 @@ export async function PUT(
     const ownedCompanies = await Company.find({ userId: session.user.id });
     const ownedCompanyIds = ownedCompanies.map(c => c._id.toString());
 
-    const teamMember = await TeamMember.findOneAndUpdate(
-      { _id: id, company: { $in: ownedCompanyIds } },
-      body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    ).populate("company", "name industry");
+    const teamMember = await TeamMember.findOne({
+      _id: id,
+      company: { $in: ownedCompanyIds },
+    });
 
     if (!teamMember) {
-      return NextResponse.json({ error: "Team member not found or you don't have permission to edit" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Team member not found or you don't have permission to edit" },
+        { status: 404 }
+      );
+    }
+
+    const previousData = teamMember.toObject();
+    const updatableFields = [
+      "name",
+      "email",
+      "role",
+      "department",
+      "phone",
+      "company",
+      "isActive",
+      "permissions",
+    ] as const;
+
+    const updates: Record<string, unknown> = {};
+
+    for (const field of updatableFields) {
+      if (Object.prototype.hasOwnProperty.call(body, field)) {
+        updates[field] = body[field];
+      }
+    }
+
+    const companyUpdate = updates.company;
+    if (
+      typeof companyUpdate === "string" &&
+      !ownedCompanyIds.includes(companyUpdate)
+    ) {
+      const ownsCompany = await Company.exists({
+        _id: companyUpdate,
+        userId: session.user.id,
+      });
+
+      if (!ownsCompany) {
+        return NextResponse.json(
+          { error: "Cannot move team member to an unauthorized company" },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, "permissions")) {
+      const value = updates.permissions;
+      updates.permissions = Array.isArray(value) ? value : [];
+    }
+
+    Object.assign(teamMember, updates);
+    await teamMember.save();
+    await teamMember.populate("company", "name industry");
+
+    const changedFields = Object.keys(updates).filter((key) => {
+      if (key === "permissions") {
+        const previousPermissions = Array.isArray(previousData.permissions)
+          ? [...previousData.permissions].sort()
+          : [];
+        const currentPermissions = Array.isArray(teamMember.permissions)
+          ? [...teamMember.permissions].sort()
+          : [];
+
+        return (
+          previousPermissions.length !== currentPermissions.length ||
+          previousPermissions.some((permission, index) => permission !== currentPermissions[index])
+        );
+      }
+
+      if (key === "company") {
+        const previousCompanyId =
+          typeof previousData.company === "object" && previousData.company !== null
+            ? previousData.company.toString()
+            : String(previousData.company ?? "");
+        const nextCompanyId =
+          typeof updates.company === "string"
+            ? updates.company
+            : String(updates.company ?? "");
+
+        return previousCompanyId !== nextCompanyId;
+      }
+
+      return previousData[key] !== updates[key];
+    });
+
+    if (changedFields.length > 0) {
+      await logAuditEvent({
+        action: "team_member.updated",
+        actor: {
+          id: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+        },
+        target: {
+          type: "TeamMember",
+          id: teamMember._id.toString(),
+          name: teamMember.name,
+        },
+        description: `Updated team member ${teamMember.name}`,
+        companyId: teamMember.company?._id?.toString(),
+        teamMemberId: teamMember._id.toString(),
+        metadata: {
+          changedFields,
+          updates,
+        },
+      });
     }
 
     return NextResponse.json(teamMember);
@@ -134,6 +235,27 @@ export async function DELETE(
       email: teamMember.email,
       companyId: teamMember.company,
       isAccepted: false
+    });
+
+    await logAuditEvent({
+      action: "team_member.deleted",
+      actor: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+      },
+      target: {
+        type: "TeamMember",
+        id: teamMember._id.toString(),
+        name: teamMember.name,
+      },
+      description: `Deleted team member ${teamMember.name}`,
+      companyId: teamMember.company?.toString(),
+      teamMemberId: teamMember._id.toString(),
+      metadata: {
+        email: teamMember.email,
+        role: teamMember.role,
+      },
     });
 
     return NextResponse.json({ message: "Team member deleted successfully" });

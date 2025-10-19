@@ -6,6 +6,9 @@ import Expense from '@/models/Expense';
 import Category from '@/models/Category';
 import Tag from '@/models/Tag';
 import User from '@/models/User';
+import TeamMember from '@/models/TeamMember';
+import TeamInvite from '@/models/TeamInvite';
+import AuditLog from '@/models/AuditLog';
 
 // Export all models to ensure they're registered
 export {
@@ -13,7 +16,10 @@ export {
   Expense,
   Category,
   Tag,
-  User
+  User,
+  TeamMember,
+  TeamInvite,
+  AuditLog
 };
 
 // Function to ensure all models are registered
@@ -25,6 +31,9 @@ export function ensureModelsRegistered() {
     Expense,
     Category,
     Tag,
-    User
+    User,
+    TeamMember,
+    TeamInvite,
+    AuditLog
   };
 }

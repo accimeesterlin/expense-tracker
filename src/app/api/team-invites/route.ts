@@ -8,6 +8,7 @@ import Company from "@/models/Company";
 import User from "@/models/User";
 import { sendTeamInviteEmail } from "@/lib/email";
 import { ensureModelsRegistered } from "@/lib/models";
+import { logAuditEvent } from "@/lib/audit";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -114,6 +115,26 @@ export async function POST(request: NextRequest) {
     // Check if email was just logged (no email service configured)
     const wasLogged = emailResult.data?.message?.includes('logged');
     
+    await logAuditEvent({
+      action: "team_invite.created",
+      actor: {
+        id: session.user.id,
+        name: session.user.name,
+        email: session.user.email,
+      },
+      target: {
+        type: "TeamInvite",
+        id: invite._id.toString(),
+        name: invite.email,
+      },
+      description: `Invited ${invite.email} to ${company.name}`,
+      companyId: company._id.toString(),
+      metadata: {
+        role,
+        permissions: invite.permissions,
+      },
+    });
+
     return NextResponse.json({
       message: wasLogged 
         ? "Invitation created successfully (email service not configured - check console for invitation link)"

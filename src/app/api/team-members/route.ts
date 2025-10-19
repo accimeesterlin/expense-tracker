@@ -5,6 +5,7 @@ import dbConnect from "@/lib/db";
 import TeamMember from "@/models/TeamMember";
 import TeamInvite from "@/models/TeamInvite";
 import Company from "@/models/Company";
+import { logAuditEvent } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -75,14 +76,72 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     const body = await request.json();
 
+    const {
+      name,
+      email,
+      role,
+      department,
+      phone,
+      company,
+      isActive,
+      permissions,
+    } = body;
+
+    const normalizedPermissions = Array.isArray(permissions)
+      ? permissions
+      : [];
+
+    const companyRecord = await Company.findOne({
+      _id: company,
+      userId: session.user.id,
+    });
+
+    if (!companyRecord) {
+      return NextResponse.json(
+        { error: "Company not found or unauthorized" },
+        { status: 404 }
+      );
+    }
+
     const teamMember = new TeamMember({
-      ...body,
+      name,
+      email,
+      role,
+      department,
+      phone,
+      company,
+      isActive,
+      permissions: normalizedPermissions,
       userId: session.user.id,
     });
     await teamMember.save();
 
     const populatedMember = await TeamMember.findById(teamMember._id)
       .populate("company", "name industry");
+
+    if (populatedMember) {
+      await logAuditEvent({
+        action: "team_member.created",
+        actor: {
+          id: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+        },
+        target: {
+          type: "TeamMember",
+          id: populatedMember._id.toString(),
+          name: populatedMember.name,
+        },
+        description: `Created team member ${populatedMember.name}`,
+        companyId: populatedMember.company?._id?.toString(),
+        teamMemberId: populatedMember._id.toString(),
+        metadata: {
+          role: populatedMember.role,
+          department: populatedMember.department,
+          permissions: populatedMember.permissions,
+        },
+      });
+    }
 
     return NextResponse.json(populatedMember, { status: 201 });
   } catch (error: unknown) {

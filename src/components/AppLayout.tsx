@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Menu, Settings, User, DollarSign, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Sidebar from "./Sidebar";
 import GlobalSearch from "./GlobalSearch";
 import SettingsModal from "./SettingsModal";
@@ -37,13 +38,15 @@ export default function AppLayout({
           <div className="w-full px-3 sm:px-4 lg:px-6">
             <div className="flex justify-between items-center h-16 gap-2">
               <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={toggleSidebar}
-                  className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors lg:hidden flex-shrink-0"
+                  className="lg:hidden flex-shrink-0 h-9 w-9"
                 >
                   <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl flex items-center justify-center lg:hidden flex-shrink-0 hidden sm:flex">
+                </Button>
+                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-[#006BFF] rounded-xl items-center justify-center lg:hidden flex-shrink-0 hidden sm:flex">
                   <DollarSign className="w-4 h-4 lg:w-6 lg:h-6 text-white" />
                 </div>
                 <h1 className="text-sm sm:text-base lg:text-xl font-semibold text-[#0B3558] lg:hidden truncate min-w-0">
@@ -70,21 +73,25 @@ export default function AppLayout({
                     </span>
                   </div>
 
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowSettingsModal(true)}
-                    className="p-1.5 sm:p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors flex-shrink-0"
+                    className="flex-shrink-0 h-9 w-9"
                     title="Settings"
                   >
                     <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    variant="destructive"
+                    size="icon"
                     onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                    className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    className="flex-shrink-0 h-9 w-9"
                     title="Sign out"
                   >
                     <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

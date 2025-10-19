@@ -42,6 +42,10 @@ interface Company {
   expenseCount?: number;
   totalAmount?: number;
   teamCount?: number;
+  isOwner?: boolean;
+  permissions?: string[];
+  role?: string;
+  department?: string;
 }
 
 export default function CompaniesPage() {
@@ -82,16 +86,19 @@ export default function CompaniesPage() {
 
   const fetchCompanies = useCallback(async () => {
     try {
-      const result = await api.getCompanies();
-      if (result) {
+      const response = await fetch('/api/companies');
+      if (response.ok) {
+        const result = await response.json();
         setCompanies(result);
+      } else {
+        console.error("Failed to fetch companies");
       }
     } catch (error) {
       console.error("Error fetching companies:", error);
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, []);
 
   const filterCompanies = useCallback(() => {
     const filtered = companies.filter(
@@ -315,33 +322,48 @@ export default function CompaniesPage() {
                       href={`/companies/${company._id}`}
                       className="block hover:text-[#006BFF] transition-colors"
                     >
-                      <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] mb-1 truncate">
-                        {company.name}
-                      </h3>
+                      <div className="flex items-start justify-between mb-1">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-[#0B3558] truncate flex-1">
+                          {company.name}
+                        </h3>
+                        <div className="ml-2 flex-shrink-0">
+                          {company.isOwner ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              Owner
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              {company.role || 'Member'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <p className="text-xs sm:text-sm text-[#006BFF] font-medium truncate">
                         {company.industry}
                       </p>
                     </Link>
                   </div>
-                  <div className="flex items-center space-x-1 ml-2">
-                    <button
-                      onClick={() => {
-                        setSelectedCompany(company);
-                        setShowCompanyModal(true);
-                      }}
-                      className="p-1.5 sm:p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors"
-                      title="Edit company"
-                    >
-                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                    <button
-                      onClick={() => showDeleteConfirmation(company._id, company.name)}
-                      className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete company"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </button>
-                  </div>
+                  {company.isOwner && (
+                    <div className="flex items-center space-x-1 ml-2">
+                      <button
+                        onClick={() => {
+                          setSelectedCompany(company);
+                          setShowCompanyModal(true);
+                        }}
+                        className="p-1.5 sm:p-2 text-[#476788] hover:text-[#006BFF] hover:bg-[#006BFF]/10 rounded-lg transition-colors"
+                        title="Edit company"
+                      >
+                        <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                      <button
+                        onClick={() => showDeleteConfirmation(company._id, company.name)}
+                        className="p-1.5 sm:p-2 text-[#476788] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete company"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1 sm:space-y-1.5 lg:space-y-2 text-xs sm:text-sm text-[#476788]">

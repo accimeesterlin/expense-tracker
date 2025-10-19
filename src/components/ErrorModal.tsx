@@ -1,15 +1,17 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import {
-  Modal,
-  ModalHeader,
-  ModalContent,
-  ModalFooter,
-  ModalTitle,
-} from "./ui/Modal";
-import { Button } from "./ui/Button";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 interface ErrorModalProps {
   isOpen: boolean;
@@ -25,23 +27,25 @@ export default function ErrorModal({
   message,
 }: ErrorModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalHeader
-        icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
-        onClose={onClose}
-      >
-        <ModalTitle className="text-red-800">{title}</ModalTitle>
-      </ModalHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <DialogTitle className="text-red-800">{title}</DialogTitle>
+          </div>
+        </DialogHeader>
 
-      <ModalContent>
-        <p className="text-gray-700">{message}</p>
-      </ModalContent>
+        <Alert variant="destructive">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
 
-      <ModalFooter>
-        <Button onClick={onClose} variant="primary" className="w-full">
-          OK
-        </Button>
-      </ModalFooter>
-    </Modal>
+        <DialogFooter>
+          <Button onClick={onClose} className="w-full">
+            OK
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,5 +1,7 @@
 import { useRouter } from "next/navigation";
 import CompanyLogo from "./CompanyLogo";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Company {
   _id: string;
@@ -25,7 +27,9 @@ interface DashboardExpenseCardProps {
   expense: Expense;
 }
 
-export default function DashboardExpenseCard({ expense }: DashboardExpenseCardProps) {
+export default function DashboardExpenseCard({
+  expense,
+}: DashboardExpenseCardProps) {
   const router = useRouter();
 
   const formatCurrency = (amount: number) => {
@@ -36,15 +40,18 @@ export default function DashboardExpenseCard({ expense }: DashboardExpenseCardPr
   };
 
   const getCategoryColor = (category: string) => {
-    const colors = {
-      Travel: "bg-blue-100 text-blue-800",
-      Entertainment: "bg-purple-100 text-purple-800",
-      "Office Supplies": "bg-green-100 text-green-800",
-      Marketing: "bg-pink-100 text-pink-800",
-      Technology: "bg-indigo-100 text-indigo-800",
-      Other: "bg-gray-100 text-gray-800",
+    const colors: Record<
+      string,
+      "default" | "secondary" | "destructive" | "outline"
+    > = {
+      Travel: "default",
+      Entertainment: "secondary",
+      "Office Supplies": "outline",
+      Marketing: "secondary",
+      Technology: "default",
+      Other: "outline",
     };
-    return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    return colors[category] || "outline";
   };
 
   const handleClick = () => {
@@ -52,43 +59,44 @@ export default function DashboardExpenseCard({ expense }: DashboardExpenseCardPr
   };
 
   return (
-    <div
-      className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
+    <Card
+      className="cursor-pointer hover:shadow-md transition-shadow"
       onClick={handleClick}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <CompanyLogo
-            companyName={expense.name}
-            domain={expense.metadata?.expenseDomain}
-            size="sm"
-            showAttribution={false}
-            className="w-8 h-8 flex-shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 text-sm truncate">
-              {expense.name}
-            </h3>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-gray-500 truncate">
-                {expense.company.name}
-              </span>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
-                  expense.category
-                )}`}
-              >
-                {expense.category}
-              </span>
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <CompanyLogo
+              companyName={expense.name}
+              domain={expense.metadata?.expenseDomain}
+              size="sm"
+              showAttribution={false}
+              className="w-8 h-8 flex-shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-foreground text-sm truncate">
+                {expense.name}
+              </h3>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className="text-xs text-muted-foreground truncate">
+                  {expense.company.name}
+                </span>
+                <Badge
+                  variant={getCategoryColor(expense.category)}
+                  className="text-xs"
+                >
+                  {expense.category}
+                </Badge>
+              </div>
             </div>
           </div>
+          <div className="text-right flex-shrink-0 ml-2">
+            <span className="font-semibold text-foreground text-sm">
+              {formatCurrency(expense.amount)}
+            </span>
+          </div>
         </div>
-        <div className="text-right flex-shrink-0 ml-2">
-          <span className="font-semibold text-gray-900 text-sm">
-            {formatCurrency(expense.amount)}
-          </span>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

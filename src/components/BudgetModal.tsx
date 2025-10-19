@@ -1,7 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Budget {
   _id: string;
@@ -147,109 +167,88 @@ export default function BudgetModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-    >
-      <div className="bg-white rounded-2xl max-w-xs w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+              <DollarSign className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-[#0B3558]">
+              <DialogTitle>
                 {isEditing ? "Edit Budget" : "Create New Budget"}
-              </h2>
-              <p className="text-sm text-[#476788]">
+              </DialogTitle>
+              <DialogDescription>
                 {isEditing
                   ? "Update budget details"
                   : "Set up a new spending budget"}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-[#476788] hover:text-[#0B3558] hover:bg-[#F8F9FB] rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Budget Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2 md:col-span-1">
+              <Label htmlFor="name">
+                Budget Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-field w-full"
                 placeholder="e.g., Monthly Groceries"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="input-field w-full"
-              >
-                <option value="">Select a category</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-                <option value="other">Other</option>
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No category</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#0B3558] mb-2">
-              Description
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="input-field w-full"
               rows={3}
               placeholder="Optional description of this budget..."
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Budget Amount <span className="text-red-500">*</span>
-              </label>
-              <input
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="amount">
+                Budget Amount <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="amount"
                 type="number"
                 value={totalAmount}
                 onChange={(e) => setTotalAmount(e.target.value)}
-                className="input-field w-full"
                 placeholder="1000"
                 step="0.01"
                 min="0"
@@ -257,79 +256,76 @@ export default function BudgetModal({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Period
-              </label>
-              <select
+            <div className="space-y-2">
+              <Label htmlFor="period">Period</Label>
+              <Select
                 value={period}
-                onChange={(e) =>
+                onValueChange={(value) =>
                   setPeriod(
-                    e.target.value as
-                      | "weekly"
-                      | "monthly"
-                      | "quarterly"
-                      | "yearly"
+                    value as "weekly" | "monthly" | "quarterly" | "yearly"
                   )
                 }
-                className="input-field w-full"
               >
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="quarterly">Quarterly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+                <SelectTrigger id="period">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                Start Date <span className="text-red-500">*</span>
-              </label>
-              <input
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">
+                Start Date <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="input-field w-full"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#0B3558] mb-2">
-                End Date <span className="text-red-500">*</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="endDate">
+                End Date <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="input-field w-full"
                 required
               />
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="btn-secondary"
               disabled={loading}
             >
               Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading
                 ? "Saving..."
                 : isEditing
-                ? "Update Budget"
-                : "Create Budget"}
-            </button>
-          </div>
+                  ? "Update Budget"
+                  : "Create Budget"}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

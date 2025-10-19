@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Expense Tracker",
+  title: "Expenci",
   description: "Track and manage your business expenses efficiently",
   viewport: {
     width: "device-width",
@@ -23,13 +23,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Expense Tracker",
-    title: "Expense Tracker",
+    siteName: "Expenci",
+    title: "Expenci",
     description: "Track and manage your business expenses efficiently",
   },
   twitter: {
     card: "summary",
-    title: "Expense Tracker",
+    title: "Expenci",
     description: "Track and manage your business expenses efficiently",
   },
 };

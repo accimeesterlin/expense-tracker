@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Expense from "@/models/Expense";
 import { ensureModelsRegistered } from "@/lib/models";
+import { getUserCompanyIds, hasPermission } from "@/lib/permissions";
 
 // Function to delete receipt from S3
 async function deleteReceiptFromS3(s3Key: string): Promise<boolean> {
@@ -49,13 +50,29 @@ export async function GET(
 
     await dbConnect();
     const { id } = await params;
+    
+    // Get companies the user has access to (owned or as team member)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    // Find expense that belongs to companies user has access to
     const expense = await Expense.findOne({
       _id: id,
-      userId: session.user.id,
+      company: { $in: accessibleCompanyIds }
     }).populate("company", "name industry");
 
     if (!expense) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to view expenses for this company
+    const canViewExpenses = await hasPermission(
+      session.user.id, 
+      expense.company._id.toString(), 
+      'view_expenses'
+    );
+
+    if (!canViewExpenses) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     return NextResponse.json(expense);
@@ -84,6 +101,30 @@ export async function PUT(
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
+
+    // Get companies the user has access to (owned or as team member)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
+    // Find expense that belongs to companies user has access to
+    const existingExpense = await Expense.findOne({
+      _id: id,
+      company: { $in: accessibleCompanyIds }
+    }).populate("company", "name industry");
+
+    if (!existingExpense) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to edit expenses for this company
+    const canEditExpenses = await hasPermission(
+      session.user.id, 
+      existingExpense.company._id.toString(), 
+      'edit_expenses'
+    );
+
+    if (!canEditExpenses) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    }
 
     // Handle nextBillingDate for subscription and recurring expenses
     if (
@@ -123,7 +164,7 @@ export async function PUT(
     );
 
     const expense = await Expense.findOneAndUpdate(
-      { _id: id, userId: session.user.id },
+      { _id: id, company: { $in: accessibleCompanyIds } },
       cleanedBody,
       {
         new: true,
@@ -178,14 +219,28 @@ export async function DELETE(
     await dbConnect();
     const { id } = await params;
     
+    // Get companies the user has access to (owned or as team member)
+    const accessibleCompanyIds = await getUserCompanyIds(session.user.id);
+    
     // First, find the expense to get receipt information before deletion
     const expense = await Expense.findOne({
       _id: id,
-      userId: session.user.id,
-    });
+      company: { $in: accessibleCompanyIds }
+    }).populate("company", "name industry");
 
     if (!expense) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    // Check if user has permission to delete expenses for this company
+    const canDeleteExpenses = await hasPermission(
+      session.user.id, 
+      expense.company._id.toString(), 
+      'delete_expenses'
+    );
+
+    if (!canDeleteExpenses) {
+      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     // Delete associated receipt from S3 if it exists
@@ -203,7 +258,7 @@ export async function DELETE(
     // Now delete the expense from the database
     await Expense.findOneAndDelete({
       _id: id,
-      userId: session.user.id,
+      company: { $in: accessibleCompanyIds }
     });
 
     console.log(`Expense deleted successfully: ${id}`);
