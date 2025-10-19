@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { format } from "date-fns";
@@ -72,7 +72,7 @@ interface CompanyOption {
 
 type FilterType = "search" | "teamMember" | "company";
 
-export default function AuditLogsPage() {
+function AuditLogsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
@@ -991,5 +991,19 @@ export default function AuditLogsPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function AuditLogsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F9FB] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006BFF]"></div>
+        </div>
+      }
+    >
+      <AuditLogsContent />
+    </Suspense>
   );
 }
